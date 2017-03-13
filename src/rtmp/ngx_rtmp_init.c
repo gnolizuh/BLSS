@@ -232,10 +232,7 @@ ngx_rtmp_init_session(ngx_connection_t *c, ngx_rtmp_addr_conf_t *addr_conf)
     }
 
     /** to init the session event'log **/
-    s->connect_time = ngx_time();  // record the start time
-    s->is_drm = NGX_RTMP_STREAM_NDRM;
-    s->is_public = NGX_RTMP_STREAM_PRIVATE;
-
+    s->connect_time = ngx_time();
     s->stream_stat = NGX_RTMP_STREAM_BEGIN;
 
     /** init finalize code **/

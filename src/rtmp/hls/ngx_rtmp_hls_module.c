@@ -3212,10 +3212,7 @@ ngx_rtmp_http_hls_init_session(ngx_http_request_t *r, ngx_rtmp_addr_conf_t *addr
     }
 
     /** to init the session event'log **/
-    s->connect_time = ngx_time();  // record the start time
-    s->is_drm = NGX_RTMP_STREAM_NDRM;
-    s->is_public = NGX_RTMP_STREAM_PRIVATE;
-
+    s->connect_time = ngx_time();
     s->stream_stat = NGX_RTMP_STREAM_BEGIN;
 
     return s;
