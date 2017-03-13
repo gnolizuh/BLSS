@@ -29,7 +29,6 @@ static char * ngx_rtmp_log_compile_format(ngx_conf_t *cf, ngx_array_t *ops,
 static void ngx_rtmp_log_write(ngx_rtmp_session_t *s, ngx_rtmp_log_t *log,
        ngx_rtmp_log_fmt_t *fmt);
 static ngx_rtmp_log_ctx_t *ngx_rtmp_log_pcalloc_ctx(ngx_rtmp_session_t *s);
-static ngx_int_t ngx_rtmp_log_publisher_finalize(ngx_rtmp_session_t *s);
 
 
 static const char * ngx_rtmp_log_standards[NGX_RTMP_LOG_EVENT_MAX] = 
@@ -171,21 +170,6 @@ ngx_rtmp_log_var_tcurl_getdata(ngx_rtmp_session_t *s, u_char *buf,
     ngx_rtmp_log_op_t *op)
 {
     return ngx_snprintf(buf, s->tc_url.len, "%s", s->tc_url.data);
-}
-
-
-static size_t
-ngx_rtmp_log_var_flux_end_time_getlen(ngx_rtmp_session_t *s, ngx_rtmp_log_op_t *op)
-{
-    return NGX_INT_T_LEN;
-}
-
-
-static u_char *
-ngx_rtmp_log_var_flux_end_time_getdata(ngx_rtmp_session_t *s, u_char *buf,
-    ngx_rtmp_log_op_t *op)
-{
-    return ngx_snprintf(buf, NGX_INT_T_LEN, "%L", (int64_t)(ngx_current_msec / 1000));
 }
 
 
@@ -1674,14 +1658,6 @@ ngx_rtmp_log_var_session_readable_time_getdata(ngx_rtmp_session_t *s,
 }
 
 
-static size_t
-ngx_rtmp_log_var_sample_date_getlen(ngx_rtmp_session_t *s,
-    ngx_rtmp_log_op_t *op)
-{
-    return NGX_INT64_LEN;
-}
-
-
 static ngx_rtmp_codec_ctx_t *
 ngx_rtmp_log_get_codec_ctx(ngx_rtmp_session_t *s)
 {
@@ -1711,73 +1687,6 @@ ngx_rtmp_log_get_codec_ctx(ngx_rtmp_session_t *s)
     }
 
     return ngx_rtmp_get_module_ctx(pctx->session, ngx_rtmp_codec_module);
-}
-
-
-static size_t
-ngx_rtmp_log_var_stream_id_getlen(ngx_rtmp_session_t *s,
-    ngx_rtmp_log_op_t *op)
-{
-    return NGX_RTMP_STREAM_ID_LEN;
-}
-
-static u_char *
-ngx_rtmp_log_var_stream_id_getdata(ngx_rtmp_session_t *s, u_char *buf,
-    ngx_rtmp_log_op_t *op)
-{
-    ngx_rtmp_codec_ctx_t    *ctx;
-    ngx_str_t                stream_id;
-    
-    ctx = ngx_rtmp_log_get_codec_ctx(s);
-    if (ctx == NULL)
-    {
-        return buf;
-    }
-    stream_id.len = NGX_RTMP_STREAM_ID_LEN;
-    stream_id.data = ctx->stream_id;
-    return ngx_snprintf(buf, NGX_RTMP_STREAM_ID_LEN, "%V", &stream_id);
-}
-
-static size_t
-ngx_rtmp_log_var_end_role_getlen(ngx_rtmp_session_t *s,
-    ngx_rtmp_log_op_t *op)
-{
-    return ngx_strlen(NGX_RTMP_SERVER_TYPE);
-}
-
-static u_char *
-ngx_rtmp_log_var_end_role_getdata(ngx_rtmp_session_t *s, u_char *buf,
-    ngx_rtmp_log_op_t *op)
-{
-    return ngx_cpymem(buf, NGX_RTMP_SERVER_TYPE, ngx_strlen(NGX_RTMP_SERVER_TYPE));
-}
-
-static size_t
-ngx_rtmp_log_var_meta_x_getlen(ngx_rtmp_session_t *s,
-    ngx_rtmp_log_op_t *op)
-{
-    ngx_rtmp_codec_ctx_t    *ctx;
-    
-    ctx = ngx_rtmp_log_get_codec_ctx(s);
-    if (ctx == NULL)
-    {
-        return NGX_RTMP_MAX_BUF_SIZE;
-    }
-    return ngx_strlen(ctx->x);
-}
-
-static u_char *
-ngx_rtmp_log_var_meta_x_getdata(ngx_rtmp_session_t *s, u_char *buf,
-    ngx_rtmp_log_op_t *op)
-{
-    ngx_rtmp_codec_ctx_t    *ctx;
-    
-    ctx = ngx_rtmp_log_get_codec_ctx(s);
-    if (ctx == NULL)
-    {
-        return buf;
-    }
-    return ngx_cpymem(buf, ctx->x, ngx_strlen(ctx->x));
 }
 
 static ngx_rtmp_log_var_t ngx_rtmp_log_vars[] = {
@@ -3019,43 +2928,6 @@ ngx_rtmp_log_notify_latency(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     for (n = 0; n < lacf->logs->nelts; ++n, ++log) {
 
         fmt = log->standards[NGX_RTMP_LOG_EVENT_NOTIFY_LATENCY];
-        if (fmt) {
-            ngx_rtmp_log_write(s, log, fmt);
-        }
-    }
-
-    return NGX_OK;
-}
-
-
-static ngx_int_t
-ngx_rtmp_log_publisher_finalize(ngx_rtmp_session_t *s)
-{
-    ngx_rtmp_log_app_conf_t    *lacf;
-    ngx_rtmp_log_t             *log;
-    ngx_rtmp_log_fmt_t         *fmt;
-    ngx_uint_t                  n;
-    ngx_rtmp_log_ctx_t         *ctx;
-
-    lacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_log_module);
-    if (lacf == NULL || lacf->off || lacf->logs == NULL) {
-        return NGX_OK;
-    }
-
-    ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_log_module);
-    if (ctx == NULL) {
-        return NGX_OK;
-    }
-
-    if(ctx->play){
-        return NGX_ERROR;
-    }
-
-    ctx->event = NGX_RTMP_LOG_EVENT_PUBLISHER_FINALIZE;
-    log = lacf->logs->elts;
-    for (n = 0; n < lacf->logs->nelts; ++n, ++log) {
-
-        fmt = log->standards[NGX_RTMP_LOG_EVENT_PUBLISHER_FINALIZE];
         if (fmt) {
             ngx_rtmp_log_write(s, log, fmt);
         }
