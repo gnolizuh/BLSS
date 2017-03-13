@@ -111,8 +111,6 @@ struct ngx_rtmp_live_stream_s {
     ngx_rtmp_live_ctx_t                *ctx;
     ngx_rtmp_av_bandwidth_t             bw_in_av;
     ngx_rtmp_bandwidth_t                bw_out;
-    ngx_rtmp_bandwidth_t                bw_billing_in;
-    ngx_rtmp_bandwidth_t                bw_billing_out;
     ngx_rtmp_bandwidth_t                bw_in_bytes;
     ngx_rtmp_bandwidth_t                bw_out_bytes;
     ngx_rtmp_live_frame_rate_t          video_frame_rate;

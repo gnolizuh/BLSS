@@ -579,7 +579,6 @@ ngx_rtmp_send(ngx_event_t *wev)
 
             if (s->relay_type == NGX_NONE_RELAY) {
 
-                ngx_rtmp_update_bandwidth(&ctx->stream->bw_billing_out, n);
                 ngx_rtmp_update_bandwidth(&ctx->stream->bw_out_bytes, n);
             }
       	}

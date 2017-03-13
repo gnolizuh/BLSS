@@ -2750,7 +2750,6 @@ ngx_rtmp_live_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     }
 
     if (s->relay_type == NGX_NONE_RELAY) {
-        ngx_rtmp_update_bandwidth(&ctx->stream->bw_billing_in, h->mlen);
         ngx_rtmp_update_bandwidth(&ctx->stream->bw_in_bytes, h->mlen);
     }
 

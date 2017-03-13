@@ -471,23 +471,6 @@ typedef struct {
 } ngx_rtmp_chunk_info_t;
 
 
-typedef struct ngx_rtmp_delay_s ngx_rtmp_delay_t;
-
-struct ngx_rtmp_delay_s {
-    ngx_uint_t                          start_time;//current interval start
-    ngx_uint_t                          last_audio_pts;
-    ngx_uint_t                          cur_audio_pts;
-    ngx_uint_t                          audio_duration;//audio frame duration sum
-    ngx_uint_t                          time_cost;
-    ngx_uint_t                          audio_recv_time;
-    ngx_uint_t                          video_frame_num;
-    ngx_int_t                           audio_delay_max;
-    ngx_int_t                           audio_delay_min;
-    ngx_int_t                           recv_delay;
-    ngx_int_t                           send_delay;
-    struct ngx_rtmp_delay_s            *next;
-};
-
 typedef struct {
     uint32_t                signature;  /* "RTMP" */ /* <-- FIXME wtf */
 
@@ -513,10 +496,6 @@ typedef struct {
     uint32_t                buflen;
     uint32_t                ack_size;
 
-    /* billing parameters */
-    ngx_uint_t              is_public;
-    ngx_uint_t              is_drm;
-
     /* connection parameters */
     ngx_str_t               app;
     ngx_str_t               name;
@@ -536,9 +515,6 @@ typedef struct {
     int                     silent;
 
     ngx_str_t               x_forwarded_for;
-
-    /*real frame rate*/
-    ngx_uint_t              real_frame_rate;
 
     /* host_in: input vhost  port_in: input port */
     ngx_str_t               host_in;
