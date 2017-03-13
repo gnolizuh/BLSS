@@ -14,12 +14,6 @@
 
 static void ngx_rtmp_ping(ngx_event_t *rev);
 static ngx_int_t ngx_rtmp_finalize_set_chunk_size(ngx_rtmp_session_t *s);
-static void ngx_rtmp_update_send_delay(ngx_rtmp_session_t *s);
-static void ngx_rtmp_live_update_delay(ngx_rtmp_session_t* s,
-        ngx_uint_t type, ngx_uint_t timestamp, ngx_uint_t recv_time);
-static void ngx_rtmp_update_timestamp_record(ngx_rtmp_session_t* s,
-        ngx_uint_t type, ngx_uint_t timestamp);
-
 
 
 ngx_uint_t                  ngx_rtmp_naccepted;
@@ -588,7 +582,6 @@ ngx_rtmp_send(ngx_event_t *wev)
             s->out_chain = s->out_chain->next;
             if (s->out_chain == NULL) {
                 cscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_core_module);
-                ngx_rtmp_update_send_delay(s);
                 ngx_rtmp_free_shared_chain(cscf, s->out[s->out_pos]);
                 s->out[s->out_pos] = NULL;
                 ++s->out_pos;
@@ -963,42 +956,6 @@ ngx_rtmp_set_chunk_size(ngx_rtmp_session_t *s, ngx_uint_t size)
     }
 
     return NGX_OK;
-}
-
-
-/*record last audio/video timestamp and min/max timestamp*/
-static void
-ngx_rtmp_update_timestamp_record(ngx_rtmp_session_t* s,
-        ngx_uint_t type, ngx_uint_t timestamp)
-{
-    if (type == NGX_RTMP_MSG_AUDIO) {
-
-        s->last_audio_ts = timestamp;
-        if (s->audio_ts_min == NGX_RTMP_INVALID_TIMESTAMP
-                || timestamp < s->audio_ts_min) {
-
-            s->audio_ts_min = timestamp;
-        }
-
-        if (s->audio_ts_max == NGX_RTMP_INVALID_TIMESTAMP
-                || timestamp > s->audio_ts_max) {
-
-            s->audio_ts_max = timestamp;
-        }
-    } else if (type == NGX_RTMP_MSG_VIDEO) {
-
-        s->last_video_ts = timestamp;
-        if (s->video_ts_min == NGX_RTMP_INVALID_TIMESTAMP
-                || timestamp < s->video_ts_min) {
-
-            s->video_ts_min = timestamp;
-        }
-        if (s->video_ts_max == NGX_RTMP_INVALID_TIMESTAMP
-                || timestamp > s->video_ts_max) {
-
-            s->video_ts_max = timestamp;
-        }
-    }
 }
 
 
