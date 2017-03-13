@@ -605,11 +605,6 @@ typedef struct {
     u_char                 *log_bpos;
     u_char                  log_buf[NGX_RTMP_MAX_BUF_SIZE];
 
-    /*delay log record */
-    ngx_rtmp_delay_t       *delay_cur;
-    ngx_rtmp_delay_t       *delay;
-    ngx_rtmp_delay_t       *delay_free;
-
     /* timestamp log print*/
     ngx_uint_t              last_audio_ts;
     ngx_uint_t              last_video_ts;
