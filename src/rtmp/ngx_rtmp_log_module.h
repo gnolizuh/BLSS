@@ -85,8 +85,6 @@ typedef struct {
     uint32_t                    event;
     u_char                      name[NGX_RTMP_MAX_NAME];
     u_char                      args[NGX_RTMP_MAX_ARGS];
-    ngx_event_t                 delay_timer;
-    ngx_msec_t                  delay_timer_msec;
 } ngx_rtmp_log_ctx_t;
 
 

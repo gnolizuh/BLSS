@@ -2864,16 +2864,6 @@ ngx_rtmp_log_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
         ngx_add_timer(&ctx->timer, ctx->timer_msec);
     }
 
-    if (!ctx->delay_timer.timer_set) {
-        
-        e = &ctx->delay_timer;
-        e->data = s;
-        e->log = s->connection->log;
-        e->handler = ngx_rtmp_log_delay_timer;
-        
-        ngx_add_timer(&ctx->delay_timer, ctx->delay_timer_msec);
-    }
-
 next:
     return next_publish(s, v);
 }
@@ -2910,16 +2900,6 @@ ngx_rtmp_log_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
         ngx_add_timer(&ctx->timer, ctx->timer_msec);
     }
 
-    if (!ctx->delay_timer.timer_set) {
-        
-        e = &ctx->delay_timer;
-        e->data = s;
-        e->log = s->connection->log;
-        e->handler = ngx_rtmp_log_delay_timer;
-        
-        ngx_add_timer(&ctx->delay_timer, ctx->delay_timer_msec);
-    }
-
 next:
     return next_play(s, v);
 }
@@ -2943,14 +2923,6 @@ ngx_rtmp_log_disconnect(ngx_rtmp_session_t *s)
     if (ctx->timer.timer_set) {
 
         ngx_del_timer(&ctx->timer);
-    }
-
-    ngx_rtmp_log_delay(s);
-
-    ngx_rtmp_log_publisher_finalize(s);
-
-    if(ctx->delay_timer.timer_set) {
-        ngx_del_timer(&ctx->delay_timer);
     }
 
 next:
