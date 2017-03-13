@@ -732,9 +732,6 @@ ngx_int_t ngx_rtmp_fire_event(ngx_rtmp_session_t *s, ngx_uint_t evt,
 void ngx_rtmp_recv(ngx_event_t *rev);
 void ngx_rtmp_send(ngx_event_t *rev);
 
-void ngx_rtmp_update_recv_delay(ngx_rtmp_session_t *s,
-        ngx_rtmp_header_t *h, ngx_chain_t* in, ngx_chain_t* rpkt);
-
 ngx_int_t ngx_rtmp_set_chunk_size(ngx_rtmp_session_t *s, ngx_uint_t size);
 
 

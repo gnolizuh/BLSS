@@ -2520,10 +2520,6 @@ ngx_rtmp_live_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
     ngx_rtmp_prepare_message(s, &ch, &lh, rpkt);
 
-    if (!ngx_rtmp_is_codec_header(in)) {
-        ngx_rtmp_update_recv_delay(s, h, in, rpkt);
-    }
-
     ngx_rtmp_live_gop_cache_frame(s, prio, &ch, in);
 
     for (pctx = ctx->stream->ctx; pctx; pctx = pctx->next) {
