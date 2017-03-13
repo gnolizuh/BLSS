@@ -1,0 +1,126 @@
+
+# Copyright (C) Igor Sysoev
+# Copyright (C) Nginx, Inc.
+
+
+case "$NGX_CC_NAME" in
+
+    msvc*)
+
+    ;;
+
+    owc*)
+    ;;
+
+    bcc)
+    ;;
+
+    *)
+        ngx_makefile=
+    ;;
+
+esac
+
+
+done=NO
+
+
+case "$NGX_PLATFORM" in
+
+    win32)
+
+        if [ -n "$ngx_makefile" ]; then
+            cat << END                                        >> $NGX_MAKEFILE
+
+`echo "$JSON/json-c.lib:	$NGX_MAKEFILE" | sed -e "s/\//$ngx_regex_dirsep/g"`
+	\$(MAKE) -f auto/lib/zlib/$ngx_makefile $ngx_opt $ngx_zlib
+
+END
+
+        else
+
+            cat << END                                        >> $NGX_MAKEFILE
+
+$JSON/libjson-c.a:	$NGX_MAKEFILE
+	cd $JSON \\
+	&& \$(MAKE) distclean \\
+	&& \$(MAKE) -f win32/Makefile.gcc \\
+		CFLAGS="$JSON_OPT" CC="\$(CC)" \\
+		libjson-c.a
+
+END
+
+        fi
+
+        done=YES
+    ;;
+
+    # FreeBSD: i386
+    # Linux: i686
+
+    *:i386 | *:i686)
+        case $JSON_ASM in
+            pentium)
+
+                cat << END                                    >> $NGX_MAKEFILE
+
+$JSON/libjson-c.a:	$NGX_MAKEFILE
+	cd $JSON \\
+	&& \$(MAKE) distclean \\
+	&& cp contrib/asm586/match.S . \\
+	&& CFLAGS="$JSON_OPT -DASMV" CC="\$(CC)" \\
+		./configure \\
+	&& \$(MAKE) OBJA=match.o libjson-c.a
+
+END
+
+                done=YES
+            ;;
+
+            pentiumpro)
+
+                cat << END                                    >> $NGX_MAKEFILE
+
+$JSON/libjson-c.a:	$NGX_MAKEFILE
+	cd $JSON \\
+	&& \$(MAKE) distclean \\
+	&& cp contrib/asm686/match.S . \\
+	&& CFLAGS="$JSON_OPT -DASMV" CC="\$(CC)" \\
+		./configure \\
+	&& \$(MAKE) OBJA=match.o libjson-c.a
+
+END
+
+                done=YES
+            ;;
+
+            NO)
+            ;;
+
+            *)
+                echo "$0: error: invalid --with-json-asm=$JSON_ASM option."
+                echo "The valid values are \"pentium\" and \"pentiumpro\" only".
+                echo
+
+                exit 1;
+            ;;
+        esac
+    ;;
+
+esac
+
+
+if [ $done = NO ]; then
+
+    cat << END                                                >> $NGX_MAKEFILE
+
+$JSON/libjson-c.a:	$NGX_MAKEFILE
+	cd $JSON \\
+	&& \$(MAKE) distclean \\
+	&& CFLAGS="$JSON_OPT" CC="\$(CC)" \\
+		./configure \\
+	&& \$(MAKE) libjson-c.a
+
+END
+
+fi

@@ -1,0 +1,12 @@
+Simply run:
+	./configure
+
+Deps(LuaJIT-2.0.3 && openssl-1.0.1h && pcre-8.36 && zlib-1.2.8):
+	wget http://luajit.org/download/LuaJIT-2.0.3.tar.gz
+	wget https://www.openssl.org/source/openssl-1.0.1h.tar.gz
+	wget http://sourceforge.net/projects/pcre/files/pcre/8.36/pcre-8.36.tar.gz/download
+	wget http://prdownloads.sourceforge.net/libpng/zlib-1.2.8.tar.gz?download
+	wget http://files.luaforge.net/releases/luasocket/luasocket/luasocket-2.0.2/luasocket-2.0.2.tar.gz
+
+	* First download Deps, then make && make install all of them.
+
