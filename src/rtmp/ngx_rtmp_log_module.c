@@ -1658,37 +1658,6 @@ ngx_rtmp_log_var_session_readable_time_getdata(ngx_rtmp_session_t *s,
 }
 
 
-static ngx_rtmp_codec_ctx_t *
-ngx_rtmp_log_get_codec_ctx(ngx_rtmp_session_t *s)
-{
-    ngx_rtmp_live_ctx_t     *ctx, *pctx;
-
-    ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_live_module);
-    if (ctx == NULL){
-        return NULL;
-    }
-
-    if (ctx->publishing) {
-        pctx = ctx;
-    } else {
-        if (NULL == ctx->stream) {
-            return NULL;
-        }
-
-        for(pctx = ctx->stream->ctx; pctx; pctx = pctx->next) {
-            if (pctx->publishing) {
-                break;
-            }
-        }
-    }
-
-    if (!pctx) {
-        return NULL;
-    }
-
-    return ngx_rtmp_get_module_ctx(pctx->session, ngx_rtmp_codec_module);
-}
-
 static ngx_rtmp_log_var_t ngx_rtmp_log_vars[] = {
     { ngx_string("cid"),
       ngx_rtmp_log_var_cid_getlen,
