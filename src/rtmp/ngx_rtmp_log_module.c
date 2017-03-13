@@ -2824,7 +2824,6 @@ ngx_rtmp_log_pcalloc_ctx(ngx_rtmp_session_t *s)
         }
 
         ctx->timer_msec = lacf->log_sample_interval;
-        ctx->delay_timer_msec = lacf->log_sample_interval;
 
         ngx_rtmp_set_ctx(s, ctx, ngx_rtmp_log_module);
     }
