@@ -205,75 +205,6 @@ ngx_rtmp_log_var_connect_time_getdata(ngx_rtmp_session_t *s, u_char *buf,
 
 
 static size_t
-ngx_rtmp_log_var_flux_in_bytes_getlen(ngx_rtmp_session_t *s, ngx_rtmp_log_op_t *op)
-{
-    return NGX_INT_T_LEN;
-}
-
-
-static u_char *
-ngx_rtmp_log_var_flux_in_bytes_getdata(ngx_rtmp_session_t *s, u_char * buf,
-    ngx_rtmp_log_op_t *op)
-{
-    ngx_rtmp_live_ctx_t  *ctx;
-    uint64_t              value = 0;
-
-    ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_live_module);
-    if (ctx == NULL || ctx->stream == NULL) {
-        value = 0;
-    } else {
-        value = ctx->stream->bw_billing_in.bytes;
-        ctx->stream->bw_billing_in.bytes = 0;
-    }
-
-    return ngx_snprintf(buf, NGX_INT_T_LEN, "%uL", value);
-}
-
-
-static size_t
-ngx_rtmp_log_var_flux_out_bytes_getlen(ngx_rtmp_session_t *s, ngx_rtmp_log_op_t *op)
-{
-    return NGX_INT_T_LEN;
-}
-
-
-static u_char *
-ngx_rtmp_log_var_flux_out_bytes_getdata(ngx_rtmp_session_t *s, u_char * buf,
-    ngx_rtmp_log_op_t *op)
-{
-    ngx_rtmp_live_ctx_t  *ctx;
-    uint64_t              value = 0;
-
-    ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_live_module);
-    if (ctx == NULL || ctx->stream == NULL) {
-        value = 0;
-    } else {
-        value = ctx->stream->bw_billing_out.bytes;
-        ctx->stream->bw_billing_out.bytes = 0;
-    }
-
-    return ngx_snprintf(buf, NGX_INT_T_LEN, "%uL", value);
-}
-
-
-static size_t
-ngx_rtmp_log_var_flux_duration_sec_getlen(ngx_rtmp_session_t *s, ngx_rtmp_log_op_t *op)
-{
-    return NGX_INT_T_LEN;
-}
-
-
-static u_char *
-ngx_rtmp_log_var_flux_duration_sec_getdata(ngx_rtmp_session_t *s, u_char *buf,
-    ngx_rtmp_log_op_t *op)
-{
-    s->last_time = ngx_current_msec;
-
-    return ngx_snprintf(buf, NGX_INT_T_LEN, "%L",
-            (int64_t)(ngx_current_msec - s->last_time) / 1000);
-}
-
-static size_t
 ngx_rtmp_log_var_log_version_string_getlen(ngx_rtmp_session_t *s, ngx_rtmp_log_op_t *op)
 {
     return ngx_strlen("v2");
@@ -2170,26 +2101,6 @@ static ngx_rtmp_log_var_t ngx_rtmp_log_vars[] = {
       ngx_rtmp_log_var_connect_time_getdata,
       0 },
 
-    { ngx_string("flux_end_time"),
-      ngx_rtmp_log_var_flux_end_time_getlen,
-      ngx_rtmp_log_var_flux_end_time_getdata,
-      0 },
-
-    { ngx_string("flux_in_bytes"),
-      ngx_rtmp_log_var_flux_in_bytes_getlen,
-      ngx_rtmp_log_var_flux_in_bytes_getdata,
-      0 },
-
-    { ngx_string("flux_out_bytes"),
-      ngx_rtmp_log_var_flux_out_bytes_getlen,
-      ngx_rtmp_log_var_flux_out_bytes_getdata,
-      0 },
-
-    { ngx_string("flux_duration_sec"),
-      ngx_rtmp_log_var_flux_duration_sec_getlen,
-      ngx_rtmp_log_var_flux_duration_sec_getdata,
-      0 },
-    
     { ngx_string("log_version"),
       ngx_rtmp_log_var_log_version_string_getlen,
       ngx_rtmp_log_var_log_version_string_getdata,
