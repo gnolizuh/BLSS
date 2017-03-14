@@ -1587,7 +1587,6 @@ ngx_rtmp_codec_meta_data(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_chain_
 {
     ngx_rtmp_codec_app_conf_t      *cacf;
     ngx_rtmp_codec_ctx_t           *ctx;
-    ngx_rtmp_core_main_conf_t      *cmcf;
     ngx_uint_t                      skip;
     ngx_rtmp_amf_elt_ex_t          *elt_ex;
 
