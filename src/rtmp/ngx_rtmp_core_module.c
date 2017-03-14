@@ -28,10 +28,6 @@ static char *ngx_rtmp_core_application(ngx_conf_t *cf, ngx_command_t *cmd,
         void *conf);
 static char *ngx_rtmp_core_domains(ngx_conf_t *cf, ngx_command_t *cmd,
         void *conf);
-static char *ngx_rtmp_set_time_update_server(ngx_conf_t *cf, ngx_command_t *cmd,
-        void *conf);
-static char *ngx_rtmp_set_resolver(ngx_conf_t *cf, ngx_command_t *cmd,
-        void *conf);
 
 ngx_rtmp_core_main_conf_t *ngx_rtmp_core_main_conf;
 
