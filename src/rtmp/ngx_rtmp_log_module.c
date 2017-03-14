@@ -1558,15 +1558,6 @@ ngx_rtmp_log_var_session_readable_time_getdata(ngx_rtmp_session_t *s,
 
 
 static ngx_rtmp_log_var_t ngx_rtmp_log_vars[] = {
-    { ngx_string("cid"),
-      ngx_rtmp_log_var_cid_getlen,
-      ngx_rtmp_log_var_cid_getdata,
-      0 },
-
-    { ngx_string("lid"),
-      ngx_rtmp_log_var_lid_getlen,
-      ngx_rtmp_log_var_lid_getdata,
-      0 },
 
     { ngx_string("pid"),
       ngx_rtmp_log_var_pid_getlen,
