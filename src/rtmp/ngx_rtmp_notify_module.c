@@ -317,15 +317,12 @@ ngx_rtmp_notify_connect_create(ngx_rtmp_session_t *s, void *arg,
         ngx_pool_t *pool)
 {
     ngx_rtmp_notify_srv_conf_t     *nscf;
-    ngx_rtmp_core_main_conf_t      *cmcf;
     ngx_url_t                      *url;
     ngx_chain_t                    *al, *bl;
     ngx_buf_t                      *b;
     ngx_str_t                      *addr_text;
 
     nscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_notify_module);
-
-    cmcf = ngx_rtmp_get_module_main_conf(s, ngx_rtmp_core_module);
 
     al = ngx_alloc_chain_link(pool);
     if (al == NULL) {
