@@ -308,7 +308,6 @@ ngx_rtmp_cmd_connect(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
 {
     ngx_rtmp_core_srv_conf_t   *cscf;
     ngx_rtmp_header_t           h;
-    ngx_rtmp_core_main_conf_t   *cmcf;
 
     static double               trans;
     static double               capabilities = NGX_RTMP_CAPABILITIES;
@@ -372,12 +371,6 @@ ngx_rtmp_cmd_connect(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
         ngx_log_error(NGX_LOG_WARN, s->connection->log, 0,
                 "connect: duplicate connection");
         return NGX_ERROR;
-    }
-
-    cmcf = ngx_rtmp_core_main_conf;
-    if (!cmcf->time_update_active) {
-        ngx_rtmp_time_update_timer(&cmcf->time_update_evt);
-        cmcf->time_update_active = 1;
     }
 
     cscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_core_module);
