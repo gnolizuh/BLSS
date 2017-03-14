@@ -586,8 +586,6 @@ ngx_rtmp_netcall_http_format_session(ngx_rtmp_session_t *s, ngx_pool_t *pool)
     ngx_str_t                      *addr_text;
     ngx_uint_t                     port;
 
-    cmcf = ngx_rtmp_get_module_main_conf(s, ngx_rtmp_core_module);
-
     addr_text = &s->connection->addr_text;
     port = ngx_rtmp_get_remote_port(s);
 
