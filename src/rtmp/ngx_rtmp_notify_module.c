@@ -340,8 +340,6 @@ ngx_rtmp_notify_connect_create(ngx_rtmp_session_t *s, void *arg,
             sizeof("&srv=") + s->host_in.len +
             sizeof("&app=") - 1 + s->app.len * 3 +
             sizeof("&tcurl=") - 1 + s->tc_url.len * 3 +
-            sizeof("&nginxid=") - 1 + NGX_INT_T_LEN +
-            sizeof("&clusterid=") - 1 + NGX_INT_T_LEN +
             sizeof("&clientid=") - 1 + NGX_INT_T_LEN +
             sizeof("&srcslot=") - 1 + NGX_INT_T_LEN +
             sizeof("&addr=") - 1 + addr_text->len * 3
