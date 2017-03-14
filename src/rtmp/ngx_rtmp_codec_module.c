@@ -1700,7 +1700,6 @@ ngx_rtmp_codec_meta_data(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_chain_
     }
 
     elt_ex = NULL;
-    cmcf = ngx_rtmp_core_main_conf;
 
     ngx_memzero(&v, sizeof(v));
 
