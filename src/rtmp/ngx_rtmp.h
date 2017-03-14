@@ -326,17 +326,6 @@ typedef struct {
     ngx_uint_t              server_names_hash_max_size;
     ngx_uint_t              server_names_hash_bucket_size;
     ngx_uint_t              load_conf_from;          /* load configure from local or remote */
-
-    ngx_msec_t              delay_log_interval;
-    ngx_url_t               time_server_url;
-    ngx_event_t             time_update_evt;
-    ngx_msec_t              time_update_evt_msec;
-    ngx_int_t               time_update_active:1;
-    ngx_resolver_t         *resolver;
-    ngx_msec_t              resolver_timeout;
-    ngx_uint_t              last_time_update;//last time update request recv time
-    ngx_uint_t              cur_utc_time;//utc time corrected
-    ngx_uint_t              cur_time_update;//current time update request send time
 } ngx_rtmp_core_main_conf_t;
 
 extern ngx_rtmp_core_main_conf_t   *ngx_rtmp_core_main_conf;

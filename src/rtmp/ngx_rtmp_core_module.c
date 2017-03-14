@@ -301,12 +301,6 @@ ngx_rtmp_core_create_main_conf(ngx_conf_t *cf)
     cmcf->server_names_hash_max_size = NGX_CONF_UNSET_UINT;
     cmcf->server_names_hash_bucket_size = NGX_CONF_UNSET_UINT;
     cmcf->load_conf_from = NGX_CONF_UNSET_UINT;
-    ngx_memzero(&cmcf->time_update_evt, sizeof(cmcf->time_update_evt));
-    cmcf->time_update_evt.data = cmcf;
-    cmcf->time_update_evt_msec = NGX_CONF_UNSET_UINT;
-    cmcf->delay_log_interval = NGX_CONF_UNSET_UINT;
-    cmcf->resolver = NGX_CONF_UNSET_PTR;
-    cmcf->resolver_timeout = NGX_CONF_UNSET_UINT;
 
     return cmcf;
 }
@@ -320,10 +314,6 @@ ngx_rtmp_core_init_main_conf(ngx_conf_t *cf, void *conf)
     ngx_conf_init_uint_value(cmcf->server_names_hash_max_size, 8192);
     ngx_conf_init_uint_value(cmcf->load_conf_from, NGX_RTMP_CORE_LOAD_CONF_LOCAL);
     ngx_conf_init_uint_value(cmcf->server_names_hash_bucket_size, ngx_cacheline_size);
-
-    ngx_conf_init_msec_value(cmcf->time_update_evt_msec, 3600*1000);
-    ngx_conf_init_msec_value(cmcf->resolver_timeout, 30*1000);
-    ngx_conf_init_msec_value(cmcf->delay_log_interval, 0);
 
     cmcf->server_names_hash_bucket_size =
         ngx_align(cmcf->server_names_hash_bucket_size, ngx_cacheline_size);
