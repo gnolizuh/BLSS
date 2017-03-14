@@ -366,12 +366,6 @@ ngx_rtmp_notify_connect_create(ngx_rtmp_session_t *s, void *arg,
     b->last = ngx_cpymem(b->last, (u_char*) "&tcurl=", sizeof("&tcurl=") - 1);
     b->last = (u_char*) ngx_escape_uri(b->last, s->tc_url.data, s->tc_url.len, NGX_ESCAPE_ARGS);
 
-    b->last = ngx_cpymem(b->last, (u_char*) "&clusterid=", sizeof("&clusterid=") - 1);
-    b->last = ngx_sprintf(b->last, "%ui", (ngx_uint_t) cmcf->cluster_id);
-
-	b->last = ngx_cpymem(b->last, (u_char*) "&nginxid=", sizeof("&nginxid=") - 1);
-    b->last = ngx_sprintf(b->last, "%ui", (ngx_uint_t) cmcf->nginx_id);
-
     b->last = ngx_cpymem(b->last, (u_char*) "&clientid=", sizeof("&clientid=") - 1);
     b->last = ngx_sprintf(b->last, "%ui", (ngx_uint_t) s->connection->number);
 

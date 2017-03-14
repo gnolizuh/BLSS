@@ -655,14 +655,6 @@ ngx_rtmp_netcall_http_format_session(ngx_rtmp_session_t *s, ngx_pool_t *pool)
                          sizeof("&clientid=") - 1);
     b->last = ngx_sprintf(b->last, "%ui", (ngx_uint_t) s->connection->number);
 
-    b->last = ngx_cpymem(b->last, (u_char*) "&clusterid=",
-                         sizeof("&clusterid=") - 1);
-    b->last = ngx_sprintf(b->last, "%ui", (ngx_uint_t) cmcf->cluster_id);
-
-    b->last = ngx_cpymem(b->last, (u_char*) "&nginxid=",
-                         sizeof("&nginxid=") - 1);
-    b->last = ngx_sprintf(b->last, "%ui", (ngx_uint_t) cmcf->nginx_id);
-
     b->last = ngx_cpymem(b->last, (u_char*) "&protocol=",
                          sizeof("&protocol=") - 1);
     b->last = ngx_sprintf(b->last, "%ui", s->protocol);

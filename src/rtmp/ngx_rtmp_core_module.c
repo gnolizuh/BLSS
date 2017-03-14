@@ -65,56 +65,6 @@ static ngx_command_t  ngx_rtmp_core_commands[] = {
         0,
         NULL },
 
-    /* Cluster id will be using when relay a stream among the different clusters. */
-    { ngx_string("cluster_id"),
-        NGX_RTMP_MAIN_CONF|NGX_CONF_TAKE1,
-        ngx_conf_set_num_slot,
-        NGX_RTMP_MAIN_CONF_OFFSET,
-        offsetof(ngx_rtmp_core_main_conf_t, cluster_id),
-        NULL },
-
-    { ngx_string("nginx_id"),
-        NGX_RTMP_MAIN_CONF|NGX_CONF_TAKE1,
-        ngx_conf_set_num_slot,
-        NGX_RTMP_MAIN_CONF_OFFSET,
-        offsetof(ngx_rtmp_core_main_conf_t, nginx_id),
-        NULL },
-    
-    { ngx_string("time_server_url"),
-        NGX_RTMP_MAIN_CONF|NGX_CONF_TAKE1,
-        ngx_rtmp_set_time_update_server,
-        0,
-        0,
-        NULL },
-
-    { ngx_string("time_update_interval"),
-        NGX_RTMP_MAIN_CONF|NGX_CONF_TAKE1,
-        ngx_conf_set_msec_slot,
-        NGX_RTMP_MAIN_CONF_OFFSET,
-        offsetof(ngx_rtmp_core_main_conf_t, time_update_evt_msec),
-        NULL },
-
-    { ngx_string("delay_log_interval"),
-        NGX_RTMP_MAIN_CONF|NGX_CONF_TAKE1,
-        ngx_conf_set_msec_slot,
-        NGX_RTMP_MAIN_CONF_OFFSET,
-        offsetof(ngx_rtmp_core_main_conf_t, delay_log_interval),
-        NULL },
-
-    { ngx_string("resolver"),
-        NGX_RTMP_MAIN_CONF|NGX_CONF_TAKE1,
-        ngx_rtmp_set_resolver,
-        0,
-        0,
-        NULL },
-
-    { ngx_string("resolver_timeout"),
-        NGX_RTMP_MAIN_CONF|NGX_CONF_TAKE1,
-        ngx_conf_set_msec_slot,
-        NGX_RTMP_MAIN_CONF_OFFSET,
-        offsetof(ngx_rtmp_core_main_conf_t, resolver_timeout),
-        NULL },
-
     { ngx_string("hls_play_domains"),
         NGX_RTMP_SRV_CONF|NGX_CONF_1MORE,
         ngx_rtmp_core_domains,
@@ -348,8 +298,6 @@ ngx_rtmp_core_create_main_conf(ngx_conf_t *cf)
         return NULL;
     }
 
-    cmcf->cluster_id = NGX_CONF_UNSET_UINT;
-    cmcf->nginx_id = NGX_CONF_UNSET_UINT;
     cmcf->server_names_hash_max_size = NGX_CONF_UNSET_UINT;
     cmcf->server_names_hash_bucket_size = NGX_CONF_UNSET_UINT;
     cmcf->load_conf_from = NGX_CONF_UNSET_UINT;

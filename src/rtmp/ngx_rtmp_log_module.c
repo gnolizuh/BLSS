@@ -541,42 +541,6 @@ ngx_rtmp_log_var_remote_port_getdata(ngx_rtmp_session_t *s, u_char *buf,
 
 
 static size_t
-ngx_rtmp_log_var_cid_getlen(ngx_rtmp_session_t *s,
-    ngx_rtmp_log_op_t *op)
-{
-    return NGX_INT_T_LEN;
-}
-
-
-static u_char *
-ngx_rtmp_log_var_cid_getdata(ngx_rtmp_session_t *s, u_char *buf,
-    ngx_rtmp_log_op_t *op)
-{
-    ngx_rtmp_core_main_conf_t *cmcf = ngx_rtmp_core_main_conf;
-
-    return ngx_sprintf(buf, "%ui", cmcf->cluster_id);
-}
-
-
-static size_t
-ngx_rtmp_log_var_lid_getlen(ngx_rtmp_session_t *s,
-    ngx_rtmp_log_op_t *op)
-{
-    return NGX_INT_T_LEN;
-}
-
-
-static u_char *
-ngx_rtmp_log_var_lid_getdata(ngx_rtmp_session_t *s, u_char *buf,
-    ngx_rtmp_log_op_t *op)
-{
-    ngx_rtmp_core_main_conf_t *cmcf = ngx_rtmp_core_main_conf;
-
-    return ngx_sprintf(buf, "%ui", cmcf->nginx_id);
-}
-
-
-static size_t
 ngx_rtmp_log_var_pid_getlen(ngx_rtmp_session_t *s,
     ngx_rtmp_log_op_t *op)
 {
