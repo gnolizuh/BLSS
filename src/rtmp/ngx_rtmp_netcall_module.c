@@ -581,7 +581,6 @@ ngx_rtmp_netcall_http_format_request(ngx_int_t method, ngx_str_t *host, int fami
 ngx_chain_t *
 ngx_rtmp_netcall_http_format_session(ngx_rtmp_session_t *s, ngx_pool_t *pool)
 {
-    ngx_rtmp_core_main_conf_t      *cmcf;
     ngx_chain_t                    *cl;
     ngx_buf_t                      *b;
     ngx_str_t                      *addr_text;
