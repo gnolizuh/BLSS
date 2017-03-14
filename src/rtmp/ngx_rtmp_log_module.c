@@ -436,73 +436,8 @@ ngx_rtmp_log_var_stream_stat_uint_getdata(ngx_rtmp_session_t *s, u_char *buf,
  
     return ngx_sprintf(buf, "%ui", *v);
 }
- 
-static size_t
-ngx_rtmp_log_var_extend1_string_getlen(ngx_rtmp_session_t *s, ngx_rtmp_log_op_t *op)
-{
-    return ngx_strlen("-");
-}
- 
-static u_char *
-ngx_rtmp_log_var_extend1_string_getdata(ngx_rtmp_session_t *s, u_char *buf,
-    ngx_rtmp_log_op_t *op)
-{
-    return ngx_snprintf(buf, ngx_strlen("-"), "%s", "-");
-}
- 
-static size_t
-ngx_rtmp_log_var_extend2_string_getlen(ngx_rtmp_session_t *s, ngx_rtmp_log_op_t *op)
-{
-    return ngx_strlen("-");
-}
- 
-static u_char *
-ngx_rtmp_log_var_extend2_string_getdata(ngx_rtmp_session_t *s, u_char *buf,
-    ngx_rtmp_log_op_t *op)
-{
-    return ngx_snprintf(buf, ngx_strlen("-"), "%s", "-");
-}
- 
-static size_t
-ngx_rtmp_log_var_extend3_string_getlen(ngx_rtmp_session_t *s, ngx_rtmp_log_op_t *op)
-{
-    return ngx_strlen("-");
-}
- 
-static u_char *
-ngx_rtmp_log_var_extend3_string_getdata(ngx_rtmp_session_t *s, u_char *buf,
-    ngx_rtmp_log_op_t *op)
-{
-    return ngx_snprintf(buf, ngx_strlen("-"), "%s", "-");
-}
- 
-static size_t
-ngx_rtmp_log_var_extend4_string_getlen(ngx_rtmp_session_t *s, ngx_rtmp_log_op_t *op)
-{
-    return ngx_strlen("-");
-}
- 
-static u_char *
-ngx_rtmp_log_var_extend4_string_getdata(ngx_rtmp_session_t *s, u_char *buf,
-    ngx_rtmp_log_op_t *op)
-{
-    return ngx_snprintf(buf, ngx_strlen("-"), "%s", "-");
-}
- 
-static size_t
-ngx_rtmp_log_var_extend5_string_getlen(ngx_rtmp_session_t *s, ngx_rtmp_log_op_t *op)
-{
-    return ngx_strlen("-");
-}
- 
-static u_char *
-ngx_rtmp_log_var_extend5_string_getdata(ngx_rtmp_session_t *s, u_char *buf,
-    ngx_rtmp_log_op_t *op)
-{
-	
-    return ngx_snprintf(buf, ngx_strlen("-"), "%s", "-");
-}
- 
+
+
 static size_t
 ngx_rtmp_log_var_online_players_getlen(ngx_rtmp_session_t *s ,ngx_rtmp_log_op_t *op)
 {
@@ -2034,32 +1969,6 @@ static ngx_rtmp_log_var_t ngx_rtmp_log_vars[] = {
       ngx_rtmp_log_var_stream_stat_uint_getdata,
       offsetof(ngx_rtmp_session_t, stream_stat) },
  
-    { ngx_string("extend1"),
-      ngx_rtmp_log_var_extend1_string_getlen,
-      ngx_rtmp_log_var_extend1_string_getdata,
-      0 },
- 
-    { ngx_string("extend2"),
-      ngx_rtmp_log_var_extend2_string_getlen,
-      ngx_rtmp_log_var_extend2_string_getdata,
-      0 },
- 
-    { ngx_string("extend3"),
-      ngx_rtmp_log_var_extend3_string_getlen,
-      ngx_rtmp_log_var_extend3_string_getdata,
-      0 },
- 
-    { ngx_string("extend4"),
-      ngx_rtmp_log_var_extend4_string_getlen,
-      ngx_rtmp_log_var_extend4_string_getdata,
-      0 },
- 
-    { ngx_string("extend5"),
-      ngx_rtmp_log_var_extend5_string_getlen,
-	
-      ngx_rtmp_log_var_extend5_string_getdata,
-      0 },
-
     { ngx_string("online_players"),
       ngx_rtmp_log_var_online_players_getlen,
       ngx_rtmp_log_var_online_players_getdata,

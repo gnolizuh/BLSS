@@ -82,13 +82,6 @@ typedef struct {
     ngx_uint_t                  audio_channels; /* 1, 2 */
     u_char                      profile[32];
     u_char                      level[32];
-    //userdefine for delay record
-    u_char                      stream_id[NGX_RTMP_STREAM_ID_LEN + 1];//md5 of push url + current time
-    ngx_uint_t                  utc_start_time;//first audio frame pts
-    u_char                      x[128]; //x-forword-for
-    ngx_uint_t                  interval;//delay record interval(ms)
-    ngx_uint_t                  first_audio_pts;//first audio pts
-    //userdefine for delay record end
 
     ngx_chain_t                *video_header;
     ngx_chain_t                *aac_header;

@@ -327,8 +327,6 @@ typedef struct {
     ngx_uint_t              server_names_hash_bucket_size;
     ngx_uint_t              load_conf_from;          /* load configure from local or remote */
 
-	ngx_uint_t              cluster_id;
-	ngx_uint_t              nginx_id;
     ngx_msec_t              delay_log_interval;
     ngx_url_t               time_server_url;
     ngx_event_t             time_update_evt;
@@ -978,76 +976,12 @@ ngx_rtmp_get_remote_port(ngx_rtmp_session_t *s)
     return port;
 }
 
+
 static inline ngx_int_t
 ngx_rtmp_set_fincode(ngx_rtmp_session_t *s, ngx_uint_t fincode)
 {
     s->finalize_code = fincode;
     return NGX_OK;
-}
-
-/*
- * | 38 bits: Timestamp | 4 bits: ClusterID | 9 bits: LID |6 bits: PID | 7 bits: Sequence|
- */
-#define NGX_RTMP_UUID_TIMESTAMP_BITS 38
-#define NGX_RTMP_UUID_CID_BITS 4
-#define NGX_RTMP_UUID_LID_BITS  9
-#define NGX_RTMP_UUID_PID_BITS 6
-#define NGX_RTMP_UUID_SEQUENCE_BITS 7
-
-#define NGX_RTMP_UUID_PID_SHIFT NGX_RTMP_UUID_SEQUENCE_BITS
-#define NGX_RTMP_UUID_LID_SHIFT (NGX_RTMP_UUID_SEQUENCE_BITS + NGX_RTMP_UUID_PID_BITS)
-#define NGX_RTMP_UUID_CID_SHIFT (NGX_RTMP_UUID_SEQUENCE_BITS + NGX_RTMP_UUID_PID_BITS \
-                                 + NGX_RTMP_UUID_LID_BITS)
-#define NGX_RTMP_UUID_TIMESTAMP_SHIFT (NGX_RTMP_UUID_SEQUENCE_BITS + NGX_RTMP_UUID_PID_BITS \
-                                       + NGX_RTMP_UUID_LID_BITS + NGX_RTMP_UUID_CID_BITS)
-
-//基准时间 2016/1/1 0:0:0
-#define NGX_RTMP_UUID_RT_EPOCH 1451577600000
-#define NGX_RTMP_UUID_SEQUENCE_MASK  ((1 << NGX_RTMP_UUID_SEQUENCE_BITS) - 1)
-
-#define NGX_RTMP_CREATE_UUID(timestamp, cluster_id, lid, pid, sequence) \
-    ((timestamp - NGX_RTMP_UUID_RT_EPOCH) << NGX_RTMP_UUID_TIMESTAMP_SHIFT | \
-     (cluster_id << NGX_RTMP_UUID_CID_SHIFT) | \
-     (lid << NGX_RTMP_UUID_LID_SHIFT) | \
-     (pid << NGX_RTMP_UUID_PID_SHIFT) | \
-     sequence )
-
-typedef struct {
-    ngx_msec_t  last_time;
-    ngx_int_t   sequence;
-}custom_uuid_t;
-
-extern custom_uuid_t custom_uuid;
-
-static ngx_inline uint64_t
-ngx_rtmp_generate_uuid(custom_uuid_t * uuid, ngx_rtmp_session_t *s)
-{
-    ngx_rtmp_core_main_conf_t *cmcf = ngx_rtmp_core_main_conf;
-
-    ngx_msec_t cur_time  = ngx_current_msec;
-
-    if(uuid->last_time == cur_time) {
-        uuid->sequence = (uuid->sequence + 1) & NGX_RTMP_UUID_SEQUENCE_MASK;
-        if (uuid->sequence == 0) {
-            ngx_log_error(NGX_LOG_EMERG, s->connection->log, 0,
-                          "time(%T) uuid is overflow!", cur_time);
-        }
-    } else {
-        uuid->sequence = 0;
-    }
-
-    uuid->last_time = cur_time;
-
-    return NGX_RTMP_CREATE_UUID(cur_time, cmcf->cluster_id, cmcf->nginx_id, ngx_process_slot, uuid->sequence);
-}
-
-static ngx_inline ngx_msec_t
-ngx_rtmp_get_utc_time()
-{
-    ngx_rtmp_core_main_conf_t   *cmcf;
-
-    cmcf = ngx_rtmp_core_main_conf;
-    return ngx_current_msec - cmcf->last_time_update + cmcf->cur_utc_time;
 }
 
 

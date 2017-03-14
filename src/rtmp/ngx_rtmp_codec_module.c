@@ -1236,10 +1236,6 @@ ngx_rtmp_codec_reconstruct_meta(ngx_rtmp_session_t *s)
         double                      audio_codec_id;
         u_char                      profile[32];
         u_char                      level[32];
-        u_char                      stream_id[NGX_RTMP_STREAM_ID_LEN + 1];
-        double                      utc_start_time;
-        u_char                      x[128];
-        double                      interval;
     }                               v;
 
     static ngx_rtmp_amf_elt_t       out_inf[] = {
@@ -1299,22 +1295,6 @@ ngx_rtmp_codec_reconstruct_meta(ngx_rtmp_session_t *s)
         { NGX_RTMP_AMF_STRING,
           ngx_string("level"),
           &v.level, sizeof(v.level) },
-
-        { NGX_RTMP_AMF_STRING,
-          ngx_string("streamId"),
-          &v.stream_id, sizeof(v.stream_id)},
-
-        { NGX_RTMP_AMF_NUMBER,
-          ngx_string("utcstarttime"),
-          &v.utc_start_time, 0 },
-
-        { NGX_RTMP_AMF_STRING,
-          ngx_string("x"),
-          &v.x, sizeof(v.x) },
-
-        { NGX_RTMP_AMF_NUMBER,
-          ngx_string("interval"),
-          &v.interval, 0 },
     };
 
     static ngx_rtmp_amf_elt_t       out_elts[] = {
@@ -1351,10 +1331,6 @@ ngx_rtmp_codec_reconstruct_meta(ngx_rtmp_session_t *s)
     v.audio_codec_id = ctx->audio_codec_id;
     ngx_memcpy(v.profile, ctx->profile, sizeof(ctx->profile));
     ngx_memcpy(v.level, ctx->level, sizeof(ctx->level));
-    ngx_memcpy(v.stream_id, ctx->stream_id, NGX_RTMP_STREAM_ID_LEN);
-    v.utc_start_time = ctx->utc_start_time;
-    ngx_memcpy(v.x, ctx->x, sizeof(ctx->x));
-    v.interval = ctx->interval;
 
     rc = ngx_rtmp_append_amf(s, &ctx->meta, NULL, out_elts,
                              sizeof(out_elts) / sizeof(out_elts[0]));
@@ -1389,10 +1365,6 @@ ngx_rtmp_codec_append_meta(ngx_rtmp_session_t *s,
         double                      audio_codec_id;
         u_char                      profile[32];
         u_char                      level[32];
-        u_char                      stream_id[NGX_RTMP_STREAM_ID_LEN + 1];
-        double                      utc_start_time;
-        u_char                      x[128];
-        double                      interval;
     }                               v;
 
     static ngx_rtmp_amf_elt_t       out_inf[] = {
@@ -1456,22 +1428,6 @@ ngx_rtmp_codec_append_meta(ngx_rtmp_session_t *s,
         { NGX_RTMP_AMF_STRING,
           ngx_string("level"),
           &v.level, sizeof(v.level) },
-
-        { NGX_RTMP_AMF_STRING,
-          ngx_string("streamId"),
-          &v.stream_id, sizeof(v.stream_id)},
-
-        { NGX_RTMP_AMF_NUMBER,
-          ngx_string("utcstarttime"),
-          &v.utc_start_time, 0 },
-
-        { NGX_RTMP_AMF_STRING,
-          ngx_string("x"),
-          &v.x, sizeof(v.x) },
-
-        { NGX_RTMP_AMF_NUMBER,
-          ngx_string("interval"),
-          &v.interval, 0 },
     };
 
     static ngx_rtmp_amf_elt_t       out_elts[] = {
@@ -1509,10 +1465,6 @@ ngx_rtmp_codec_append_meta(ngx_rtmp_session_t *s,
     v.audio_sample_rate = ctx->sample_rate;
     ngx_memcpy(v.profile, ctx->profile, sizeof(ctx->profile));
     ngx_memcpy(v.level, ctx->level, sizeof(ctx->level));
-    ngx_memcpy(v.stream_id, ctx->stream_id, NGX_RTMP_STREAM_ID_LEN);
-    v.utc_start_time = ctx->utc_start_time;
-    ngx_memcpy(v.x, ctx->x, sizeof(ctx->x));
-    v.interval = ctx->interval;
 
     nelts = 0;
     for (elt_ex_p = elt_ex; elt_ex_p; elt_ex_p = elt_ex_p->next) {
@@ -1630,29 +1582,6 @@ ngx_rtmp_codec_prepare_msg(ngx_rtmp_session_t *s, uint32_t timestamp)
 }
 
 
-static void
-ngx_rtmp_codec_set_stream_id(ngx_rtmp_session_t* s, ngx_rtmp_codec_ctx_t *ctx)
-{
-    u_char      result[16], url[1024];
-    ngx_md5_t   md5;
-
-    ngx_memzero(url, sizeof(url));
-    ngx_memzero(ctx->stream_id, sizeof(ctx->stream_id));
-    if (s->port_in != 1935) {
-        ngx_slprintf(url, url+sizeof(url), "rtmp://%V:%i/%V/%V%ui",
-                &s->host_in, s->port_in, &s->app, &s->name, ctx->utc_start_time);
-    } else {
-        ngx_slprintf(url, url+sizeof(url), "rtmp://%V/%V/%V%ui",
-                &s->host_in, &s->app, &s->name, ctx->utc_start_time);
-    }
-
-    ngx_md5_init(&md5);
-    ngx_md5_update(&md5, url, ngx_strlen(url));
-    ngx_md5_final(result, &md5);
-
-    ngx_hex_dump(ctx->stream_id, result, ngx_min((sizeof(ctx->stream_id) - 1) / 2, 16));
-}
-
 static ngx_int_t
 ngx_rtmp_codec_meta_data(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_chain_t *in)
 {
@@ -1661,8 +1590,6 @@ ngx_rtmp_codec_meta_data(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_chain_
     ngx_rtmp_core_main_conf_t      *cmcf;
     ngx_uint_t                      skip;
     ngx_rtmp_amf_elt_ex_t          *elt_ex;
-    ngx_int_t                       utc_start_time;
-    ngx_int_t                       interval;
 
     static struct {
         u_char                      type[32];
@@ -1679,12 +1606,6 @@ ngx_rtmp_codec_meta_data(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_chain_
         u_char                      audio_codec_id_s[32];
         u_char                      profile[32];
         u_char                      level[32];
-        u_char                      stream_id[NGX_RTMP_STREAM_ID_LEN + 1];
-        double                      utc_start_time;
-        u_char                      utc_start_time_s[NGX_INT64_LEN];
-        u_char                      x[128];
-        double                      interval;
-        u_char                      interval_s[NGX_INT64_LEN];
     }                               v;
 
     static ngx_rtmp_amf_elt_t       in_video_codec_id[] = {
@@ -1707,28 +1628,6 @@ ngx_rtmp_codec_meta_data(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_chain_
         { NGX_RTMP_AMF_STRING,
           ngx_null_string,
           &v.audio_codec_id_s, sizeof(v.audio_codec_id_s) },
-    };
-
-    static ngx_rtmp_amf_elt_t       in_utc_start_time[] = {
-
-        { NGX_RTMP_AMF_NUMBER,
-          ngx_null_string,
-          &v.utc_start_time, 0 },
-
-        { NGX_RTMP_AMF_STRING,
-          ngx_null_string,
-          &v.utc_start_time_s, sizeof(v.utc_start_time_s) },
-    };
-
-    static ngx_rtmp_amf_elt_t       in_interval[] = {
-
-        { NGX_RTMP_AMF_NUMBER,
-          ngx_null_string,
-          &v.interval, 0 },
-
-        { NGX_RTMP_AMF_STRING,
-          ngx_null_string,
-          &v.interval_s, sizeof(v.interval_s) },
     };
 
     static ngx_rtmp_amf_elt_t       in_inf[] = {
@@ -1780,22 +1679,6 @@ ngx_rtmp_codec_meta_data(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_chain_
         { NGX_RTMP_AMF_STRING,
           ngx_string("level"),
           &v.level, sizeof(v.level) },
-
-        { NGX_RTMP_AMF_STRING,
-          ngx_string("streamId"),
-          &v.stream_id, sizeof(v.stream_id)},
-
-        { NGX_RTMP_AMF_VARIANT,
-          ngx_string("utcstarttime"),
-          in_utc_start_time, sizeof(in_utc_start_time)},
-
-        { NGX_RTMP_AMF_STRING,
-          ngx_string("x"),
-          &v.x, sizeof(v.x) },
-
-        { NGX_RTMP_AMF_VARIANT,
-          ngx_string("interval"),
-          in_interval, sizeof(in_interval)},
     };
 
     static ngx_rtmp_amf_elt_t       in_elts[] = {
@@ -1825,8 +1708,6 @@ ngx_rtmp_codec_meta_data(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_chain_
     /* use -1 as a sign of unchanged data;
      * 0 is a valid value for uncompressed audio */
     v.audio_codec_id_n = -1;
-    v.interval = -1;
-    v.utc_start_time = -1;
 
     /* FFmpeg sends a string in front of actal metadata; ignore it */
     skip = !(in->buf->last > in->buf->pos
@@ -1858,34 +1739,6 @@ ngx_rtmp_codec_meta_data(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_chain_
             ? NGX_RTMP_AUDIO_UNCOMPRESSED : (ngx_uint_t) v.audio_codec_id_n);
     ngx_memcpy(ctx->profile, v.profile, sizeof(v.profile));
     ngx_memcpy(ctx->level, v.level, sizeof(v.level));
-
-    utc_start_time = ngx_atoi(v.utc_start_time_s, ngx_strlen(v.utc_start_time_s));
-    ctx->utc_start_time = (v.utc_start_time == -1)
-        ? ((utc_start_time == NGX_ERROR)
-                ? ngx_rtmp_get_utc_time()
-                : (ngx_uint_t)utc_start_time)
-        : (ngx_uint_t)v.utc_start_time;
-
-    interval = ngx_atoi(v.interval_s, ngx_strlen(v.interval_s));
-    ctx->interval = (v.interval == -1)
-        ? ((interval == NGX_ERROR)
-                ? cmcf->delay_log_interval
-                : (ngx_uint_t)interval)
-        : (ngx_uint_t)v.interval;
-
-    ctx->first_audio_pts = NGX_MAX_INT32_VALUE;
-
-    if (ngx_strlen(v.stream_id) == 0) { // gen stream id
-        ngx_rtmp_codec_set_stream_id(s, ctx);
-    } else {
-        ngx_memcpy(ctx->stream_id, v.stream_id, NGX_RTMP_STREAM_ID_LEN);
-    }
-
-    if (ngx_strlen(v.x) > 0) {
-        ngx_slprintf(ctx->x, ctx->x+sizeof(ctx->x), "%s-%ui:%ui:%ui", v.x, cmcf->cluster_id, cmcf->nginx_id, ngx_log_pid);
-    } else {
-        ngx_slprintf(ctx->x, ctx->x + sizeof(ctx->x), "%ui:%ui:%ui", cmcf->cluster_id, cmcf->nginx_id, ngx_log_pid);
-    }
 
     ngx_log_debug8(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
             "codec: data frame: "
