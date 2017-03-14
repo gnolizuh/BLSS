@@ -1010,7 +1010,6 @@ ngx_rtmp_hdl_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     ngx_chain_t                    *header, *fpkt, *apkt, *mpkt, *meta;
     ngx_rtmp_live_chunk_stream_t   *cs;
     uint32_t                        delta = 0;
-    ngx_rtmp_chunk_info_t          *ci;
 #ifdef NGX_DEBUG
     const char                     *type_s;
 
