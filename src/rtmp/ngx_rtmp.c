@@ -43,18 +43,8 @@ static ngx_int_t ngx_rtmp_add_addresses(ngx_conf_t *cf, ngx_rtmp_core_srv_conf_t
     ngx_rtmp_conf_port_t *port, ngx_rtmp_listen_t *lsopt);
 static ngx_int_t ngx_rtmp_add_address(ngx_conf_t *cf, ngx_rtmp_core_srv_conf_t *cscf,
     ngx_rtmp_conf_port_t *port, ngx_rtmp_listen_t *lsopt);
-
 static ngx_int_t ngx_rtmp_init_listening(ngx_conf_t *cf, ngx_rtmp_conf_port_t *port);
-
 static ngx_listening_t * ngx_rtmp_add_listening(ngx_conf_t *cf, ngx_rtmp_conf_addr_t *addr);
-
-static void ngx_rtmp_time_update_handle_http_response(ngx_rtmp_core_main_conf_t *cmcf,
-        ngx_connection_t* c);
-static ngx_chain_t* ngx_rtmp_time_update_gen_http_request(ngx_peer_connection_t* pc,
-        ngx_rtmp_core_main_conf_t *cmcf);
-static void ngx_rtmp_time_update_read_event_handler(ngx_event_t* rev);
-static void ngx_rtmp_time_update_write_event_handler(ngx_event_t *wev);
-static void ngx_rtmp_time_update(ngx_resolver_ctx_t* ctx); 
 static ngx_int_t ngx_rtmp_init_process(ngx_cycle_t *cycle);
 
 
