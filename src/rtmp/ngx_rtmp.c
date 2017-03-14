@@ -69,7 +69,6 @@ ngx_thread_volatile ngx_event_t    *ngx_rtmp_init_queue;
 
 ngx_uint_t  ngx_rtmp_max_module;
 
-custom_uuid_t custom_uuid = {0, 0};
 
 static ngx_command_t  ngx_rtmp_commands[] = {
 
