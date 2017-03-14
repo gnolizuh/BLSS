@@ -1118,14 +1118,6 @@ ngx_rtmp_hdl_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     /* broadcast to all subscribers */
     fpkt = ngx_rtmp_hdl_append_tag_bufs(s, in, &ch);
 
-    if (!ngx_rtmp_is_codec_header(in)) {
-        ci = ngx_rtmp_get_chunk_info(fpkt);
-        ci->type = h->type;
-        ci->recv_time = ngx_rtmp_get_utc_time();
-        ci->is_raw = 1;
-        ci->timestamp = h->timestamp;
-    }
-
     for (pctx = ctx->stream->ctx; pctx; pctx = pctx->next) {
         if (pctx == ctx || pctx->paused) {
             continue;
