@@ -3011,6 +3011,7 @@ ngx_rtmp_hls_merge_app_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_rtmp_hls_app_conf_t    *prev = parent;
     ngx_rtmp_hls_app_conf_t    *conf = child;
     ngx_rtmp_hls_cleanup_t     *cleanup;
+    ngx_path_t                **path;
 
     ngx_conf_merge_value(conf->hls, prev->hls, 0);
     ngx_conf_merge_msec_value(conf->hls_fragment, prev->hls_fragment, 5000);
@@ -3072,9 +3073,12 @@ ngx_rtmp_hls_merge_app_conf(ngx_conf_t *cf, void *parent, void *child)
         conf->slot->conf_file = cf->conf_file->file.name.data;
         conf->slot->line = cf->conf_file->line;
 
-        if (ngx_add_path1(cf, &conf->slot) != NGX_OK) {
-	    return NGX_CONF_ERROR;
+        path = ngx_array_push(&cf->cycle->paths);
+        if (p == NULL) {
+            return NGX_CONF_ERROR;
         }
+
+        *path = conf->slot;
     }
 
     return NGX_CONF_OK;

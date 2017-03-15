@@ -141,7 +141,6 @@ void ngx_create_hashed_filename(ngx_path_t *path, u_char *file, size_t len);
 ngx_int_t ngx_create_path(ngx_file_t *file, ngx_path_t *path);
 ngx_err_t ngx_create_full_path(u_char *dir, ngx_uint_t access);
 ngx_int_t ngx_add_path(ngx_conf_t *cf, ngx_path_t **slot);
-ngx_int_t ngx_add_path1(ngx_conf_t *cf, ngx_path_t **slot);
 ngx_int_t ngx_create_paths(ngx_cycle_t *cycle, ngx_uid_t user);
 ngx_int_t ngx_ext_rename_file(ngx_str_t *src, ngx_str_t *to,
     ngx_ext_rename_file_t *ext);

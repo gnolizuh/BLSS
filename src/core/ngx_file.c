@@ -570,22 +570,6 @@ ngx_add_path(ngx_conf_t *cf, ngx_path_t **slot)
 
 
 ngx_int_t
-ngx_add_path1(ngx_conf_t *cf, ngx_path_t **slot)
-{
-    ngx_path_t **p;
-
-    p = ngx_array_push(&cf->cycle->paths);
-    if (p == NULL) {
-        return NGX_ERROR;
-    }
-
-    *p = *slot;
-
-    return NGX_OK;
-}
-
-
-ngx_int_t
 ngx_create_paths(ngx_cycle_t *cycle, ngx_uid_t user)
 {
     ngx_err_t         err;
