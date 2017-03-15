@@ -42,8 +42,7 @@ typedef struct {
 #define ngx_str_set(str, text)                                               \
     (str)->len = sizeof(text) - 1; (str)->data = (u_char *) text
 #define ngx_str_null(str)   (str)->len = 0; (str)->data = NULL
-#define ngx_set_str(str, text)                                               \
-    (str)->len = ngx_strlen(text); (str)->data = (u_char *) text
+
 
 #define ngx_tolower(c)      (u_char) ((c >= 'A' && c <= 'Z') ? (c | 0x20) : c)
 #define ngx_toupper(c)      (u_char) ((c >= 'a' && c <= 'z') ? (c & ~0x20) : c)
@@ -161,7 +160,6 @@ ngx_int_t ngx_strncasecmp(u_char *s1, u_char *s2, size_t n);
 u_char *ngx_strnstr(u_char *s1, char *s2, size_t n);
 
 u_char *ngx_strstrn(u_char *s1, char *s2, size_t n);
-u_char *ngx_strdup(ngx_pool_t *pool, u_char *str, size_t len);
 u_char *ngx_strcasestrn(u_char *s1, char *s2, size_t n);
 u_char *ngx_strlcasestrn(u_char *s1, u_char *last, u_char *s2, size_t n);
 

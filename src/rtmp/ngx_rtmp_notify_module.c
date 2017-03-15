@@ -1380,7 +1380,8 @@ ngx_rtmp_notify_json_decode(ngx_rtmp_session_t *s, const char *jsonstr, ngx_addr
 
     if (ngx_hls_pull_type(s->protocol)) {
 
-        ngx_set_str(&str_remote_ip, remote_ip);
+        str_remote_ip.len = ngx_strlen(remote_ip);
+        str_remote_ip.data = (u_char *)remote_ip;
 
         ngx_rtmp_http_hls_build_url(s, &str_remote_ip, (ngx_int_t) remote_http_port);
     } else {
@@ -2173,7 +2174,8 @@ ngx_rtmp_notify_connect_json_decode(ngx_rtmp_session_t *s, char *jsonstr)
             p = (u_char *)json_object_get_string(obj); \
             len = json_object_get_string_len(obj); \
             s->conf.param.len = len; \
-            s->conf.param.data = ngx_strdup(s->pool, p, len); \
+            s->conf.param.data = ngx_pnalloc(s->pool, len); \
+            ngx_memcpy(s->conf.param.data, p, len); \
             obj = NULL; \
         } else { \
             obj = NULL; \

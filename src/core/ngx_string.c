@@ -52,21 +52,6 @@ ngx_cpystrn(u_char *dst, u_char *src, size_t n)
     return dst;
 }
 
-u_char *
-ngx_strdup(ngx_pool_t *pool, u_char *str, size_t len)
-{
-    u_char  *dst;
-
-    dst = ngx_pnalloc(pool, len);
-    if (dst == NULL) {
-        return NULL;
-    }
-
-    ngx_memcpy(dst, str, len);
-
-    return dst;
-}
-
 
 u_char *
 ngx_pstrdup(ngx_pool_t *pool, ngx_str_t *src)
