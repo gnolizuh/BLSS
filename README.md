@@ -13,7 +13,7 @@ A bravo live streaming service powered by [nginx-rtmp-module](https://github.com
 
 * RTMP/HTTP+FLV/HLS/MPEG-DASH live streaming
 
-* H264/H265/AAC support
+* H264/AAC support
 
 * Linux/FreeBSD/MacOS/Windows
 

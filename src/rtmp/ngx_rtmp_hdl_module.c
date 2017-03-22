@@ -353,6 +353,7 @@ static ngx_rtmp_session_t *
 ngx_rtmp_http_hdl_init_session(ngx_http_request_t *r, ngx_rtmp_addr_conf_t *addr_conf)
 {
     ngx_rtmp_core_srv_conf_t       *cscf;
+    ngx_rtmp_http_hdl_ctx_t        *ctx;
     ngx_rtmp_session_t             *s;
     ngx_connection_t               *c;
 
@@ -366,6 +367,16 @@ ngx_rtmp_http_hdl_init_session(ngx_http_request_t *r, ngx_rtmp_addr_conf_t *addr
         ngx_http_finalize_request(r, NGX_DECLINED);
         return NULL;
     }
+
+    ctx = ngx_pcalloc(r->pool, sizeof(ngx_rtmp_http_hdl_ctx_t));
+    if (ctx == NULL) {
+        return NGX_ERROR;
+    }
+
+    ngx_http_set_ctx(r, ctx, ngx_rtmp_http_hdl_module);
+
+    // attach rtmp session to http ctx.
+    ctx->s = s;
 
     s->pool = r->pool;
 

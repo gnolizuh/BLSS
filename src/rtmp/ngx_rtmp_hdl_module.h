@@ -28,5 +28,10 @@ typedef struct {
 } ngx_rtmp_hdl_app_conf_t;
 
 
+typedef struct {
+    ngx_rtmp_session_t                 *s;
+} ngx_rtmp_http_hdl_ctx_t;
+
+
 #endif /* _NGX_RTMP_HDL_H_INCLUDED_ */
 
