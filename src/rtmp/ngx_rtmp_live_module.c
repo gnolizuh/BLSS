@@ -653,7 +653,7 @@ ngx_rtmp_live_dryup_handler(ngx_event_t *e)
        return;
     }
 
-    s = !ngx_rtmp_type(c->protocol) ? c->http_data : c->data;
+    s = c->data;
     if (s == NULL) {
        return;
     }
@@ -863,7 +863,7 @@ ngx_rtmp_live_idle(ngx_event_t *pev)
     ngx_rtmp_session_t         *s;
 
     c = pev->data;
-    s = !ngx_rtmp_type(c->protocol) ? c->http_data : c->data;
+    s = c->data;
 
     ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
                   "live: drop idle publisher");

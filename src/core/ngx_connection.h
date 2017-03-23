@@ -124,7 +124,6 @@ typedef enum {
 
 struct ngx_connection_s {
     void               *data;
-    void               *http_data;
     ngx_event_t        *read;
     ngx_event_t        *write;
 

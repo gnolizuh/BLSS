@@ -1710,7 +1710,7 @@ ngx_rtmp_notify_update(ngx_event_t *e)
     ngx_url_t                   *url;
 
     c = e->data;
-    s = !ngx_rtmp_type(c->protocol) ? c->http_data : c->data;
+    s = c->data;
 
     nacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_notify_module);
     url = nacf->url[NGX_RTMP_NOTIFY_UPDATE];

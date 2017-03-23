@@ -212,10 +212,13 @@ ngx_rtmp_http_hdl_play_local(ngx_http_request_t *r)
 
 	ngx_rtmp_session_t         *s;
     ngx_rtmp_hdl_ctx_t         *ctx;
+    ngx_rtmp_http_hdl_ctx_t    *httpctx;
     ngx_rtmp_core_srv_conf_t   *cscf;
     ngx_rtmp_core_app_conf_t   *cacf;
 
-	s = r->connection->http_data;
+    httpctx = ngx_http_get_module_ctx(r, ngx_rtmp_http_hdl_module);
+
+    s = httpctx->s;
 
 	ngx_memzero(&v, sizeof(ngx_rtmp_play_t));
 
@@ -285,17 +288,18 @@ ngx_rtmp_hdl_close_session_handler(ngx_rtmp_session_t *s)
 static void
 ngx_rtmp_http_hdl_close_connection(ngx_http_request_t *r)
 {
+    ngx_rtmp_http_hdl_ctx_t    *httpctx;
 	ngx_rtmp_session_t		   *s;
 
-    s = r->connection->http_data;
+    httpctx = ngx_http_get_module_ctx(r, ngx_rtmp_http_hdl_module);
+
+    s = httpctx->s;
 
     ngx_log_error(NGX_LOG_INFO, s->connection->log, 0, "hdl close connection");
 
     --ngx_rtmp_hdl_naccepted;
 
     ngx_rtmp_hdl_close_session_handler(s);
-
-    r->connection->http_data = NULL;
 }
 
 
@@ -307,8 +311,11 @@ ngx_rtmp_http_hdl_connect_local(ngx_http_request_t *r, ngx_str_t *app, ngx_str_t
     ngx_rtmp_session_t         *s;
     ngx_connection_t           *c;
     ngx_rtmp_hdl_ctx_t         *ctx;
+    ngx_rtmp_http_hdl_ctx_t    *httpctx;
 
-    s = r->connection->http_data;
+    httpctx = ngx_http_get_module_ctx(r, ngx_rtmp_http_hdl_module);
+
+    s = httpctx->s;
     c = r->connection;
 
     ngx_memzero(&v, sizeof(ngx_rtmp_connect_t));
@@ -353,7 +360,7 @@ static ngx_rtmp_session_t *
 ngx_rtmp_http_hdl_init_session(ngx_http_request_t *r, ngx_rtmp_addr_conf_t *addr_conf)
 {
     ngx_rtmp_core_srv_conf_t       *cscf;
-    ngx_rtmp_http_hdl_ctx_t        *ctx;
+    ngx_rtmp_http_hdl_ctx_t        *httpctx;
     ngx_rtmp_session_t             *s;
     ngx_connection_t               *c;
 
@@ -368,15 +375,15 @@ ngx_rtmp_http_hdl_init_session(ngx_http_request_t *r, ngx_rtmp_addr_conf_t *addr
         return NULL;
     }
 
-    ctx = ngx_pcalloc(r->pool, sizeof(ngx_rtmp_http_hdl_ctx_t));
-    if (ctx == NULL) {
+    httpctx = ngx_pcalloc(r->pool, sizeof(ngx_rtmp_http_hdl_ctx_t));
+    if (httpctx == NULL) {
         return NGX_ERROR;
     }
 
-    ngx_http_set_ctx(r, ctx, ngx_rtmp_http_hdl_module);
+    ngx_http_set_ctx(r, httpctx, ngx_rtmp_http_hdl_module);
 
     // attach rtmp session to http ctx.
-    ctx->s = s;
+    httpctx->s = s;
 
     s->pool = r->pool;
 
@@ -390,7 +397,6 @@ ngx_rtmp_http_hdl_init_session(ngx_http_request_t *r, ngx_rtmp_addr_conf_t *addr
 
     s->addr_text = &addr_conf->addr_text;
 
-    c->http_data = s;
     s->connection = c;
     r->rtmp_http_close_handler = ngx_rtmp_http_hdl_close_connection;
 
@@ -555,14 +561,109 @@ ngx_rtmp_http_hdl_init_connection(ngx_http_request_t *r, ngx_rtmp_conf_port_t *c
     r->read_event_handler = ngx_http_test_reading;
     // r->blocked = 1;
 
-    c->write->handler = ngx_rtmp_send;
-	c->read->handler = ngx_rtmp_recv;
+    c->write->handler = ngx_rtmp_http_flv_send;
+	// c->read->handler = ngx_rtmp_http_flv_recv;  TODO: We do not need to be careful of http read handler.
 
 	s->auto_pushed = unix_socket;
 
 	return NGX_OK;
 }
 
+
+static void
+ngx_rtmp_http_flv_send(ngx_event_t *wev)
+{
+    ngx_connection_t           *c;
+    ngx_http_request_t         *r;
+    ngx_rtmp_session_t         *s;
+    ngx_int_t                   n;
+    ngx_rtmp_core_srv_conf_t   *cscf;
+    ngx_rtmp_http_hdl_ctx_t    *httpctx;
+    ngx_rtmp_live_ctx_t 	   *ctx;
+
+    c = wev->data;
+    r = c->data;
+
+    httpctx = ngx_http_get_module_ctx(r, ngx_rtmp_http_hdl_module);
+
+    s = httpctx->s;
+
+    if (c->destroyed) {
+        return;
+    }
+
+    if (wev->timedout) {
+        ngx_log_error(NGX_LOG_ERR, c->log, NGX_ETIMEDOUT,
+                "client timed out");
+        c->timedout = 1;
+        ngx_rtmp_finalize_session(s);
+        return;
+    }
+
+    if (wev->timer_set) {
+        ngx_del_timer(wev);
+    }
+
+    if (s->out_chain == NULL && s->out_pos != s->out_last) {
+        s->out_chain = s->out[s->out_pos];
+        s->out_bpos = s->out_chain->buf->pos;
+    }
+
+    ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_live_module);
+    while (s->out_chain) {
+        n = c->send(c, s->out_bpos, s->out_chain->buf->last - s->out_bpos);
+
+        if (n == NGX_AGAIN || n == 0) {
+            ngx_add_timer(c->write, s->timeout);
+            if (ngx_handle_write_event(c->write, 0) != NGX_OK) {
+                ngx_rtmp_finalize_session(s);
+            }
+            return;
+        }
+
+        if (n < 0) {
+            ngx_rtmp_finalize_session(s);
+            return;
+        }
+
+        s->out_bytes += n;
+        s->ping_reset = 1;
+
+      	ngx_rtmp_update_bandwidth(&ngx_rtmp_bw_out, n);
+
+      	if(ctx && ctx->stream){
+            ngx_rtmp_update_bandwidth(&ctx->stream->bw_out, n);
+
+            if (s->relay_type == NGX_NONE_RELAY) {
+
+                ngx_rtmp_update_bandwidth(&ctx->stream->bw_out_bytes, n);
+            }
+      	}
+
+        s->out_bpos += n;
+        if (s->out_bpos == s->out_chain->buf->last) {
+            s->out_chain = s->out_chain->next;
+            if (s->out_chain == NULL) {
+                cscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_core_module);
+                ngx_rtmp_free_shared_chain(cscf, s->out[s->out_pos]);
+                s->out[s->out_pos] = NULL;
+                ++s->out_pos;
+                s->out_pos %= s->out_queue;
+                if (s->out_pos == s->out_last) {
+                    break;
+                }
+                s->out_chain = s->out[s->out_pos];
+            }
+            s->out_bpos = s->out_chain->buf->pos;
+        }
+    }
+
+    if (wev->active) {
+        ngx_del_event(wev, NGX_WRITE_EVENT, 0);
+    }
+
+    ngx_event_process_posted((ngx_cycle_t *) ngx_cycle, &s->posted_dry_events);
+}
 
 static ngx_int_t
 ngx_rtmp_http_hdl_handler(ngx_http_request_t *r)
@@ -583,11 +684,6 @@ ngx_rtmp_http_hdl_handler(ngx_http_request_t *r)
     hlcf = ngx_http_get_module_loc_conf(r, ngx_rtmp_http_hdl_module);
     if (hlcf == NULL || !hlcf->hdl) {
     	return NGX_DECLINED;
-    }
-
-    if (r->connection->http_data) {
-
-        return NGX_CUSTOME;
     }
 
     if (!(r->method & (NGX_HTTP_GET|NGX_HTTP_HEAD))

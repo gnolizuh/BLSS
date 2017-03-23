@@ -326,11 +326,16 @@ ngx_rtmp_hls_send(ngx_event_t *wev)
     ngx_rtmp_session_t         *s;
     ngx_int_t                   n;
     ngx_rtmp_core_srv_conf_t   *cscf;
+    ngx_rtmp_http_hls_ctx_t    *httpctx;
     ngx_rtmp_live_ctx_t        *lctx;
     ngx_rtmp_hls_ctx_t         *hctx;
 
     c = wev->data;
-    s = c->http_data;
+    r = c->data;
+
+    httpctx = ngx_http_get_module_ctx(r, ngx_rtmp_http_hls_module);
+
+    s = httpctx->s;
 
     if (c->destroyed) {
         return;
@@ -3126,8 +3131,11 @@ static void
 ngx_rtmp_hls_close_connection(ngx_http_request_t *r)
 {
     ngx_rtmp_session_t		   *s;
+    ngx_rtmp_http_hls_ctx_t    *httpctx;
 
-    s = r->connection->http_data;
+    httpctx = ngx_http_get_module_ctx(r, ngx_rtmp_http_hls_module);
+
+    s = httpctx->s;
 
     ngx_log_error(NGX_LOG_INFO, s->connection->log, 0, "hls close connection");
 
@@ -3144,8 +3152,6 @@ ngx_rtmp_hls_close_connection(ngx_http_request_t *r)
     --ngx_rtmp_hls_naccepted;
 
     ngx_rtmp_hls_close_session_handler(s);
-
-    r->connection->http_data = NULL;
 }
 
 
@@ -3153,6 +3159,7 @@ static ngx_rtmp_session_t *
 ngx_rtmp_http_hls_init_session(ngx_http_request_t *r, ngx_rtmp_addr_conf_t *addr_conf)
 {
     ngx_rtmp_core_srv_conf_t       *cscf;
+    ngx_rtmp_http_hls_ctx_t        *ctx;
     ngx_rtmp_session_t             *s;
     ngx_connection_t               *c;
 
@@ -3167,6 +3174,16 @@ ngx_rtmp_http_hls_init_session(ngx_http_request_t *r, ngx_rtmp_addr_conf_t *addr
         return NULL;
     }
 
+    ctx = ngx_pcalloc(r->pool, sizeof(ngx_rtmp_http_hls_ctx_t));
+    if (ctx == NULL) {
+        return NGX_ERROR;
+    }
+
+    ngx_http_set_ctx(r, ctx, ngx_rtmp_http_hls_module);
+
+    // attach rtmp session to http ctx.
+    ctx->s = s;
+
     s->pool = r->pool;
 
     s->r = r;
@@ -3179,7 +3196,6 @@ ngx_rtmp_http_hls_init_session(ngx_http_request_t *r, ngx_rtmp_addr_conf_t *addr
 
     s->addr_text = &addr_conf->addr_text;
 
-    c->http_data = s;
     s->connection = c;
     r->rtmp_http_close_handler = ngx_rtmp_hls_close_connection;
 
@@ -3541,8 +3557,11 @@ ngx_rtmp_http_hls_play_local(ngx_http_request_t *r)
     ngx_rtmp_hls_ctx_t         *ctx;
     ngx_rtmp_core_srv_conf_t   *cscf;
     ngx_rtmp_core_app_conf_t   *cacf;
+    ngx_rtmp_http_hls_ctx_t    *httpctx;
 
-    s = r->connection->http_data;
+    httpctx = ngx_http_get_module_ctx(r, ngx_rtmp_http_hls_module);
+
+    s = httpctx->s;
 
     ngx_memzero(&v, sizeof(ngx_rtmp_play_t));
 
@@ -3586,9 +3605,12 @@ ngx_rtmp_http_hls_connect_local(ngx_http_request_t *r, ngx_str_t *app, ngx_str_t
 
     ngx_rtmp_session_t         *s;
     ngx_connection_t           *c;
+    ngx_rtmp_http_hls_ctx_t    *httpctx;
     ngx_rtmp_hls_ctx_t         *ctx;
 
-    s = r->connection->http_data;
+    httpctx = ngx_http_get_module_ctx(r, ngx_rtmp_http_hls_module);
+
+    s = httpctx->s;
     c = r->connection;
 
     if (!(r->headers_in.host && r->headers_in.host->value.len > 0)) {
@@ -3659,11 +3681,6 @@ ngx_rtmp_http_hls_handler(ngx_http_request_t *r)
     hlcf = ngx_http_get_module_loc_conf(r, ngx_rtmp_http_hls_module);
     if (hlcf == NULL || !hlcf->hls) {
         return NGX_DECLINED;
-    }
-
-    if (r->connection->http_data) {
-
-        return NGX_CUSTOME;
     }
 
     if (!(r->method & (NGX_HTTP_GET|NGX_HTTP_HEAD))

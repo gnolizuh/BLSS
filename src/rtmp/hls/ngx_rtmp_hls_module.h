@@ -156,6 +156,11 @@ typedef struct {
 } ngx_rtmp_hls_app_conf_t;
 
 
+typedef struct {
+    ngx_rtmp_session_t                 *s;
+} ngx_rtmp_http_hls_ctx_t;
+
+
 ngx_int_t ngx_rtmp_http_hls_build_url(ngx_rtmp_session_t *s, ngx_str_t *remote_ip,
     ngx_int_t remote_port);
 ngx_int_t ngx_rtmp_hls_copy(ngx_rtmp_session_t *s, void *dst, u_char **src, size_t n,
