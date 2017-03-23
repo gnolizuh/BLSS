@@ -344,7 +344,7 @@ ngx_rtmp_http_hdl_connect_local(ngx_http_request_t *r, ngx_str_t *app, ngx_str_t
     s->name.len = name->len;
     s->name.data = ngx_pstrdup(s->pool, name);
 
-    c->protocol = s->protocol = protocol;
+    s->protocol = protocol;
 
     ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_hdl_module);
     if (ctx == NULL) {

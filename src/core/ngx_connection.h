@@ -165,8 +165,6 @@ struct ngx_connection_s {
 
     ngx_uint_t          requests;
 
-    unsigned            protocol:4;
-
     unsigned            buffered:8;
 
     unsigned            log_error:3;     /* ngx_connection_log_error_e */

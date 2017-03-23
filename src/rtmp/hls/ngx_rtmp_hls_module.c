@@ -3647,7 +3647,7 @@ ngx_rtmp_http_hls_connect_local(ngx_http_request_t *r, ngx_str_t *app, ngx_str_t
     s->hls_name.len = fname->len;
     s->hls_name.data = ngx_pstrdup(s->pool, fname);
 
-    c->protocol = s->protocol = protocol;
+    s->protocol = protocol;
 
     ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_hls_module);
     if (ctx == NULL) {
