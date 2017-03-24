@@ -125,6 +125,102 @@ ngx_module_t  ngx_rtmp_hdl_module = {
 };
 
 
+static void
+ngx_rtmp_http_flv_send(ngx_event_t *wev)
+{
+    ngx_connection_t           *c;
+    ngx_http_request_t         *r;
+    ngx_rtmp_session_t         *s;
+    ngx_int_t                   n;
+    ngx_rtmp_core_srv_conf_t   *cscf;
+    ngx_rtmp_http_hdl_ctx_t    *httpctx;
+    ngx_rtmp_live_ctx_t 	   *ctx;
+
+    c = wev->data;
+    r = c->data;
+
+    httpctx = ngx_http_get_module_ctx(r, ngx_rtmp_http_hdl_module);
+
+    s = httpctx->s;
+
+    if (c->destroyed) {
+        return;
+    }
+
+    if (wev->timedout) {
+        ngx_log_error(NGX_LOG_ERR, c->log, NGX_ETIMEDOUT,
+                "client timed out");
+        c->timedout = 1;
+        ngx_rtmp_finalize_session(s);
+        return;
+    }
+
+    if (wev->timer_set) {
+        ngx_del_timer(wev);
+    }
+
+    if (s->out_chain == NULL && s->out_pos != s->out_last) {
+        s->out_chain = s->out[s->out_pos];
+        s->out_bpos = s->out_chain->buf->pos;
+    }
+
+    ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_live_module);
+    while (s->out_chain) {
+        n = c->send(c, s->out_bpos, s->out_chain->buf->last - s->out_bpos);
+
+        if (n == NGX_AGAIN || n == 0) {
+            ngx_add_timer(c->write, s->timeout);
+            if (ngx_handle_write_event(c->write, 0) != NGX_OK) {
+                ngx_rtmp_finalize_session(s);
+            }
+            return;
+        }
+
+        if (n < 0) {
+            ngx_rtmp_finalize_session(s);
+            return;
+        }
+
+        s->out_bytes += n;
+        s->ping_reset = 1;
+
+      	ngx_rtmp_update_bandwidth(&ngx_rtmp_bw_out, n);
+
+      	if(ctx && ctx->stream){
+            ngx_rtmp_update_bandwidth(&ctx->stream->bw_out, n);
+
+            if (s->relay_type == NGX_NONE_RELAY) {
+
+                ngx_rtmp_update_bandwidth(&ctx->stream->bw_out_bytes, n);
+            }
+      	}
+
+        s->out_bpos += n;
+        if (s->out_bpos == s->out_chain->buf->last) {
+            s->out_chain = s->out_chain->next;
+            if (s->out_chain == NULL) {
+                cscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_core_module);
+                ngx_rtmp_free_shared_chain(cscf, s->out[s->out_pos]);
+                s->out[s->out_pos] = NULL;
+                ++s->out_pos;
+                s->out_pos %= s->out_queue;
+                if (s->out_pos == s->out_last) {
+                    break;
+                }
+                s->out_chain = s->out[s->out_pos];
+            }
+            s->out_bpos = s->out_chain->buf->pos;
+        }
+    }
+
+    if (wev->active) {
+        ngx_del_event(wev, NGX_WRITE_EVENT, 0);
+    }
+
+    ngx_event_process_posted((ngx_cycle_t *) ngx_cycle, &s->posted_dry_events);
+}
+
+
 static ngx_int_t
 ngx_rtmp_hdl_send_message(ngx_rtmp_session_t *s, ngx_chain_t *out,
         ngx_uint_t priority)
@@ -377,7 +473,7 @@ ngx_rtmp_http_hdl_init_session(ngx_http_request_t *r, ngx_rtmp_addr_conf_t *addr
 
     httpctx = ngx_pcalloc(r->pool, sizeof(ngx_rtmp_http_hdl_ctx_t));
     if (httpctx == NULL) {
-        return NGX_ERROR;
+        return NULL;
     }
 
     ngx_http_set_ctx(r, httpctx, ngx_rtmp_http_hdl_module);
@@ -569,101 +665,6 @@ ngx_rtmp_http_hdl_init_connection(ngx_http_request_t *r, ngx_rtmp_conf_port_t *c
 	return NGX_OK;
 }
 
-
-static void
-ngx_rtmp_http_flv_send(ngx_event_t *wev)
-{
-    ngx_connection_t           *c;
-    ngx_http_request_t         *r;
-    ngx_rtmp_session_t         *s;
-    ngx_int_t                   n;
-    ngx_rtmp_core_srv_conf_t   *cscf;
-    ngx_rtmp_http_hdl_ctx_t    *httpctx;
-    ngx_rtmp_live_ctx_t 	   *ctx;
-
-    c = wev->data;
-    r = c->data;
-
-    httpctx = ngx_http_get_module_ctx(r, ngx_rtmp_http_hdl_module);
-
-    s = httpctx->s;
-
-    if (c->destroyed) {
-        return;
-    }
-
-    if (wev->timedout) {
-        ngx_log_error(NGX_LOG_ERR, c->log, NGX_ETIMEDOUT,
-                "client timed out");
-        c->timedout = 1;
-        ngx_rtmp_finalize_session(s);
-        return;
-    }
-
-    if (wev->timer_set) {
-        ngx_del_timer(wev);
-    }
-
-    if (s->out_chain == NULL && s->out_pos != s->out_last) {
-        s->out_chain = s->out[s->out_pos];
-        s->out_bpos = s->out_chain->buf->pos;
-    }
-
-    ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_live_module);
-    while (s->out_chain) {
-        n = c->send(c, s->out_bpos, s->out_chain->buf->last - s->out_bpos);
-
-        if (n == NGX_AGAIN || n == 0) {
-            ngx_add_timer(c->write, s->timeout);
-            if (ngx_handle_write_event(c->write, 0) != NGX_OK) {
-                ngx_rtmp_finalize_session(s);
-            }
-            return;
-        }
-
-        if (n < 0) {
-            ngx_rtmp_finalize_session(s);
-            return;
-        }
-
-        s->out_bytes += n;
-        s->ping_reset = 1;
-
-      	ngx_rtmp_update_bandwidth(&ngx_rtmp_bw_out, n);
-
-      	if(ctx && ctx->stream){
-            ngx_rtmp_update_bandwidth(&ctx->stream->bw_out, n);
-
-            if (s->relay_type == NGX_NONE_RELAY) {
-
-                ngx_rtmp_update_bandwidth(&ctx->stream->bw_out_bytes, n);
-            }
-      	}
-
-        s->out_bpos += n;
-        if (s->out_bpos == s->out_chain->buf->last) {
-            s->out_chain = s->out_chain->next;
-            if (s->out_chain == NULL) {
-                cscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_core_module);
-                ngx_rtmp_free_shared_chain(cscf, s->out[s->out_pos]);
-                s->out[s->out_pos] = NULL;
-                ++s->out_pos;
-                s->out_pos %= s->out_queue;
-                if (s->out_pos == s->out_last) {
-                    break;
-                }
-                s->out_chain = s->out[s->out_pos];
-            }
-            s->out_bpos = s->out_chain->buf->pos;
-        }
-    }
-
-    if (wev->active) {
-        ngx_del_event(wev, NGX_WRITE_EVENT, 0);
-    }
-
-    ngx_event_process_posted((ngx_cycle_t *) ngx_cycle, &s->posted_dry_events);
-}
 
 static ngx_int_t
 ngx_rtmp_http_hdl_handler(ngx_http_request_t *r)
