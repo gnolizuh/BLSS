@@ -906,9 +906,9 @@ ngx_rtmp_record_ensure_directory(ngx_rtmp_session_t *s, ngx_rtmp_record_rec_ctx_
     ngx_file_info_t                           fi;
     u_char                                    num[NGX_INT32_LEN];
     u_char                                   *p;
-    u_char                                   index_path[NGX_MAX_PATH];
-    u_char                                   record_path[NGX_MAX_PATH];
-    u_char                                   publish_time[NGX_UINT32_LEN];
+    u_char                                    index_path[NGX_MAX_PATH];
+    u_char                                    record_path[NGX_MAX_PATH];
+    u_char                                    publish_time[NGX_INT32_LEN];
 
 #define NGX_RTMP_RECORD_MERGE_PATH(p, unique_name, app, sname, time, num) \
     do {\
