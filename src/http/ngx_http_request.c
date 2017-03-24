@@ -2266,14 +2266,6 @@ ngx_http_finalize_request(ngx_http_request_t *r, ngx_int_t rc)
     ngx_log_debug5(NGX_LOG_DEBUG_HTTP, c->log, 0,
                    "http finalize request: %i, \"%V?%V\" a:%d, c:%d",
                    rc, &r->uri, &r->args, r == c->data, r->main->count);
-    
-    if (rc == NGX_CUSTOME) {
-    	ngx_log_debug2(NGX_LOG_DEBUG_HTTP, c->log, 0,
-                       "http finalize request: \"%V?%V\", NGX_CUSTOME",
-                       &r->uri, &r->args);
-
-        return;
-    }
 
     if (rc == NGX_DONE) {
         ngx_http_finalize_connection(r);

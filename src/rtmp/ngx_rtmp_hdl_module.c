@@ -665,7 +665,7 @@ ngx_rtmp_http_hdl_init_connection(ngx_http_request_t *r, ngx_rtmp_conf_port_t *c
     }
 
     r->read_event_handler = ngx_http_test_reading;
-    // r->blocked = 1;
+    r->blocked = 1;
 
     c->write->handler = ngx_rtmp_http_flv_send;
 	// c->read->handler = ngx_rtmp_http_flv_recv;  TODO: We do not need to be careful of http read handler.
@@ -756,9 +756,12 @@ ngx_rtmp_http_hdl_handler(ngx_http_request_t *r)
         return NGX_DECLINED;
     }
 
-    ngx_rtmp_http_hdl_connect_local(r, &app, &name, protocol);
+    if (ngx_rtmp_http_hdl_connect_local(r, &app, &name, protocol) != NGX_OK) {
 
-    return NGX_CUSTOME;
+        return NGX_DECLINED;
+    }
+
+    return NGX_OK;
 }
 
 

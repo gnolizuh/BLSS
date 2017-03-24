@@ -3360,7 +3360,7 @@ ngx_rtmp_http_hls_init_connection(ngx_http_request_t *r, ngx_rtmp_conf_port_t *c
     }
 
     r->read_event_handler = ngx_http_test_reading;
-    // r->blocked = 1;
+    r->blocked = 1;
 
     s->auto_pushed = unix_socket;
 
@@ -3745,25 +3745,26 @@ ngx_rtmp_http_hls_handler(ngx_http_request_t *r)
         "http_hls handle uri: '%V' args: '%V'", &r->uri, &r->args);
 
     if (ngx_rtmp_http_hls_get_info(&r->uri, &app, &name, &fname) != NGX_OK) {
+
         return NGX_DECLINED;
     }
 
     ngx_log_error(NGX_LOG_INFO, r->connection->log, 0,
               "http_hls handle app: '%V' name: '%V' fname: '%V'", &app, &name, &fname);
 
-
     port = cmcf->ports.elts;
+
     if (ngx_rtmp_http_hls_init_connection(r, &port[0]) != NGX_OK) {
 
-        return NGX_HTTP_NOT_FOUND;
+        return NGX_DECLINED;
     }
 
     if (ngx_rtmp_http_hls_connect_local(r, &app, &name, &fname, protocol) != NGX_OK) {
 
-        return NGX_HTTP_NOT_FOUND;
+        return NGX_DECLINED;
     }
 
-    return NGX_CUSTOME;
+    return NGX_OK;
 }
 
 
