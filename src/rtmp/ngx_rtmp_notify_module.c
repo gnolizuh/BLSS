@@ -669,13 +669,13 @@ ngx_rtmp_notify_update_create(ngx_rtmp_session_t *s, void *arg,
                             sizeof("&update_cnt=") + NGX_INT32_LEN +
                             sizeof("&channels=") + NGX_INT32_LEN +
                             sizeof("&sample_rate=") + NGX_INT32_LEN +
-                            sizeof("&bw_in_audio=") + NGX_UINT64_LEN +
-                            sizeof("&bw_in_video=") + NGX_UINT64_LEN +
-                            sizeof("&bw_real=") + NGX_UINT64_LEN +
-                            sizeof("&bw_in=") + NGX_UINT64_LEN +
+                            sizeof("&bw_in_audio=") + NGX_INT64_LEN +
+                            sizeof("&bw_in_video=") + NGX_INT64_LEN +
+                            sizeof("&bw_real=") + NGX_INT64_LEN +
+                            sizeof("&bw_in=") + NGX_INT64_LEN +
                             sizeof("&real_framerate=") + NGX_INT32_LEN +
-                            sizeof("&npull=") + NGX_UINT64_LEN +
-                            sizeof("&pre_npull=") + NGX_UINT64_LEN);
+                            sizeof("&npull=") + NGX_INT64_LEN +
+                            sizeof("&pre_npull=") + NGX_INT64_LEN);
     if (b == NULL) {
         return NULL;
     }
