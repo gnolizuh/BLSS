@@ -13,7 +13,11 @@ A bravo live streaming service powered by [nginx-rtmp-module](https://github.com
 
 * RTMP/HTTP+FLV/HLS/MPEG-DASH live streaming
 
-* H264/AAC support
+* H264/AAC support, H265 is on the road.
+
+* GOP Cache/HLS VOD features
+
+* Support Socket Sharding feature that to improve load balance (RTMP reuseport)
 
 * Linux/FreeBSD/MacOS/Windows
 
