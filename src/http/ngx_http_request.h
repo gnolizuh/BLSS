@@ -95,6 +95,7 @@
 #define NGX_HTTP_REQUEST_URI_TOO_LARGE     414
 #define NGX_HTTP_UNSUPPORTED_MEDIA_TYPE    415
 #define NGX_HTTP_RANGE_NOT_SATISFIABLE     416
+#define NGX_HTTP_MISDIRECTED_REQUEST       421
 
 
 /* Our own HTTP codes */
@@ -278,7 +279,6 @@ typedef struct {
 
 
 typedef void (*ngx_http_client_body_handler_pt)(ngx_http_request_t *r);
-typedef void (*ngx_rtmp_http_close_handler_pt)(ngx_http_request_t *r);
 
 typedef struct {
     ngx_temp_file_t                  *temp_file;
@@ -374,8 +374,6 @@ struct ngx_http_request_s {
 
     ngx_http_event_handler_pt         read_event_handler;
     ngx_http_event_handler_pt         write_event_handler;
-    
-    ngx_rtmp_http_close_handler_pt    rtmp_http_close_handler;
 
 #if (NGX_HTTP_CACHE)
     ngx_http_cache_t                 *cache;

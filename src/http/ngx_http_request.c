@@ -3403,10 +3403,6 @@ ngx_http_close_request(ngx_http_request_t *r, ngx_int_t rc)
         return;
     }
 
-    if (r->rtmp_http_close_handler) {
-        r->rtmp_http_close_handler(r);
-    }
-
 #if (NGX_HTTP_V2)
     if (r->stream) {
         ngx_http_v2_close_stream(r->stream, rc);
