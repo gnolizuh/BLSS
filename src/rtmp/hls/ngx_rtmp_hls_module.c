@@ -3177,7 +3177,7 @@ ngx_rtmp_http_hls_init_session(ngx_http_request_t *r, ngx_rtmp_addr_conf_t *addr
 
     ctx = ngx_pcalloc(r->pool, sizeof(ngx_rtmp_http_hls_ctx_t));
     if (ctx == NULL) {
-        return NGX_ERROR;
+        return NULL;
     }
 
     ngx_http_set_ctx(r, ctx, ngx_rtmp_http_hls_module);
