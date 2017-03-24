@@ -3128,9 +3128,11 @@ ngx_rtmp_hls_close_session_handler(ngx_rtmp_session_t *s)
     }
 }
 
+
 static void
-ngx_rtmp_hls_close_connection(ngx_http_request_t *r)
+ngx_rtmp_http_hls_cleanup(void *data)
 {
+    ngx_http_request_t         *r = data;
     ngx_rtmp_session_t		   *s;
     ngx_rtmp_http_hls_ctx_t    *httpctx;
 
@@ -3160,7 +3162,8 @@ static ngx_rtmp_session_t *
 ngx_rtmp_http_hls_init_session(ngx_http_request_t *r, ngx_rtmp_addr_conf_t *addr_conf)
 {
     ngx_rtmp_core_srv_conf_t       *cscf;
-    ngx_rtmp_http_hls_ctx_t        *ctx;
+    ngx_http_cleanup_t             *cln;
+    ngx_rtmp_http_hls_ctx_t        *httpctx;
     ngx_rtmp_session_t             *s;
     ngx_connection_t               *c;
 
@@ -3175,15 +3178,15 @@ ngx_rtmp_http_hls_init_session(ngx_http_request_t *r, ngx_rtmp_addr_conf_t *addr
         return NULL;
     }
 
-    ctx = ngx_pcalloc(r->pool, sizeof(ngx_rtmp_http_hls_ctx_t));
-    if (ctx == NULL) {
+    httpctx = ngx_pcalloc(r->pool, sizeof(ngx_rtmp_http_hls_ctx_t));
+    if (httpctx == NULL) {
         return NULL;
     }
 
-    ngx_http_set_ctx(r, ctx, ngx_rtmp_http_hls_module);
+    ngx_http_set_ctx(r, httpctx, ngx_rtmp_http_hls_module);
 
     // attach rtmp session to http ctx.
-    ctx->s = s;
+    httpctx->s = s;
 
     s->pool = r->pool;
 
@@ -3198,7 +3201,14 @@ ngx_rtmp_http_hls_init_session(ngx_http_request_t *r, ngx_rtmp_addr_conf_t *addr
     s->addr_text = &addr_conf->addr_text;
 
     s->connection = c;
-    r->rtmp_http_close_handler = ngx_rtmp_hls_close_connection;
+
+    cln = ngx_http_cleanup_add(r, 0);
+    if (cln == NULL) {
+        return NULL;
+    }
+
+    cln->handler = ngx_rtmp_http_hls_cleanup;
+    cln->data = r;
 
     s->ctx = ngx_pcalloc(s->pool, sizeof(void *) * ngx_rtmp_max_module);
     if (s->ctx == NULL) {

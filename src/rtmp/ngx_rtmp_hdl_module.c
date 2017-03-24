@@ -381,23 +381,6 @@ ngx_rtmp_hdl_close_session_handler(ngx_rtmp_session_t *s)
     }
 }
 
-static void
-ngx_rtmp_http_hdl_close_connection(ngx_http_request_t *r)
-{
-    ngx_rtmp_http_hdl_ctx_t    *httpctx;
-	ngx_rtmp_session_t		   *s;
-
-    httpctx = ngx_http_get_module_ctx(r, ngx_rtmp_http_hdl_module);
-
-    s = httpctx->s;
-
-    ngx_log_error(NGX_LOG_INFO, s->connection->log, 0, "hdl close connection");
-
-    --ngx_rtmp_hdl_naccepted;
-
-    ngx_rtmp_hdl_close_session_handler(s);
-}
-
 
 static ngx_int_t
 ngx_rtmp_http_hdl_connect_local(ngx_http_request_t *r, ngx_str_t *app, ngx_str_t *name, ngx_int_t protocol)
@@ -452,10 +435,30 @@ ngx_rtmp_http_hdl_connect_local(ngx_http_request_t *r, ngx_str_t *app, ngx_str_t
 }
 
 
+static void
+ngx_rtmp_http_hdl_cleanup(void *data)
+{
+    ngx_http_request_t         *r = data;
+    ngx_rtmp_session_t		   *s;
+    ngx_rtmp_http_hls_ctx_t    *httpctx;
+
+    httpctx = ngx_http_get_module_ctx(r, ngx_rtmp_http_hdl_module);
+
+    s = httpctx->s;
+
+    ngx_log_error(NGX_LOG_INFO, s->connection->log, 0, "hdl close connection");
+
+    -- ngx_rtmp_hdl_naccepted;
+
+    ngx_rtmp_hdl_close_session_handler(s);
+}
+
+
 static ngx_rtmp_session_t *
 ngx_rtmp_http_hdl_init_session(ngx_http_request_t *r, ngx_rtmp_addr_conf_t *addr_conf)
 {
     ngx_rtmp_core_srv_conf_t       *cscf;
+    ngx_http_cleanup_t             *cln;
     ngx_rtmp_http_hdl_ctx_t        *httpctx;
     ngx_rtmp_session_t             *s;
     ngx_connection_t               *c;
@@ -494,7 +497,14 @@ ngx_rtmp_http_hdl_init_session(ngx_http_request_t *r, ngx_rtmp_addr_conf_t *addr
     s->addr_text = &addr_conf->addr_text;
 
     s->connection = c;
-    r->rtmp_http_close_handler = ngx_rtmp_http_hdl_close_connection;
+
+    cln = ngx_http_cleanup_add(r, 0);
+    if (cln == NULL) {
+        return NULL;
+    }
+
+    cln->handler = ngx_rtmp_http_hdl_cleanup;
+    cln->data = r;
 
     s->last_audio_ts = NGX_RTMP_INVALID_TIMESTAMP;
     s->audio_ts_min = NGX_RTMP_INVALID_TIMESTAMP;
