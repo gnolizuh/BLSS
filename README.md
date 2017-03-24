@@ -35,12 +35,6 @@ cd to BLSS source directory & run this:
         log_format bw_out '[$time_local] pid:$pid sid:$sid slot:$slot bucket:$bucket vhost:$vhost app:$app name:$name remote_addr:$remote_addr protocol:$protocol rtype:$rtype event:$event bw_out_kb:$bw_out_kb bw_out_buf_kb:$bw_out_buf_kb last_audio_ts:$last_audio_ts last_video_ts:$last_video_ts last_av_ts_diff:$last_av_ts_diff audio_ts_min:$audio_ts_min audio_ts_max:$audio_ts_max audio_ts_diff:$audio_ts_diff video_ts_min:$video_ts_min video_ts_max:$video_ts_max video_ts_diff:$video_ts_diff';
         access_log /data/logs/blss/rtmp_sla.log bw_in bw_out;
     
-        on_connect      unix:/dev/shm/rtmp.sock:/connect;
-        on_publish      unix:/dev/shm/rtmp.sock:/publish;
-        on_play         unix:/dev/shm/rtmp.sock:/play;
-        on_update       unix:/dev/shm/rtmp.sock:/update;
-        on_publish_done unix:/dev/shm/rtmp.sock:/publish_done;
-
         server {
 
             listen 1935 reuseport;
