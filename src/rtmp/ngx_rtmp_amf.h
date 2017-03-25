@@ -45,15 +45,9 @@ typedef struct {
     size_t                              len;
 } ngx_rtmp_amf_elt_t;
 
-typedef struct {
-    ngx_int_t                           type;
-    ngx_str_t                           name;
-    void                               *data;
-    size_t                              len;
-    void                               *next;
-} ngx_rtmp_amf_elt_ex_t;
 
 typedef ngx_chain_t * (*ngx_rtmp_amf_alloc_pt)(void *arg);
+
 
 typedef struct {
     ngx_chain_t                        *link, *first;
@@ -61,9 +55,6 @@ typedef struct {
     ngx_rtmp_amf_alloc_pt               alloc;
     void                               *arg;
     ngx_log_t                          *log;
-    ngx_rtmp_amf_elt_ex_t              *elts;
-    ngx_uint_t                          nelts;
-    ngx_pool_t                         *pool;
 } ngx_rtmp_amf_ctx_t;
 
 
@@ -71,18 +62,9 @@ typedef struct {
 ngx_int_t ngx_rtmp_amf_read(ngx_rtmp_amf_ctx_t *ctx,
         ngx_rtmp_amf_elt_t *elts, size_t nelts);
 
-ngx_int_t ngx_rtmp_amf_read_ex(ngx_rtmp_amf_ctx_t *ctx,
-        ngx_rtmp_amf_elt_t *elts, size_t nelts);
-
 /* writing AMF */
 ngx_int_t ngx_rtmp_amf_write(ngx_rtmp_amf_ctx_t *ctx,
         ngx_rtmp_amf_elt_t *elts, size_t nelts);
-
-static ngx_inline void
-ngx_rtmp_amf_free(ngx_pool_t* pool, ngx_rtmp_amf_elt_ex_t* elt) {
-    ngx_pfree(pool, elt->data);
-    ngx_pfree(pool, elt);
-}
 
 
 #endif /* _NGX_RTMP_AMF_H_INCLUDED_ */

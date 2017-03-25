@@ -561,7 +561,7 @@ ngx_rtmp_flv_init(ngx_rtmp_session_t *s, ngx_file_t *f, ngx_int_t aindex,
     ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_flv_module);
 
     if (ctx == NULL) {
-        ctx = ngx_palloc(s->pool, sizeof(ngx_rtmp_flv_ctx_t));
+        ctx = ngx_palloc(s->connection->pool, sizeof(ngx_rtmp_flv_ctx_t));
 
         if (ctx == NULL) {
             return NGX_ERROR;

@@ -93,6 +93,34 @@ ngx_module_t  ngx_rtmp_auto_push_module = {
 };
 
 
+static ngx_rtmp_module_t  ngx_rtmp_auto_push_index_module_ctx = {
+    NULL,                                   /* preconfiguration */
+    NULL,                                   /* postconfiguration */
+    NULL,                                   /* create main configuration */
+    NULL,                                   /* init main configuration */
+    NULL,                                   /* create server configuration */
+    NULL,                                   /* merge server configuration */
+    NULL,                                   /* create app configuration */
+    NULL                                    /* merge app configuration */
+};
+
+
+ngx_module_t  ngx_rtmp_auto_push_index_module = {
+    NGX_MODULE_V1,
+    &ngx_rtmp_auto_push_index_module_ctx,   /* module context */
+    NULL,                                   /* module directives */
+    NGX_RTMP_MODULE,                        /* module type */
+    NULL,                                   /* init master */
+    NULL,                                   /* init module */
+    NULL,                                   /* init process */
+    NULL,                                   /* init thread */
+    NULL,                                   /* exit thread */
+    NULL,                                   /* exit process */
+    NULL,                                   /* exit master */
+    NGX_MODULE_V1_PADDING
+};
+
+
 #define NGX_RTMP_AUTO_PUSH_SOCKNAME         "nginx-rtmp"
 
 
@@ -325,7 +353,7 @@ ngx_rtmp_auto_push_reconnect(ngx_event_t *ev)
 
     apcf = (ngx_rtmp_auto_push_conf_t *) ngx_get_conf(ngx_cycle->conf_ctx,
                                                     ngx_rtmp_auto_push_module);
-    ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_auto_push_module);
+    ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_auto_push_index_module);
     if (ctx == NULL) {
         return;
     }
@@ -381,7 +409,7 @@ ngx_rtmp_auto_push_reconnect(ngx_event_t *ev)
 
         u->data = path;
         u->len = p - path;
-        if (ngx_parse_url(s->pool, &at.url) != NGX_OK) {
+        if (ngx_parse_url(s->connection->pool, &at.url) != NGX_OK) {
             ngx_log_error(NGX_LOG_ERR, s->connection->log, 0,
                           "auto_push: auto-push parse_url failed "
                           "url='%V' name='%s'",
@@ -462,14 +490,14 @@ ngx_rtmp_auto_push_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
         goto next;
     }
 
-    ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_auto_push_module);
+    ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_auto_push_index_module);
     if (ctx == NULL) {
-        ctx = ngx_palloc(s->pool,
+        ctx = ngx_palloc(s->connection->pool,
                          sizeof(ngx_rtmp_auto_push_ctx_t));
         if (ctx == NULL) {
             goto next;
         }
-        ngx_rtmp_set_ctx(s, ctx, ngx_rtmp_auto_push_module);
+        ngx_rtmp_set_ctx(s, ctx, ngx_rtmp_auto_push_index_module);
 
     }
     ngx_memzero(ctx, sizeof(*ctx));
@@ -509,7 +537,7 @@ ngx_rtmp_auto_push_delete_stream(ngx_rtmp_session_t *s,
         goto next;
     }
 
-    ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_auto_push_module);
+    ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_auto_push_index_module);
     if (ctx) {
         if (ctx->push_evt.timer_set) {
             ngx_del_timer(&ctx->push_evt);
@@ -533,7 +561,7 @@ ngx_rtmp_auto_push_delete_stream(ngx_rtmp_session_t *s,
                    slot, &rctx->app, &rctx->name);
 
     pctx = ngx_rtmp_get_module_ctx(rctx->publish->session,
-                                   ngx_rtmp_auto_push_module);
+                                   ngx_rtmp_auto_push_index_module);
     if (pctx == NULL) {
         goto next;
     }

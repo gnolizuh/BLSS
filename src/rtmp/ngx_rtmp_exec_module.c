@@ -29,9 +29,14 @@ static ngx_int_t ngx_rtmp_exec_postconfiguration(ngx_conf_t *cf);
 static void * ngx_rtmp_exec_create_main_conf(ngx_conf_t *cf);
 static char * ngx_rtmp_exec_init_main_conf(ngx_conf_t *cf, void *conf);
 static void * ngx_rtmp_exec_create_app_conf(ngx_conf_t *cf);
-static char * ngx_rtmp_exec_merge_app_conf(ngx_conf_t *cf, void *parent, void *child);
-static char * ngx_rtmp_exec_conf(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
-static char *ngx_rtmp_exec_kill_signal(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
+static char * ngx_rtmp_exec_merge_app_conf(ngx_conf_t *cf,
+       void *parent, void *child);
+/*static char * ngx_rtmp_exec_block(ngx_conf_t *cf, ngx_command_t *cmd,
+       void *conf);*/
+static char * ngx_rtmp_exec_conf(ngx_conf_t *cf, ngx_command_t *cmd,
+       void *conf);
+static char *ngx_rtmp_exec_kill_signal(ngx_conf_t *cf, ngx_command_t *cmd,
+       void *conf);
 
 
 #define NGX_RTMP_EXEC_RESPAWN           0x01
@@ -139,7 +144,14 @@ static ngx_int_t ngx_rtmp_exec_run(ngx_rtmp_exec_t *e);
 
 
 static ngx_command_t  ngx_rtmp_exec_commands[] = {
-
+/*
+    { ngx_string("exec_block"),
+      NGX_RTMP_APP_CONF|NGX_CONF_BLOCK|NGX_CONF_NOARGS|NGX_CONF_TAKE1,
+      ngx_rtmp_exec_block,
+      NGX_RTMP_APP_CONF_OFFSET,
+      0,
+      NULL },
+*/
     { ngx_string("exec"),
       NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_1MORE,
       ngx_rtmp_exec_conf,
@@ -706,7 +718,7 @@ ngx_rtmp_exec_run(ngx_rtmp_exec_t *e)
         }
 
         if (pipe(pipefd) == -1) {
-            ngx_log_error(NGX_LOG_ERR, e->log, ngx_errno,
+            ngx_log_error(NGX_LOG_INFO, e->log, ngx_errno,
                           "exec: pipe failed");
             return NGX_ERROR;
         }
@@ -725,7 +737,7 @@ ngx_rtmp_exec_run(ngx_rtmp_exec_t *e)
             close(pipefd[0]);
             close(pipefd[1]);
 
-            ngx_log_error(NGX_LOG_ERR, e->log, ngx_errno,
+            ngx_log_error(NGX_LOG_INFO, e->log, ngx_errno,
                           "exec: fcntl failed");
 
             return NGX_ERROR;
@@ -748,7 +760,7 @@ ngx_rtmp_exec_run(ngx_rtmp_exec_t *e)
                 close(pipefd[1]);
             }
 
-            ngx_log_error(NGX_LOG_ERR, e->log, ngx_errno,
+            ngx_log_error(NGX_LOG_INFO, e->log, ngx_errno,
                           "exec: fork failed");
 
             return NGX_ERROR;
@@ -896,7 +908,7 @@ ngx_rtmp_exec_init_ctx(ngx_rtmp_session_t *s, u_char name[NGX_RTMP_MAX_NAME],
         goto done;
     }
 
-    ctx = ngx_pcalloc(s->pool, sizeof(ngx_rtmp_exec_ctx_t));
+    ctx = ngx_pcalloc(s->connection->pool, sizeof(ngx_rtmp_exec_ctx_t));
 
     if (ctx == NULL) {
         return NGX_ERROR;
@@ -912,7 +924,7 @@ ngx_rtmp_exec_init_ctx(ngx_rtmp_session_t *s, u_char name[NGX_RTMP_MAX_NAME],
 
     if (push_conf->nelts > 0) {
 
-        if (ngx_array_init(&ctx->push_exec, s->pool,
+        if (ngx_array_init(&ctx->push_exec, s->connection->pool,
                            push_conf->nelts,
                            sizeof(ngx_rtmp_exec_t)) != NGX_OK)
         {
