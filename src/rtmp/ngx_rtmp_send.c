@@ -9,7 +9,6 @@
 #include "ngx_rtmp.h"
 #include "ngx_rtmp_amf.h"
 #include "ngx_rtmp_streams.h"
-#include "ngx_rtmp_log_module.h"
 
 
 #define NGX_RTMP_USER_START(s, tp)                                          \
@@ -43,16 +42,6 @@
     *(__b->last++) = ((u_char*)&v)[1];                                      \
     *(__b->last++) = ((u_char*)&v)[0];
 
-#define NGX_RTMP_USER_OUT8(v)                                               \
-	*(__b->last++) = ((u_char*)&v)[3];                                      \
-    *(__b->last++) = ((u_char*)&v)[2];                                      \
-    *(__b->last++) = ((u_char*)&v)[1];                                      \
-    *(__b->last++) = ((u_char*)&v)[0];                                      \
-    *(__b->last++) = ((u_char*)&v)[7];                                      \
-    *(__b->last++) = ((u_char*)&v)[6];                                      \
-    *(__b->last++) = ((u_char*)&v)[5];                                      \
-    *(__b->last++) = ((u_char*)&v)[4];
-
 #define NGX_RTMP_USER_END(s)                                                \
     ngx_rtmp_prepare_message(s, &__h, NULL, __l);                           \
     return __l;
@@ -77,8 +66,6 @@ ngx_rtmp_send_shared_packet(ngx_rtmp_session_t *s, ngx_chain_t *cl)
         return NGX_OK;
     }
 
-    ngx_rtmp_log_evt_out(s);
-
     rc = ngx_rtmp_send_message(s, cl, 0);
 
     ngx_rtmp_free_shared_chain(cscf, cl);
@@ -95,10 +82,6 @@ ngx_rtmp_create_chunk_size(ngx_rtmp_session_t *s, uint32_t chunk_size)
     ngx_log_debug1(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
                    "chunk_size=%uD", chunk_size);
 
-    s->log_bpos = s->log_buf;
-    *ngx_sprintf(s->log_bpos, BLANK_SPACE"rtmp_msg_type:%d"BLANK_SPACE"chunk_size:%uD",
-            NGX_RTMP_MSG_CHUNK_SIZE, chunk_size) = 0;
-
     {
         NGX_RTMP_USER_START(s, NGX_RTMP_MSG_CHUNK_SIZE);
 
@@ -111,7 +94,7 @@ ngx_rtmp_create_chunk_size(ngx_rtmp_session_t *s, uint32_t chunk_size)
 
 ngx_int_t
 ngx_rtmp_send_chunk_size(ngx_rtmp_session_t *s, uint32_t chunk_size)
-{    
+{
     return ngx_rtmp_send_shared_packet(s,
            ngx_rtmp_create_chunk_size(s, chunk_size));
 }
@@ -122,9 +105,6 @@ ngx_rtmp_create_abort(ngx_rtmp_session_t *s, uint32_t csid)
 {
     ngx_log_debug1(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
                    "create: abort csid=%uD", csid);
-
-    s->log_bpos = s->log_buf;
-    *ngx_sprintf(s->log_bpos, BLANK_SPACE"rtmp_msg_type:%d", NGX_RTMP_MSG_ABORT) = 0;
 
     {
         NGX_RTMP_USER_START(s, NGX_RTMP_MSG_ABORT);
@@ -150,10 +130,6 @@ ngx_rtmp_create_ack(ngx_rtmp_session_t *s, uint32_t seq)
     ngx_log_debug1(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
                    "create: ack seq=%uD", seq);
 
-    s->log_bpos = s->log_buf;
-    *ngx_sprintf(s->log_bpos, BLANK_SPACE"rtmp_msg_type:%d"BLANK_SPACE"ack_seq:%uD",
-            NGX_RTMP_MSG_ACK, seq) = 0;
-
     {
         NGX_RTMP_USER_START(s, NGX_RTMP_MSG_ACK);
 
@@ -177,10 +153,6 @@ ngx_rtmp_create_ack_size(ngx_rtmp_session_t *s, uint32_t ack_size)
 {
     ngx_log_debug1(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
                    "create: ack_size=%uD", ack_size);
-
-    s->log_bpos = s->log_buf;
-    *ngx_sprintf(s->log_bpos, BLANK_SPACE"rtmp_msg_type:%d"BLANK_SPACE"ack_size:%uD",
-            NGX_RTMP_MSG_ACK_SIZE, ack_size) = 0;
 
     {
         NGX_RTMP_USER_START(s, NGX_RTMP_MSG_ACK_SIZE);
@@ -207,10 +179,6 @@ ngx_rtmp_create_bandwidth(ngx_rtmp_session_t *s, uint32_t ack_size,
     ngx_log_debug2(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
                    "create: bandwidth ack_size=%uD limit=%d",
                    ack_size, (int)limit_type);
-
-    s->log_bpos = s->log_buf;
-    *ngx_sprintf(s->log_bpos, BLANK_SPACE"rtmp_msg_type:%d"BLANK_SPACE"bandwidth:%uD"BLANK_SPACE"limit:%d",
-            NGX_RTMP_MSG_BANDWIDTH, ack_size, (int)limit_type) = 0;
 
     {
         NGX_RTMP_USER_START(s, NGX_RTMP_MSG_BANDWIDTH);
@@ -240,10 +208,6 @@ ngx_rtmp_create_stream_begin(ngx_rtmp_session_t *s, uint32_t msid)
     ngx_log_debug1(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
                    "create: stream_begin msid=%uD", msid);
 
-    s->log_bpos = s->log_buf;
-    *ngx_sprintf(s->log_bpos, BLANK_SPACE"rtmp_msg_type:%d"BLANK_SPACE"rtmp_user_msg_type:%d"BLANK_SPACE"msid:%uD",
-            NGX_RTMP_MSG_USER, NGX_RTMP_USER_STREAM_BEGIN, msid) = 0;
-
     {
         NGX_RTMP_UCTL_START(s, NGX_RTMP_MSG_USER, NGX_RTMP_USER_STREAM_BEGIN);
 
@@ -265,13 +229,8 @@ ngx_rtmp_send_stream_begin(ngx_rtmp_session_t *s, uint32_t msid)
 ngx_chain_t *
 ngx_rtmp_create_stream_eof(ngx_rtmp_session_t *s, uint32_t msid)
 {
-    
     ngx_log_debug1(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
                    "create: stream_end msid=%uD", msid);
-
-    s->log_bpos = s->log_buf;
-    *ngx_sprintf(s->log_bpos, BLANK_SPACE"rtmp_msg_type:%d"BLANK_SPACE"rtmp_user_msg_type:%d"BLANK_SPACE"msid:%uD",
-            NGX_RTMP_MSG_USER, NGX_RTMP_USER_STREAM_EOF, msid) = 0;
 
     {
         NGX_RTMP_UCTL_START(s, NGX_RTMP_MSG_USER, NGX_RTMP_USER_STREAM_EOF);
@@ -296,10 +255,6 @@ ngx_rtmp_create_stream_dry(ngx_rtmp_session_t *s, uint32_t msid)
 {
     ngx_log_debug1(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
                    "create: stream_dry msid=%uD", msid);
-
-    s->log_bpos = s->log_buf;
-    *ngx_sprintf(s->log_bpos, BLANK_SPACE"rtmp_msg_type:%d"BLANK_SPACE"rtmp_user_msg_type:%d"BLANK_SPACE"msid:%uD",
-            NGX_RTMP_MSG_USER, NGX_RTMP_USER_STREAM_DRY, msid) = 0;
 
     {
         NGX_RTMP_UCTL_START(s, NGX_RTMP_MSG_USER, NGX_RTMP_USER_STREAM_DRY);
@@ -327,9 +282,6 @@ ngx_rtmp_create_set_buflen(ngx_rtmp_session_t *s, uint32_t msid,
                    "create: set_buflen msid=%uD buflen=%uD",
                    msid, buflen_msec);
 
-    s->log_bpos = s->log_buf;
-    *ngx_sprintf(s->log_bpos, BLANK_SPACE"rtmp_msg_type:%d"BLANK_SPACE"rtmp_user_msg_type:%d"BLANK_SPACE"msid:%uD"BLANK_SPACE"buflen:%uD", NGX_RTMP_MSG_USER, NGX_RTMP_USER_SET_BUFLEN, msid, buflen_msec) = 0;
-
     {
         NGX_RTMP_UCTL_START(s, NGX_RTMP_MSG_USER, NGX_RTMP_USER_SET_BUFLEN);
 
@@ -356,10 +308,6 @@ ngx_rtmp_create_recorded(ngx_rtmp_session_t *s, uint32_t msid)
     ngx_log_debug1(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
                    "create: recorded msid=%uD", msid);
 
-    s->log_bpos = s->log_buf;
-    *ngx_sprintf(s->log_bpos, BLANK_SPACE"rtmp_msg_type:%d"BLANK_SPACE"rtmp_user_msg_type:%d"BLANK_SPACE"msid:%uD",
-            NGX_RTMP_MSG_USER, NGX_RTMP_USER_RECORDED, msid) = 0;
-
     {
         NGX_RTMP_UCTL_START(s, NGX_RTMP_MSG_USER, NGX_RTMP_USER_RECORDED);
 
@@ -384,10 +332,6 @@ ngx_rtmp_create_ping_request(ngx_rtmp_session_t *s, uint32_t timestamp)
     ngx_log_debug1(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
                    "create: ping_request timestamp=%uD", timestamp);
 
-    s->log_bpos = s->log_buf;
-    *ngx_sprintf(s->log_bpos, BLANK_SPACE"rtmp_msg_type:%d"BLANK_SPACE"rtmp_user_msg_type:%d"BLANK_SPACE"timestamp:%uD",
-            NGX_RTMP_MSG_USER, NGX_RTMP_USER_PING_REQUEST, timestamp) = 0;
-
     {
         NGX_RTMP_UCTL_START(s, NGX_RTMP_MSG_USER, NGX_RTMP_USER_PING_REQUEST);
 
@@ -411,10 +355,6 @@ ngx_rtmp_create_ping_response(ngx_rtmp_session_t *s, uint32_t timestamp)
 {
     ngx_log_debug1(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
                    "create: ping_response timestamp=%uD", timestamp);
-
-    s->log_bpos = s->log_buf;
-    *ngx_sprintf(s->log_bpos, BLANK_SPACE"rtmp_msg_type:%d"BLANK_SPACE"rtmp_user_msg_type:%d"BLANK_SPACE"timestamp:%uD",
-            NGX_RTMP_MSG_USER, NGX_RTMP_USER_PING_RESPONSE, timestamp) = 0;
 
     {
         NGX_RTMP_UCTL_START(s, NGX_RTMP_MSG_USER, NGX_RTMP_USER_PING_RESPONSE);
@@ -493,13 +433,6 @@ ngx_rtmp_create_amf(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     ngx_log_debug1(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
                    "create: amf nelts=%ui", nelts);
 
-    if (nelts > 0) {
-
-        s->log_bpos = s->log_buf;
-        *ngx_sprintf(s->log_bpos, BLANK_SPACE"rtmp_msg_type:%d"BLANK_SPACE"amf_msg_name:%s", 
-            h->type, (u_char *)elts[0].data) = 0;
-    }
-
     cscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_core_module);
 
     first = NULL;
@@ -525,99 +458,6 @@ ngx_rtmp_send_amf(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 {
     return ngx_rtmp_send_shared_packet(s,
            ngx_rtmp_create_amf(s, h, elts, nelts));
-}
-
-ngx_int_t
-ngx_rtmp_send_finalize_status(ngx_rtmp_session_t *s, u_char *stage,
-                                u_char *fin_code, u_char *fin_desc)
-{
-    ngx_rtmp_header_t           h;
-
-    if (stage == NULL ||
-        fin_code == NULL ||
-        fin_desc == NULL) {
-
-        return NGX_ERROR;
-    }
-
-    ngx_memzero(&h, sizeof(h));
-    h.csid = NGX_RTMP_CSID_AMF_INI;
-    h.type = NGX_RTMP_MSG_AMF_CMD;
-
-    static ngx_rtmp_amf_elt_t  out_elts[] = {
-
-        { NGX_RTMP_AMF_STRING,
-          ngx_null_string,
-          NULL, 0},
-
-        { NGX_RTMP_AMF_STRING,
-          ngx_null_string,
-          NULL, 0},
-
-        { NGX_RTMP_AMF_STRING,
-          ngx_null_string,
-          NULL, 0}
-    };
-
-    out_elts[0].data = stage;
-    out_elts[0].len = ngx_strlen(stage);
-
-    out_elts[1].data = fin_code;
-    out_elts[1].len = ngx_strlen(fin_code);
-
-    out_elts[2].data = fin_desc;
-    out_elts[2].len = ngx_strlen(fin_desc);
-
-    return ngx_rtmp_send_amf(s, &h, out_elts, sizeof(out_elts)/sizeof(out_elts[0]));
-}
-
-ngx_int_t 
-ngx_rtmp_send_ret_status(ngx_rtmp_session_t *s, char *code, char *desc)
-{
-	return ngx_rtmp_send_shared_packet(s,
-	   ngx_rtmp_create_ret_status(s, code, desc));
-}
-
-
-ngx_chain_t *
-ngx_rtmp_create_ret_status(ngx_rtmp_session_t *s, char *code, char *desc)
-{
-    ngx_rtmp_header_t               h;
-
-    static ngx_rtmp_amf_elt_t       out_inf[] = {
-    
-         { NGX_RTMP_AMF_STRING,
-         ngx_string("code"),
-         NULL, 0 },
-         
-         { NGX_RTMP_AMF_STRING,
-         ngx_string("description"),
-         NULL, 0 },
-    };
-
-    static ngx_rtmp_amf_elt_t out_elts[] = {
-
-    	{ NGX_RTMP_AMF_STRING,
-    	  ngx_null_string,
-    	  "_result", 0 },
-    
-    	{ NGX_RTMP_AMF_OBJECT,
-    	  ngx_null_string,
-    	  out_inf,
-    	  sizeof(out_inf) },
-    };
-
-    out_inf[0].data = code;
-    out_inf[1].data = desc;
-    
-    ngx_memset(&h, 0, sizeof(h));
-    
-    h.type = NGX_RTMP_MSG_AMF_CMD;
-    h.csid = NGX_RTMP_CSID_AMF;
-    h.msid = NGX_RTMP_MSID;
-    
-    return ngx_rtmp_create_amf(s, &h, out_elts,
-    						   sizeof(out_elts) / sizeof(out_elts[0]));
 }
 
 
