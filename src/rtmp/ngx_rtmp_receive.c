@@ -10,7 +10,6 @@
 #include "ngx_rtmp_amf.h"
 #include "ngx_rtmp_cmd_module.h"
 #include <string.h>
-#include "ngx_rtmp_live_module.h"
 
 
 ngx_int_t
@@ -39,8 +38,6 @@ ngx_rtmp_protocol_message_handler(ngx_rtmp_session_t *s,
 
     switch(h->type) {
         case NGX_RTMP_MSG_CHUNK_SIZE:
-            s->log_bpos = ngx_sprintf(s->log_bpos, " chunk_size:%uD", val);
-
             /* set chunk size =val */
             ngx_rtmp_set_chunk_size(s, val);
             break;
@@ -50,16 +47,12 @@ ngx_rtmp_protocol_message_handler(ngx_rtmp_session_t *s,
             break;
 
         case NGX_RTMP_MSG_ACK:
-            s->log_bpos = ngx_sprintf(s->log_bpos, " ack_seq:%uD", val);
-
             /* receive ack with sequence number =val */
             ngx_log_debug1(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
                 "receive ack seq=%uD", val);
             break;
 
         case NGX_RTMP_MSG_ACK_SIZE:
-            s->log_bpos = ngx_sprintf(s->log_bpos, " ack_size:%uD", val);
-
             /* receive window size =val */
             ngx_log_debug1(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
                 "receive ack_size=%uD", val);
@@ -72,8 +65,6 @@ ngx_rtmp_protocol_message_handler(ngx_rtmp_session_t *s,
 
                 (void)val;
                 (void)limit;
-
-                s->log_bpos = ngx_sprintf(s->log_bpos, " bandwidth:%uD limit:%d", val, limit);
 
                 ngx_log_debug2(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
                     "receive bandwidth=%uD limit=%d",
@@ -126,8 +117,6 @@ ngx_rtmp_user_message_handler(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     p[2] = b->pos[3];
     p[3] = b->pos[2];
 
-    s->log_bpos = ngx_sprintf(s->log_bpos, " rtmp_user_msg_type:%i", (ngx_int_t)evt);
-
     switch(evt) {
         case NGX_RTMP_USER_STREAM_BEGIN:
             {
@@ -137,8 +126,6 @@ ngx_rtmp_user_message_handler(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
                 ngx_log_debug1(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
                                "receive: stream_begin msid=%uD", v.msid);
-
-                s->log_bpos = ngx_sprintf(s->log_bpos, " msid:%uD", v.msid);
 
                 return ngx_rtmp_stream_begin(s, &v);
             }
@@ -152,8 +139,6 @@ ngx_rtmp_user_message_handler(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
                 ngx_log_debug1(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
                                "receive: stream_eof msid=%uD", v.msid);
 
-                s->log_bpos = ngx_sprintf(s->log_bpos, " msid:%uD", v.msid);
-
                 return ngx_rtmp_stream_eof(s, &v);
             }
 
@@ -165,8 +150,6 @@ ngx_rtmp_user_message_handler(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
                 ngx_log_debug1(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
                                "receive: stream_dry msid=%uD", v.msid);
-
-                s->log_bpos = ngx_sprintf(s->log_bpos, " msid:%uD", v.msid);
 
                 return ngx_rtmp_stream_dry(s, &v);
             }
@@ -192,8 +175,6 @@ ngx_rtmp_user_message_handler(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
                                "receive: set_buflen msid=%uD buflen=%uD",
                                v.msid, v.buflen);
 
-                s->log_bpos = ngx_sprintf(s->log_bpos, " msid:%uD buflen:%uD", v.msid, v.buflen);
-
                 /*TODO: move this to play module */
                 s->buflen = v.buflen;
 
@@ -209,27 +190,19 @@ ngx_rtmp_user_message_handler(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
                 ngx_log_debug1(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
                                "receive: recorded msid=%uD", v.msid);
 
-                s->log_bpos = ngx_sprintf(s->log_bpos, " msid:%uD", v.msid);
-
                 return ngx_rtmp_recorded(s, &v);
             }
 
         case NGX_RTMP_USER_PING_REQUEST:
-            {
-                s->log_bpos = ngx_sprintf(s->log_bpos, " timestamp:%uD", val);
-
-                return ngx_rtmp_send_ping_response(s, val);
-            }
+            return ngx_rtmp_send_ping_response(s, val);
 
         case NGX_RTMP_USER_PING_RESPONSE:
-            {
-                /* val = incoming timestamp */
-                s->log_bpos = ngx_sprintf(s->log_bpos, " timestamp:%uD", val);
 
-                ngx_rtmp_reset_ping(s);
+            /* val = incoming timestamp */
 
-                return NGX_OK;
-            }
+            ngx_rtmp_reset_ping(s);
+
+            return NGX_OK;
 
         default:
             ngx_log_debug1(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
@@ -349,7 +322,7 @@ ngx_rtmp_aggregate_message_handler(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
         }
 
         if (cl == NULL) {
-            ngx_log_error(NGX_LOG_ERR, s->connection->log, 0,
+            ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
                           "RTMP error parsing aggregate");
             return NGX_ERROR;
         }
@@ -455,8 +428,6 @@ ngx_rtmp_amf_message_handler(ngx_rtmp_session_t *s,
     ch = ngx_hash_find(&cmcf->amf_hash,
             ngx_hash_strlow(func, func, len), func, len);
 
-    s->log_bpos = ngx_sprintf(s->log_bpos, " amf_msg_name:%s", func);
-
     if (ch && ch->nelts) {
         ph = ch->elts;
         for (n = 0; n < ch->nelts; ++n, ++ph) {
@@ -489,25 +460,5 @@ ngx_rtmp_receive_amf(ngx_rtmp_session_t *s, ngx_chain_t *in,
     act.link = in;
     act.log = s->connection->log;
 
-    ngx_rtmp_receive_amf_meta(s, in, elts, nelts);
-
     return ngx_rtmp_amf_read(&act, elts, nelts);
-}
-
-ngx_rtmp_amf_elt_ex_t *
-ngx_rtmp_receive_amf_meta(ngx_rtmp_session_t *s, ngx_chain_t *in,
-        ngx_rtmp_amf_elt_t *elts, size_t nelts)
-{
-    ngx_rtmp_amf_ctx_t      act;
-
-    ngx_memzero(&act, sizeof(act));
-    act.link = in;
-    act.log = s->connection->log;
-    act.pool = s->connection->pool;
-
-    if (ngx_rtmp_amf_read_ex(&act, elts, nelts) != NGX_OK) {
-        return (ngx_rtmp_amf_elt_ex_t *) NGX_ERROR;
-    }
-
-    return act.elts;
 }

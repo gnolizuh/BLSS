@@ -11,7 +11,6 @@
 #include "ngx_rtmp_netcall_module.h"
 #include "ngx_rtmp_codec_module.h"
 #include "ngx_rtmp_record_module.h"
-#include "ngx_rtmp_log_module.h"
 
 
 ngx_rtmp_record_done_pt             ngx_rtmp_record_done;
@@ -36,33 +35,14 @@ static ngx_int_t ngx_rtmp_record_av(ngx_rtmp_session_t *s,
        ngx_rtmp_header_t *h, ngx_chain_t *in);
 static ngx_int_t ngx_rtmp_record_node_av(ngx_rtmp_session_t *s,
        ngx_rtmp_record_rec_ctx_t *rctx, ngx_rtmp_header_t *h, ngx_chain_t *in);
-
 static ngx_int_t ngx_rtmp_record_node_open(ngx_rtmp_session_t *s,
-       ngx_rtmp_record_rec_ctx_t *rctx, ngx_rtmp_record_ctx_t  *ctx);
-
+       ngx_rtmp_record_rec_ctx_t *rctx);
 static ngx_int_t ngx_rtmp_record_node_close(ngx_rtmp_session_t *s,
        ngx_rtmp_record_rec_ctx_t *rctx);
 static void  ngx_rtmp_record_make_path(ngx_rtmp_session_t *s,
-       ngx_rtmp_record_rec_ctx_t *rctx, ngx_rtmp_record_ctx_t *ctx, ngx_str_t *path);
-
+       ngx_rtmp_record_rec_ctx_t *rctx, ngx_str_t *path);
 static ngx_int_t ngx_rtmp_record_init(ngx_rtmp_session_t *s);
-static ngx_int_t ngx_rtmp_record_init_remote(ngx_rtmp_session_t *s);
 
-static void  ngx_rtmp_record_start(ngx_rtmp_session_t *s);
-static void  ngx_rtmp_record_start_remote(ngx_rtmp_session_t *s);
-
-
-static ngx_int_t ngx_rtmp_record_create_dir(ngx_rtmp_session_t *s,  u_char *path, ngx_file_info_t *fi);
-
-static ngx_int_t ngx_rtmp_record_ensure_directory(ngx_rtmp_session_t *s, ngx_rtmp_record_rec_ctx_t  *rctx);
-
-static ngx_int_t ngx_rtmp_record_init_indexfile(ngx_rtmp_session_t *s, 
-    ngx_rtmp_record_rec_ctx_t *rctx);
-static ngx_int_t ngx_rtmp_record_init_indexfile_remote(ngx_rtmp_session_t *s, 
-    ngx_rtmp_record_rec_ctx_t  *rctx);
-
-static ngx_int_t ngx_rtmp_record_write_over_file(ngx_rtmp_session_t *s, ngx_rtmp_record_ctx_t *ctx,
-ngx_rtmp_record_rec_ctx_t *rctx);
 
 static ngx_conf_bitmask_t  ngx_rtmp_record_mask[] = {
     { ngx_string("off"),                NGX_RTMP_RECORD_OFF         },
@@ -150,78 +130,6 @@ static ngx_command_t  ngx_rtmp_record_commands[] = {
       offsetof(ngx_rtmp_record_app_conf_t, interval),
       NULL },
 
-    { ngx_string("record_usr_id"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|
-                         NGX_RTMP_REC_CONF|NGX_CONF_TAKE1,
-      ngx_conf_set_str_slot,
-      NGX_RTMP_APP_CONF_OFFSET,
-      offsetof(ngx_rtmp_record_app_conf_t, user_id),
-      NULL },
-
-    { ngx_string("record_is_public"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|
-                         NGX_RTMP_REC_CONF|NGX_CONF_TAKE1,
-      ngx_conf_set_str_slot,
-      NGX_RTMP_APP_CONF_OFFSET,
-      offsetof(ngx_rtmp_record_app_conf_t, is_public),
-      NULL },
-
-    { ngx_string("record_vod_id"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|
-                         NGX_RTMP_REC_CONF|NGX_CONF_TAKE1,
-      ngx_conf_set_size_slot,
-      NGX_RTMP_APP_CONF_OFFSET,
-      offsetof(ngx_rtmp_record_app_conf_t, vdoid),
-      NULL },
-
-    { ngx_string("record_bucket"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|
-                         NGX_RTMP_REC_CONF|NGX_CONF_TAKE1,
-      ngx_conf_set_str_slot,
-      NGX_RTMP_APP_CONF_OFFSET,
-      offsetof(ngx_rtmp_record_app_conf_t, bucket),
-      NULL },
-      
-    { ngx_string("record_notify_url"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|
-    				     NGX_RTMP_REC_CONF|NGX_CONF_TAKE1,
-      ngx_conf_set_str_slot,
-      NGX_RTMP_APP_CONF_OFFSET,
-      offsetof(ngx_rtmp_record_app_conf_t, notify_url),
-      NULL },
-          
-    { ngx_string("screenshot_is_cover"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|
-                         NGX_RTMP_REC_CONF|NGX_CONF_TAKE1,
-      ngx_conf_set_flag_slot,
-      NGX_RTMP_APP_CONF_OFFSET,
-      offsetof(ngx_rtmp_record_app_conf_t, screenshot_is_cover),
-      NULL },
-
-    { ngx_string("screenshot_monitor"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|
-                         NGX_RTMP_REC_CONF|NGX_CONF_TAKE1,
-      ngx_conf_set_num_slot,
-      NGX_RTMP_APP_CONF_OFFSET,
-      offsetof(ngx_rtmp_record_app_conf_t, screenshot_monitor),
-      NULL },
-
-     { ngx_string("region_pic"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|
-    				     NGX_RTMP_REC_CONF|NGX_CONF_TAKE1,
-      ngx_conf_set_str_slot,
-      NGX_RTMP_APP_CONF_OFFSET,
-      offsetof(ngx_rtmp_record_app_conf_t, region_pic),
-      NULL },
-      
-    { ngx_string("host_pic"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|
-                         NGX_RTMP_REC_CONF|NGX_CONF_TAKE1,
-      ngx_conf_set_str_slot,
-      NGX_RTMP_APP_CONF_OFFSET,
-      offsetof(ngx_rtmp_record_app_conf_t, host_pic),
-      NULL },
-
     { ngx_string("record_notify"),
       NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|
                          NGX_RTMP_REC_CONF|NGX_CONF_TAKE1,
@@ -283,15 +191,13 @@ ngx_rtmp_record_create_app_conf(ngx_conf_t *cf)
 
     racf->max_size = NGX_CONF_UNSET_SIZE;
     racf->max_frames = NGX_CONF_UNSET_SIZE;
-    racf->vdoid = NGX_CONF_UNSET_SIZE;
     racf->interval = NGX_CONF_UNSET_MSEC;
     racf->unique = NGX_CONF_UNSET;
     racf->append = NGX_CONF_UNSET;
     racf->lock_file = NGX_CONF_UNSET;
     racf->notify = NGX_CONF_UNSET;
     racf->url = NGX_CONF_UNSET_PTR;
-    racf->screenshot_monitor = NGX_CONF_UNSET_UINT;
-	
+
     if (ngx_array_init(&racf->rec, cf->pool, 1, sizeof(void *)) != NGX_OK) {
         return NULL;
     }
@@ -308,27 +214,15 @@ ngx_rtmp_record_merge_app_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_rtmp_record_app_conf_t    **rracf;
 
     ngx_conf_merge_str_value(conf->path, prev->path, "");
-    ngx_conf_merge_str_value(conf->suffix, prev->suffix, ".flv.bak");
+    ngx_conf_merge_str_value(conf->suffix, prev->suffix, ".flv");
     ngx_conf_merge_size_value(conf->max_size, prev->max_size, 0);
     ngx_conf_merge_size_value(conf->max_frames, prev->max_frames, 0);
-    ngx_conf_merge_value(conf->unique, prev->unique, 1);
+    ngx_conf_merge_value(conf->unique, prev->unique, 0);
     ngx_conf_merge_value(conf->append, prev->append, 0);
     ngx_conf_merge_value(conf->lock_file, prev->lock_file, 0);
     ngx_conf_merge_value(conf->notify, prev->notify, 0);
-    ngx_conf_merge_value(conf->screenshot_is_cover, prev->screenshot_is_cover, 0);
-    ngx_conf_merge_uint_value(conf->screenshot_monitor, prev->screenshot_monitor, 0);
     ngx_conf_merge_msec_value(conf->interval, prev->interval,
                               (ngx_msec_t) NGX_CONF_UNSET);
-	
-    ngx_conf_merge_str_value(conf->user_id, prev->user_id, "");
-    ngx_conf_merge_str_value(conf->is_public, prev->is_public, "");
-    ngx_conf_merge_str_value(conf->bucket, prev->bucket, "");
-    ngx_conf_merge_str_value(conf->notify_url, prev->notify_url, "");
-    ngx_conf_merge_size_value(conf->vdoid, prev->vdoid, 0);
-
-    ngx_conf_merge_str_value(conf->region_pic, prev->region_pic, "");
-    ngx_conf_merge_str_value(conf->host_pic, prev->host_pic, ""); 
-    
     ngx_conf_merge_bitmask_value(conf->flags, prev->flags, 0);
     ngx_conf_merge_ptr_value(conf->url, prev->url, NULL);
 
@@ -397,25 +291,23 @@ ngx_rtmp_record_open(ngx_rtmp_session_t *s, ngx_uint_t n, ngx_str_t *path)
 {
     ngx_rtmp_record_rec_ctx_t      *rctx;
     ngx_int_t                       rc;
-    ngx_rtmp_record_ctx_t           *ctx;
 
     ngx_log_debug1(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
                    "record: #%ui manual open", n);
 
     rctx = ngx_rtmp_record_get_node_ctx(s, n);
-    ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_record_module);
-	
-    if (rctx == NULL || ctx == NULL) {
+
+    if (rctx == NULL) {
         return NGX_ERROR;
     }
 
-    rc = ngx_rtmp_record_node_open(s, rctx, ctx);
+    rc = ngx_rtmp_record_node_open(s, rctx);
     if (rc != NGX_OK) {
         return rc;
     }
-	
+
     if (path) {
-        ngx_rtmp_record_make_path(s, rctx, ctx, path);
+        ngx_rtmp_record_make_path(s, rctx, path);
     }
 
     return NGX_OK;
@@ -427,15 +319,13 @@ ngx_rtmp_record_close(ngx_rtmp_session_t *s, ngx_uint_t n, ngx_str_t *path)
 {
     ngx_rtmp_record_rec_ctx_t      *rctx;
     ngx_int_t                       rc;
-    ngx_rtmp_record_ctx_t          *ctx;
 
     ngx_log_debug1(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
                    "record: #%ui manual close", n);
-    
-    rctx = ngx_rtmp_record_get_node_ctx(s, n);
-    ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_record_module);
 
-    if (rctx == NULL || ctx ==  NULL) {
+    rctx = ngx_rtmp_record_get_node_ctx(s, n);
+
+    if (rctx == NULL) {
         return NGX_ERROR;
     }
 
@@ -445,7 +335,7 @@ ngx_rtmp_record_close(ngx_rtmp_session_t *s, ngx_uint_t n, ngx_str_t *path)
     }
 
     if (path) {
-        ngx_rtmp_record_make_path(s, rctx, ctx, path);
+        ngx_rtmp_record_make_path(s, rctx, path);
     }
 
     return NGX_OK;
@@ -477,38 +367,27 @@ ngx_rtmp_record_find(ngx_rtmp_record_app_conf_t *racf, ngx_str_t *id)
 /* This funcion returns pointer to a static buffer */
 static void
 ngx_rtmp_record_make_path(ngx_rtmp_session_t *s,
-                          ngx_rtmp_record_rec_ctx_t *rctx, ngx_rtmp_record_ctx_t *ctx, ngx_str_t *path)
+                          ngx_rtmp_record_rec_ctx_t *rctx, ngx_str_t *path)
 {
-    //ngx_rtmp_record_ctx_t          *ctx;
-    ngx_rtmp_record_app_conf_t     *rracf, *racf;
+    ngx_rtmp_record_ctx_t          *ctx;
+    ngx_rtmp_record_app_conf_t     *rracf;
     u_char                         *p, *l;
     struct tm                       tm;
 
     static u_char                   buf[NGX_TIME_T_LEN + 1];
     static u_char                   pbuf[NGX_MAX_PATH + 1];
 
-    racf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_record_module);
-    if (racf == NULL){
-        return;
-    }
+    ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_record_module);
 
-    if (ctx == NULL){
-        return;
-    }
-
-    if (ngx_rtmp_remote_conf()) {
-        rracf = racf;
-    }else {
-        rracf = rctx->conf;
-    }
+    rracf = rctx->conf;
 
     /* create file path */
     p = pbuf;
     l = pbuf + sizeof(pbuf) - 1;
 
-    p = ngx_cpymem(p, rctx->record_path.data,
-    			ngx_min(rctx->record_path.len, (size_t)(l - p - 1)));
-
+    p = ngx_cpymem(p, rracf->path.data,
+                ngx_min(rracf->path.len, (size_t)(l - p - 1)));
+    *p++ = '/';
     p = (u_char *)ngx_escape_uri(p, ctx->name, ngx_min(ngx_strlen(ctx->name),
                 (size_t)(l - p)), NGX_ESCAPE_URI_COMPONENT);
 
@@ -534,25 +413,15 @@ ngx_rtmp_record_make_path(ngx_rtmp_session_t *s,
                    "record: %V path: '%V'", &rracf->id, path);
 }
 
+
 static void
 ngx_rtmp_record_notify_error(ngx_rtmp_session_t *s,
                              ngx_rtmp_record_rec_ctx_t *rctx)
 {
-    ngx_rtmp_record_app_conf_t *rracf, *racf = NULL; 
-
-    racf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_record_module);
-    if(racf == NULL) {
-        return;
-    }
+    ngx_rtmp_record_app_conf_t *rracf = rctx->conf;
 
     rctx->failed = 1;
 
-    if (ngx_rtmp_remote_conf()) {
-
-        rracf = racf;
-    }else{
-        rracf = rctx->conf;
-    }
     if (!rracf->notify) {
         return;
     }
@@ -564,64 +433,32 @@ ngx_rtmp_record_notify_error(ngx_rtmp_session_t *s,
 
 static ngx_int_t
 ngx_rtmp_record_node_open(ngx_rtmp_session_t *s,
-                          ngx_rtmp_record_rec_ctx_t *rctx, ngx_rtmp_record_ctx_t *ctx)
+                          ngx_rtmp_record_rec_ctx_t *rctx)
 {
-    ngx_rtmp_record_app_conf_t *rracf, *racf;
+    ngx_rtmp_record_app_conf_t *rracf;
     ngx_err_t                   err;
     ngx_str_t                   path;
     ngx_int_t                   mode, create_mode;
     u_char                      buf[8], *p;
     off_t                       file_size;
     uint32_t                    tag_size, mlen, timestamp;
-    ngx_str_t                   record_path;
-    ngx_str_t                   index_path;
 
-    ngx_rtmp_rec_ctx_type_e     type;
-    ngx_int_t                   interval;
-    unsigned                    first_cutpic;
-
-    racf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_record_module);
-    if (racf == NULL){
-        return NGX_ERROR;
-    }
-
-    if(ngx_rtmp_record_ensure_directory(s, rctx) != NGX_OK) {
-        return NGX_ERROR;
-    }
+    rracf = rctx->conf;
+    tag_size = 0;
 
     if (rctx->file.fd != NGX_INVALID_FILE) {
         return NGX_AGAIN;
     }
-    if (ngx_rtmp_remote_conf()) {
-
-        rracf = racf;
-    }else {
-
-        rracf = rctx->conf;
-    }
-
-    record_path = rctx->record_path;
-    index_path = rctx->index_path;
-    type = rctx->type;
-    interval = rctx->interval;
-    first_cutpic = rctx->first_cutpic;
-    tag_size = 0;
 
     ngx_log_debug1(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
                    "record: %V opening", &rracf->id);
 
     ngx_memzero(rctx, sizeof(*rctx));
     rctx->conf = rracf;
-    rctx->record_path = record_path;
-    rctx->index_path = index_path;
-    rctx->type = type;
-    rctx->interval = interval;
-    rctx->first_cutpic = first_cutpic;
-
     rctx->last = *ngx_cached_time;
     rctx->timestamp = ngx_cached_time->sec;
 
-    ngx_rtmp_record_make_path(s, rctx, ctx, &path);
+    ngx_rtmp_record_make_path(s, rctx, &path);
 
     mode = rracf->append ? NGX_FILE_RDWR : NGX_FILE_WRONLY;
     create_mode = rracf->append ? NGX_FILE_CREATE_OR_OPEN : NGX_FILE_TRUNCATE;
@@ -635,9 +472,12 @@ ngx_rtmp_record_node_open(ngx_rtmp_session_t *s,
 
     if (rctx->file.fd == NGX_INVALID_FILE) {
         err = ngx_errno;
-        ngx_log_error(NGX_LOG_CRIT, s->connection->log, err,
-                      "record: %V failed to open file '%V', err:%D",
-                      &rracf->id, &path, err);
+
+        if (err != NGX_ENOENT) {
+            ngx_log_error(NGX_LOG_CRIT, s->connection->log, err,
+                          "record: %V failed to open file '%V'",
+                          &rracf->id, &path);
+        }
 
         ngx_rtmp_record_notify_error(s, rctx);
 
@@ -658,7 +498,6 @@ ngx_rtmp_record_node_open(ngx_rtmp_session_t *s,
                    "record: %V opened '%V'", &rracf->id, &path);
 
     if (rracf->notify) {
-
         ngx_rtmp_send_status(s, "NetStream.Record.Start", "status",
                              rracf->id.data ? (char *) rracf->id.data : "");
     }
@@ -682,7 +521,7 @@ ngx_rtmp_record_node_open(ngx_rtmp_session_t *s,
         file_size = lseek(rctx->file.fd, 0, SEEK_END);
 #endif
         if (file_size == (off_t) -1) {
-            ngx_log_error(NGX_LOG_ERR, s->connection->log, ngx_errno,
+            ngx_log_error(NGX_LOG_CRIT, s->connection->log, ngx_errno,
                           "record: %V seek failed", &rracf->id);
             goto done;
         }
@@ -755,9 +594,6 @@ ngx_rtmp_record_init(ngx_rtmp_session_t *s)
     ngx_rtmp_record_ctx_t          *ctx;
     ngx_uint_t                      n;
 
-#define     PATH_BUFF_LEN       1024
-#define     TIME_BUFF_LEN        256
-
     ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_record_module);
 
     if (ctx) {
@@ -770,7 +606,7 @@ ngx_rtmp_record_init(ngx_rtmp_session_t *s)
         return NGX_OK;
     }
 
-    ctx = ngx_pcalloc(s->pool, sizeof(ngx_rtmp_record_ctx_t));
+    ctx = ngx_pcalloc(s->connection->pool, sizeof(ngx_rtmp_record_ctx_t));
 
     if (ctx == NULL) {
         return NGX_ERROR;
@@ -778,7 +614,7 @@ ngx_rtmp_record_init(ngx_rtmp_session_t *s)
 
     ngx_rtmp_set_ctx(s, ctx, ngx_rtmp_record_module);
 
-    if (ngx_array_init(&ctx->rec, s->pool, racf->rec.nelts,
+    if (ngx_array_init(&ctx->rec, s->connection->pool, racf->rec.nelts,
                        sizeof(ngx_rtmp_record_rec_ctx_t))
         != NGX_OK)
     {
@@ -795,6 +631,7 @@ ngx_rtmp_record_init(ngx_rtmp_session_t *s)
 
     for (n = 0; n < racf->rec.nelts; ++n, ++rracf, ++rctx) {
         ngx_memzero(rctx, sizeof(*rctx));
+
         rctx->conf = *rracf;
         rctx->file.fd = NGX_INVALID_FILE;
     }
@@ -802,450 +639,6 @@ ngx_rtmp_record_init(ngx_rtmp_session_t *s)
     return NGX_OK;
 }
 
-
-static ngx_int_t
-ngx_rtmp_record_init_remote(ngx_rtmp_session_t *s)
-{
-    ngx_rtmp_record_app_conf_t    *racf;
-    ngx_rtmp_record_ctx_t         *ctx;
-    ngx_rtmp_record_rec_ctx_t     *rctx;
-
-#define     PATH_BUFF_LEN       1024
-#define     TIME_BUFF_LEN        256
-
-    ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_record_module);
-    if (ctx) {
-        return NGX_OK;
-    }
-
-    racf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_record_module);
-    if (racf == NULL) {
-        return NGX_ERROR;
-    }
-
-    ctx = ngx_pcalloc(s->pool, sizeof(ngx_rtmp_record_ctx_t));
-    if (ctx == NULL) {
-        return NGX_ERROR;
-    }
-
-    ngx_rtmp_set_ctx(s, ctx, ngx_rtmp_record_module);
-
-    if (!s->conf.screenshot) {
-        return NGX_OK;
-    }
-
-    if (ngx_array_init(&ctx->rec, s->pool, 4,
-                       sizeof(ngx_rtmp_record_rec_ctx_t))
-        != NGX_OK)
-    {
-        return NGX_ERROR;
-    }
-
-    rctx = ngx_array_push(&ctx->rec);
-    if (rctx == NULL) {
-        return NGX_ERROR;
-    }
-
-    ngx_memzero(rctx, sizeof(*rctx));
-    rctx->type = NGX_RTMP_REC_CTX_TYPE_PIC;
-    rctx->interval = s->conf.screenshot_interval;
-
-    rctx->file.fd = NGX_INVALID_FILE;
-
-    return NGX_OK;
-}
-
-
-static ngx_int_t
-ngx_rtmp_record_create_dir(ngx_rtmp_session_t *s, u_char *path, ngx_file_info_t *fi)
-{
-    if (!s || !path || !fi) {
-
-        return NGX_ERROR;
-    }
-
-    if (ngx_file_info(path, fi) == NGX_FILE_ERROR) {
-
-        if (ngx_errno != NGX_ENOENT) {
-            ngx_log_debug1(NGX_LOG_DEBUG_RTMP, s->connection->log, ngx_errno,
-                           "record_create_indexfile: " ngx_file_info_n " failed on '%s'", path);
-            return NGX_ERROR;
-        }
-
-        /* ENOENT */
-        if (ngx_create_full_path(path, 0777) == NGX_FILE_ERROR) {
-            ngx_log_error(NGX_LOG_ERR, s->connection->log, ngx_errno,
-                          "record create directory " ngx_create_dir_n " failed on '%s'", path);
-            return NGX_ERROR;
-        }
-        ngx_log_debug1(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
-                       "record_create_indexfile: directory '%s' created", path);
-
-    } else {
-
-        if (!ngx_is_dir(fi)) {
-            ngx_log_error(NGX_LOG_ERR, s->connection->log, 0,
-                          "pic: '%s' exists and is not a directory", path);
-            return  NGX_ERROR;
-        }
-
-        ngx_log_debug1(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
-                       "pic: '%s' exists", path);
-    }
-
-    return NGX_OK;
-}
-
-
-static ngx_int_t
-ngx_rtmp_record_ensure_directory(ngx_rtmp_session_t *s, ngx_rtmp_record_rec_ctx_t  *rctx)
-{
-    ngx_str_t                                 path;
-    ngx_str_t                                 unique_name;
-    ngx_rtmp_core_srv_conf_t                 *cscf;
-    ngx_file_info_t                           fi;
-    u_char                                    num[NGX_INT32_LEN];
-    u_char                                   *p;
-    u_char                                    index_path[NGX_MAX_PATH];
-    u_char                                    record_path[NGX_MAX_PATH];
-    u_char                                    publish_time[NGX_INT32_LEN];
-
-#define NGX_RTMP_RECORD_MERGE_PATH(p, unique_name, app, sname, time, num) \
-    do {\
-        p = ngx_cpymem(p, unique_name.data, unique_name.len); \
-        *p++ = '/'; \
-        p  = ngx_cpymem(p, app.data, app.len); \
-        *p++ = '/'; \
-        p = ngx_cpymem(p, sname.data, sname.len); \
-        *p++ = '/'; \
-        p = ngx_cpymem(p, time, ngx_strlen(time));  \
-        p = ngx_cpymem(p, "_", ngx_strlen("_"));  \
-        p = ngx_cpymem(p, num, ngx_strlen((char *)num));  \
-        *p++ = '/'; \
-    } while(0)
-
-    /*first time to create directory*/
-    if (rctx->index_path.len == 0 || rctx->record_path.len == 0) {
-
-        ngx_memzero(num, NGX_INT32_LEN);
-        *ngx_sprintf(num, "%ui", (ngx_uint_t)s->connection->number) = 0;
-
-        ngx_sprintf(publish_time, "%T", ngx_current_msec);
-
-        cscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_core_module);
-        unique_name = ngx_rtmp_get_attr_conf(cscf, unique_name);
-
-        ngx_str_set(&path, "/data/picture/index");
-
-        ngx_memzero(index_path, NGX_MAX_PATH);
-        if (path.data[path.len - 1] != '/') {
-            p = ngx_snprintf(index_path, NGX_MAX_PATH, "%V/", &path);
-        } else {
-            p = ngx_snprintf(index_path, NGX_MAX_PATH, "%V", &path);
-        }
-
-        NGX_RTMP_RECORD_MERGE_PATH(p, unique_name, s->app, s->name, publish_time, num);
-
-        rctx->index_path.len = ngx_strlen(index_path);
-        rctx->index_path.data = ngx_pcalloc(s->pool, rctx->index_path.len);
-        ngx_sprintf(rctx->index_path.data, "%s", index_path);
-        if (ngx_rtmp_record_create_dir(s, index_path, &fi) == NGX_ERROR) {
-            return NGX_ERROR;
-        }
-
-        ngx_str_set(&path, "/data/picture/data");
-        ngx_memzero(record_path, NGX_MAX_PATH);
-        if (path.data[path.len - 1] != '/') {
-            p = ngx_snprintf(record_path, NGX_MAX_PATH, "%V/", &path);
-        } else {
-            p = ngx_snprintf(record_path, NGX_MAX_PATH, "%V", &path);
-        }
-
-        NGX_RTMP_RECORD_MERGE_PATH(p, unique_name, s->app, s->name, publish_time, num);
-
-        rctx->record_path.len = ngx_strlen(record_path);
-        rctx->record_path.data = ngx_pcalloc(s->pool, rctx->record_path.len);
-        ngx_sprintf(rctx->record_path.data, "%s", record_path);
-
-        if (ngx_rtmp_record_create_dir(s, record_path, &fi) == NGX_ERROR) {
-            return NGX_ERROR;
-        }
-
-    } else {
-        ngx_memzero(index_path, sizeof(index_path));
-        p = ngx_cpymem(index_path, rctx->index_path.data, rctx->index_path.len);
-        if (p[-1] != '/') {
-            *p++ = '/';
-        }
-
-        if (ngx_file_info(index_path, &fi) == NGX_FILE_ERROR) {
-            if (ngx_errno != NGX_ENOENT) {
-                ngx_log_error(NGX_LOG_ERR, s->connection->log, ngx_errno,
-                              "pic: " ngx_file_info_n " failed on '%V'",
-                              &rctx->index_path);
-                return NGX_ERROR;
-            }
-
-            if (ngx_rtmp_record_create_dir(s, index_path, &fi) == NGX_ERROR) {
-                ngx_log_error(NGX_LOG_ERR, s->connection->log, ngx_errno,
-                               "pic: " ngx_create_dir_n " failed on '%V'",
-                               &rctx->index_path);
-                return NGX_ERROR;
-            }
-
-            ngx_log_error(NGX_LOG_ERR, s->connection->log, 0,
-                           "pic: directory '%V' created", &rctx->index_path);
-        }
-
-        ngx_memzero(record_path, sizeof(record_path));
-        p = ngx_cpymem(record_path, rctx->record_path.data, rctx->record_path.len);
-        if (p[-1] != '/') {
-            *p++ = '/';
-        }
-
-        if (ngx_file_info(record_path, &fi) == NGX_FILE_ERROR) {
-            if (ngx_errno != NGX_ENOENT) {
-                ngx_log_error(NGX_LOG_ERR, s->connection->log, ngx_errno,
-                              "pic: " ngx_file_info_n " failed on '%V'",
-                              &rctx->record_path);
-                return NGX_ERROR;
-            }
-
-            if (ngx_rtmp_record_create_dir(s, record_path, &fi) == NGX_ERROR) {
-                ngx_log_error(NGX_LOG_ERR, s->connection->log, ngx_errno,
-                              "pic: " ngx_create_dir_n " failed on '%V'",
-                              &rctx->record_path);
-                return NGX_ERROR;
-            }
-
-            ngx_log_error(NGX_LOG_ERR, s->connection->log, 0,
-                          "pic: directory '%V' created", &rctx->record_path);
-        }
-    }
-
-    if(ngx_rtmp_remote_conf()) {
-        ngx_rtmp_record_init_indexfile_remote(s, rctx);
-    } else {
-        ngx_rtmp_record_init_indexfile(s, rctx);
-    }
-
-    return NGX_OK;
-
-#undef NGX_RTMP_RECORD_MERGE_PATH
-}
-
-#define   INDEX_BUFF_LEN              1024
-#define   NGX_RTMP_RECORD_CRLF        "\r\n"
-
-static ngx_int_t
-ngx_rtmp_record_init_indexfile(ngx_rtmp_session_t *s, ngx_rtmp_record_rec_ctx_t  *rctx)
-{
-    u_char                         path[NGX_MAX_PATH], *p;
-    u_char                         buffer[INDEX_BUFF_LEN];
-    ngx_int_t                      n;
-    ngx_uint_t                     is_picture;
-    ngx_file_t                     index_file;
-    ngx_file_info_t                fi;
-
-    ngx_memzero(path, NGX_MAX_PATH);
-    p = ngx_snprintf(path, NGX_MAX_PATH, "%Vindex.txt", &rctx->index_path);
-
-    if(ngx_file_info(path, &fi)) {
-        if(!ngx_is_file(&fi)) {
-            ngx_log_error(NGX_LOG_ERR, s->connection->log, 0,
-                          "pic: '%s' exists and is not a file", path);
-            return  NGX_ERROR;
-        } else {
-            return NGX_OK;
-        }
-    }
-
-    ngx_memzero(&index_file, sizeof(index_file));
-    ngx_str_set(&index_file.name, "index.txt");
-    index_file.log = s->connection->log;
-    index_file.fd = ngx_open_file(path, NGX_FILE_WRONLY, NGX_FILE_TRUNCATE, NGX_FILE_DEFAULT_ACCESS);
-
-    if (index_file.fd == NGX_INVALID_FILE) {
-        ngx_log_error(NGX_LOG_ERR, s->connection->log, ngx_errno,
-                      "init_indexfile: error creating index file");
-        return NGX_ERROR;
-    }
-
-    if((rctx->conf->flags & NGX_RTMP_RECORD_VIDEO) &&
-    	(rctx->conf->flags & NGX_RTMP_RECORD_KEYFRAMES)) {
-
-        is_picture = 1;
-    } else {
-
-        is_picture = 0;
-    }
-
-    if (s->vdoid.len > 0) {
-    	p = ngx_snprintf(buffer, sizeof(buffer),
-                 "usr_id %V"NGX_RTMP_RECORD_CRLF
-                 "vdoid %V"NGX_RTMP_RECORD_CRLF
-                 "is_public %V"NGX_RTMP_RECORD_CRLF
-                 "bucket %V"NGX_RTMP_RECORD_CRLF
-                 "notify_url %V"NGX_RTMP_RECORD_CRLF
-                 "interval %ui"NGX_RTMP_RECORD_CRLF
-                 "is_picture %ui"NGX_RTMP_RECORD_CRLF
-                 "screenshot_is_cover %ui"NGX_RTMP_RECORD_CRLF
-                 "screenshot_monitor %ui"NGX_RTMP_RECORD_CRLF
-                 "region_pic %V"NGX_RTMP_RECORD_CRLF
-                 "host_pic %V"NGX_RTMP_RECORD_CRLF
-                 NGX_RTMP_RECORD_CRLF,
-                 &rctx->conf->user_id, &s->vdoid, &rctx->conf->is_public,
-	    	     &rctx->conf->bucket, &rctx->conf->notify_url,
-	    	     rctx->conf->interval/1000, is_picture, rctx->conf->screenshot_is_cover,
-                 rctx->conf->screenshot_monitor,
-	    	     &rctx->conf->region_pic,
-	    	     &rctx->conf->host_pic);
-    } else {
-    	p = ngx_snprintf(buffer, sizeof(buffer),
-                 "usr_id %V"NGX_RTMP_RECORD_CRLF
-                 "is_public %V"NGX_RTMP_RECORD_CRLF
-                 "bucket %V"NGX_RTMP_RECORD_CRLF
-                 "notify_url %V"NGX_RTMP_RECORD_CRLF
-                 "interval %ui"NGX_RTMP_RECORD_CRLF
-                 "is_picture %ui"NGX_RTMP_RECORD_CRLF
-                 "screenshot_is_cover %ui"NGX_RTMP_RECORD_CRLF
-                 "screenshot_monitor %ui"NGX_RTMP_RECORD_CRLF
-                 "region_pic %V"NGX_RTMP_RECORD_CRLF
-                 "host_pic %V"NGX_RTMP_RECORD_CRLF
-                 NGX_RTMP_RECORD_CRLF,
-                 &rctx->conf->user_id, &rctx->conf->is_public,
-	    	     &rctx->conf->bucket, &rctx->conf->notify_url, 
-	    	     rctx->conf->interval/1000, is_picture, rctx->conf->screenshot_is_cover,
-                 rctx->conf->screenshot_monitor,
-	    	     &rctx->conf->region_pic,
-	    	     &rctx->conf->host_pic);
-    }
-
-    n = ngx_write_fd(index_file.fd, buffer, p - buffer);
-    if (n < 0) {
-
-        ngx_log_error(NGX_LOG_ERR, s->connection->log, ngx_errno,
-                  "init_indexfile: " ngx_write_fd_n " failed: '%V'",
-                  &rctx->index_path);
-        ngx_close_file(index_file.fd);
-        return NGX_ERROR;
-    }
-
-    ngx_close_file(index_file.fd);
-
-    return NGX_OK;
-}
-
-static ngx_int_t
-ngx_rtmp_record_init_indexfile_remote(ngx_rtmp_session_t *s, ngx_rtmp_record_rec_ctx_t  *rctx)
-{
-    u_char                        path[NGX_MAX_PATH], *p;
-    static u_char                 buffer[INDEX_BUFF_LEN];
-    ngx_int_t                     n;
-    ngx_file_t                    index_file;
-    ngx_file_info_t               fi;
-
-    ngx_memzero(path, NGX_MAX_PATH);
-    p = ngx_snprintf(path, NGX_MAX_PATH, "%Vindex.txt", &rctx->index_path);
-
-    if(!ngx_file_info(path, &fi)) {
-        if(!ngx_is_file(&fi)) {
-            ngx_log_error(NGX_LOG_ERR, s->connection->log, 0,
-                          "pic: '%s' exists and is not a file", path);
-            return  NGX_ERROR;
-        } else {
-            return NGX_OK;
-        }
-    }
-
-    ngx_memzero(&index_file, sizeof(index_file));
-    ngx_str_set(&index_file.name, "index.txt");
-    index_file.log = s->connection->log;
-    index_file.fd = ngx_open_file(path, NGX_FILE_WRONLY, NGX_FILE_TRUNCATE, NGX_FILE_DEFAULT_ACCESS);
-
-    if (index_file.fd == NGX_INVALID_FILE) {
-        ngx_log_error(NGX_LOG_ERR, s->connection->log, ngx_errno,
-                      "init_indexfile: error creating index file");
-        return NGX_ERROR;
-    }
-
-    p   = buffer;
-    p = ngx_snprintf(p, INDEX_BUFF_LEN - (p - buffer) - 1,
-            "usr_id %i"NGX_RTMP_RECORD_CRLF, s->conf.user_id);
-
-    if (s->vdoid.len > 0) {
-        p = ngx_snprintf(p, INDEX_BUFF_LEN - (p - buffer) - 1,
-                "vdoid %V"NGX_RTMP_RECORD_CRLF, &s->vdoid);
-    }
-
-    p = ngx_snprintf(p, INDEX_BUFF_LEN - (p - buffer) - 1,
-            "is_public %ui"NGX_RTMP_RECORD_CRLF
-            "bucket %V"NGX_RTMP_RECORD_CRLF
-            "notify_url %V"NGX_RTMP_RECORD_CRLF
-            "interval %ui"NGX_RTMP_RECORD_CRLF
-            "is_picture %ui"NGX_RTMP_RECORD_CRLF
-            "screenshot_is_cover %ui"NGX_RTMP_RECORD_CRLF
-            "region_pic %V"NGX_RTMP_RECORD_CRLF
-            "host_pic %V"NGX_RTMP_RECORD_CRLF
-            "screenshot_monitor %ui"NGX_RTMP_RECORD_CRLF
-            NGX_RTMP_RECORD_CRLF,
-            s->conf.screenshot_is_public,
-            &s->conf.screenshot_bucket,
-            &s->conf.screenshot_url,
-            s->conf.screenshot_interval,
-            rctx->type == NGX_RTMP_REC_CTX_TYPE_PIC,
-            s->conf.screenshot_is_cover,
-            &s->conf.region_pic,
-            &s->conf.host_pic,
-            s->conf.screenshot_monitor);
-
-    n = ngx_write_fd(index_file.fd, buffer, p - buffer);
-    if (n < 0) {
-
-        ngx_log_error(NGX_LOG_ERR, s->connection->log, ngx_errno,
-            "init_indexfile: " ngx_write_fd_n " failed: '%V'", &rctx->index_path);
-        ngx_close_file(index_file.fd);
-        return NGX_ERROR;
-    }
-
-    ngx_close_file(index_file.fd);
-
-    return NGX_OK;
-}
-
-#undef NGX_RTMP_RECORD_CRLF
-#undef INDEX_BUFF_LEN
-
-static ngx_int_t
-ngx_rtmp_record_write_over_file(ngx_rtmp_session_t *s, ngx_rtmp_record_ctx_t *ctx,
-ngx_rtmp_record_rec_ctx_t *rctx)
-{
-    u_char          	path[NGX_MAX_PATH], *p;
-    ngx_file_t          file;
-
-    ngx_memzero(path, NGX_MAX_PATH);
-
-    p = ngx_snprintf(path, NGX_MAX_PATH, "%Vend", &rctx->record_path);
-    if(p == NULL) {
-        return NGX_ERROR;
-    }
-
-    ngx_memzero(&file, sizeof(file));
-    ngx_str_set(&file.name, "end");
-    file.offset = 0;
-    file.log = s->connection->log;
-    file.fd = ngx_open_file(path, NGX_FILE_WRONLY,
-                                 NGX_FILE_TRUNCATE, NGX_FILE_DEFAULT_ACCESS);
-
-    if (file.fd == NGX_INVALID_FILE) {
-
-    	return NGX_ERROR;
-    }
-
-    ngx_close_file(file.fd);
-
-    return NGX_OK;
-}
 
 static void
 ngx_rtmp_record_start(ngx_rtmp_session_t *s)
@@ -1273,35 +666,7 @@ ngx_rtmp_record_start(ngx_rtmp_session_t *s)
         if (rctx->conf->flags & (NGX_RTMP_RECORD_OFF|NGX_RTMP_RECORD_MANUAL)) {
             continue;
         }
-
-        ngx_rtmp_record_ensure_directory(s, rctx);
-    }
-}
-
-static void
-ngx_rtmp_record_start_remote(ngx_rtmp_session_t *s)
-{
-    ngx_rtmp_record_app_conf_t     *racf;
-    ngx_rtmp_record_ctx_t          *ctx;
-    ngx_rtmp_record_rec_ctx_t      *rctx;
-    ngx_uint_t                      n;
-
-    racf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_record_module);
-    if (racf == NULL) {
-        return;
-    }
-
-    ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_record_module);
-    if (ctx == NULL) {
-        return;
-    }
-
-    ngx_log_debug0(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
-                   "record: start");
-
-    rctx = ctx->rec.elts;
-    for (n = 0; n < ctx->rec.nelts; ++n,++rctx) {
-        ngx_rtmp_record_ensure_directory(s, rctx);
+        ngx_rtmp_record_node_open(s, rctx);
     }
 }
 
@@ -1315,14 +680,8 @@ ngx_rtmp_record_stop(ngx_rtmp_session_t *s)
     ngx_uint_t                      n;
 
     racf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_record_module);
-    if(racf == NULL) {
+    if (racf == NULL || racf->rec.nelts == 0) {
         return;
-    }
-
-    if (!ngx_rtmp_remote_conf()) {
-        if (racf->rec.nelts == 0) {
-            return;
-        }
     }
 
     ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_record_module);
@@ -1347,35 +706,23 @@ ngx_rtmp_record_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
     ngx_rtmp_record_ctx_t          *ctx;
     u_char                         *p;
 
-    if (s->relay_type != NGX_NONE_RELAY) {
+    if (s->auto_pushed) {
         goto next;
     }
 
     racf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_record_module);
 
-    if (ngx_rtmp_remote_conf()) {
-
-        if (racf == NULL) {
-            goto next;
-        }
-
-        if (ngx_rtmp_record_init_remote(s) != NGX_OK) {
-            return NGX_ERROR;
-        }
-    } else {
-
-        if (racf == NULL || racf->rec.nelts == 0) {
-            goto next;
-        }
-
-        if (ngx_rtmp_record_init(s) != NGX_OK) {
-            return NGX_ERROR;
-        }
-
-        ngx_log_debug1(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
-                       "record: publish %ui nodes",
-                       racf->rec.nelts);
+    if (racf == NULL || racf->rec.nelts == 0) {
+        goto next;
     }
+
+    if (ngx_rtmp_record_init(s) != NGX_OK) {
+        return NGX_ERROR;
+    }
+
+    ngx_log_debug1(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
+                   "record: publish %ui nodes",
+                   racf->rec.nelts);
 
     ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_record_module);
 
@@ -1393,11 +740,7 @@ ngx_rtmp_record_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
         }
     }
 
-    if (ngx_rtmp_remote_conf()) {
-        ngx_rtmp_record_start_remote(s);
-    } else {
-        ngx_rtmp_record_start(s);
-    }
+    ngx_rtmp_record_start(s);
 
 next:
     return next_publish(s, v);
@@ -1407,20 +750,14 @@ next:
 static ngx_int_t
 ngx_rtmp_record_stream_begin(ngx_rtmp_session_t *s, ngx_rtmp_stream_begin_t *v)
 {
-    if (s->relay_type != NGX_NONE_RELAY) {
+    if (s->auto_pushed) {
         goto next;
     }
 
     ngx_log_debug0(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
                    "record: stream_begin");
 
-    if (ngx_rtmp_remote_conf()) {  //remote conf
-
-        ngx_rtmp_record_start_remote(s);
-
-    } else {   //local conf
-        ngx_rtmp_record_start(s);
-    }
+    ngx_rtmp_record_start(s);
 
 next:
     return next_stream_begin(s, v);
@@ -1430,7 +767,7 @@ next:
 static ngx_int_t
 ngx_rtmp_record_stream_eof(ngx_rtmp_session_t *s, ngx_rtmp_stream_begin_t *v)
 {
-    if (s->relay_type != NGX_NONE_RELAY) {
+    if (s->auto_pushed) {
         goto next;
     }
 
@@ -1448,31 +785,15 @@ static ngx_int_t
 ngx_rtmp_record_node_close(ngx_rtmp_session_t *s,
                            ngx_rtmp_record_rec_ctx_t *rctx)
 {
-    ngx_rtmp_record_app_conf_t  *rracf, *racf = NULL;
+    ngx_rtmp_record_app_conf_t *rracf;
     ngx_err_t                   err;
-    void                        **app_conf;
+    void                      **app_conf;
     ngx_int_t                   rc;
     ngx_rtmp_record_done_t      v;
     u_char                      av;
-    char                        *p2;
-    ngx_rtmp_record_ctx_t       *ctx;
-    u_char                      node_path[NGX_MAX_PATH];
 
-    racf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_record_module);
-    if (racf == NULL) {
-		
-        return NGX_ERROR;
-    }
+    rracf = rctx->conf;
 
-    if (ngx_rtmp_remote_conf()) {
-		
-        rracf = racf;
-    } else {
-        rracf = rctx->conf;
-    }
- 
-    ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_record_module);
-	
     if (rctx->file.fd == NGX_INVALID_FILE) {
         return NGX_AGAIN;
     }
@@ -1508,7 +829,6 @@ ngx_rtmp_record_node_close(ngx_rtmp_session_t *s,
                    "record: %V closed", &rracf->id);
 
     if (rracf->notify) {
-
         ngx_rtmp_send_status(s, "NetStream.Record.Stop", "status",
                              rracf->id.data ? (char *) rracf->id.data : "");
     }
@@ -1520,26 +840,11 @@ ngx_rtmp_record_node_close(ngx_rtmp_session_t *s,
     }
 
     v.recorder = rracf->id;
-    ngx_memzero(node_path, NGX_MAX_PATH);
-    ngx_rtmp_record_make_path(s, rctx, ctx, &v.path);
-    p2 = ngx_strstr((char *)v.path.data, ".bak");
-    ngx_memcpy(node_path, v.path.data, (size_t)(p2 - (char *)v.path.data));
-    ngx_rename_file(v.path.data, node_path);
-
-    if (!rctx->initialized || !rctx->avc_header_sent || !rctx->video_key_sent) {
-        if (ngx_delete_file(node_path) == NGX_FILE_ERROR) {
-            ngx_log_error(NGX_LOG_ERR, s->connection->log, ngx_errno,
-                          "record: cleanup " ngx_delete_file_n " failed on '%V'",
-                          &(v.path));
-        }
-    }
+    ngx_rtmp_record_make_path(s, rctx, &v.path);
 
     rc = ngx_rtmp_record_done(s, &v);
 
     s->app_conf = app_conf;
-
-    ngx_log_debug1(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
-                  "record %s successed", node_path);
 
     return rc;
 }
@@ -1549,30 +854,15 @@ static ngx_int_t
 ngx_rtmp_record_close_stream(ngx_rtmp_session_t *s,
                              ngx_rtmp_close_stream_t *v)
 {
-    ngx_rtmp_record_rec_ctx_t      *rctx;
-    ngx_rtmp_record_ctx_t          *ctx;
-    ngx_uint_t                      n;
-
-
-    if (s->relay_type != NGX_NONE_RELAY) {
+    if (s->auto_pushed) {
         goto next;
-    }
-
-    ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_record_module);
-    if (ctx == NULL) {
-        return NGX_ERROR;
     }
 
     ngx_log_debug0(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
                    "record: close_stream");
 
     ngx_rtmp_record_stop(s);
-	
-    rctx = ctx->rec.elts;
-    for (n = 0; n < ctx->rec.nelts; ++n, ++rctx) {
-        ngx_rtmp_record_write_over_file(s, ctx, rctx);
-    }
-	
+
 next:
     return next_close_stream(s, v);
 }
@@ -1584,21 +874,11 @@ ngx_rtmp_record_write_frame(ngx_rtmp_session_t *s,
                             ngx_rtmp_header_t *h, ngx_chain_t *in,
                             ngx_int_t inc_nframes)
 {
-    ngx_rtmp_record_app_conf_t *rracf, *racf;
     u_char                      hdr[11], *p, *ph;
     uint32_t                    timestamp, tag_size;
-    size_t                      max_frames;
+    ngx_rtmp_record_app_conf_t *rracf;
 
-    racf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_record_module);
-    if (racf == NULL) {
-         return NGX_ERROR;
-    }
-
-    if(ngx_rtmp_remote_conf()) {
-        rracf = racf;
-    } else {
-        rracf = rctx->conf;
-    }
+    rracf = rctx->conf;
 
     ngx_log_debug2(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
                    "record: %V frame: mlen=%uD",
@@ -1611,7 +891,6 @@ ngx_rtmp_record_write_frame(ngx_rtmp_session_t *s,
     }
 
     timestamp = h->timestamp - rctx->epoch;
-    max_frames = 0;
 
     if ((int32_t) timestamp < 0) {
         ngx_log_debug2(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
@@ -1690,24 +969,10 @@ ngx_rtmp_record_write_frame(ngx_rtmp_session_t *s,
     rctx->nframes += inc_nframes;
 
     /* watch max size */
-    if (ngx_rtmp_remote_conf())  {
-
-        if (rctx->type == NGX_RTMP_REC_CTX_TYPE_PIC) {
-
-           max_frames = 1;
-	    }
-
-        if ((rracf->max_size && rctx->file.offset >= (ngx_int_t) rracf->max_size) ||
-            (max_frames && rctx->nframes >= max_frames))
-        {
-            ngx_rtmp_record_node_close(s, rctx);
-        }
-    } else {
-        if ((rracf->max_size && rctx->file.offset >= (ngx_int_t) rracf->max_size) ||
-            (rracf->max_frames && rctx->nframes >= rracf->max_frames))
-        {
-            ngx_rtmp_record_node_close(s, rctx);
-        }
+    if ((rracf->max_size && rctx->file.offset >= (ngx_int_t) rracf->max_size) ||
+        (rracf->max_frames && rctx->nframes >= rracf->max_frames))
+    {
+        ngx_rtmp_record_node_close(s, rctx);
     }
 
     return NGX_OK;
@@ -1755,36 +1020,13 @@ static ngx_int_t
 ngx_rtmp_record_node_av(ngx_rtmp_session_t *s, ngx_rtmp_record_rec_ctx_t *rctx,
                         ngx_rtmp_header_t *h, ngx_chain_t *in)
 {
-    ngx_time_t                         next;
-    ngx_rtmp_header_t                  ch;
-    ngx_rtmp_codec_ctx_t              *codec_ctx;
-    ngx_int_t                          keyframe, brkframe;
-    ngx_rtmp_record_app_conf_t        *rracf, *racf;
-    ngx_rtmp_record_ctx_t             *ctx;
+    ngx_time_t                      next;
+    ngx_rtmp_header_t               ch;
+    ngx_rtmp_codec_ctx_t           *codec_ctx;
+    ngx_int_t                       keyframe, brkframe;
+    ngx_rtmp_record_app_conf_t     *rracf;
 
-    racf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_record_module);
-    if(racf == NULL) {
-        return NGX_ERROR;
-    }
-
-    if(ngx_rtmp_remote_conf()) {
-
-        rracf = racf;
-        rracf->interval = rctx->interval;
-        if (rctx->type == NGX_RTMP_REC_CTX_TYPE_PIC) {
-
-            rracf->flags = NGX_RTMP_RECORD_VIDEO|NGX_RTMP_RECORD_KEYFRAMES;
-            rracf->max_frames = 1;
-        }
-    } else {
-        rracf = rctx->conf;
-    }
-
-    ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_record_module);
-    if (ctx == NULL) {
-
-        return NGX_ERROR;
-    }
+    rracf = rctx->conf;
 
     if (rracf->flags & NGX_RTMP_RECORD_OFF) {
         ngx_rtmp_record_node_close(s, rctx);
@@ -1810,17 +1052,14 @@ ngx_rtmp_record_node_av(ngx_rtmp_session_t *s, ngx_rtmp_record_rec_ctx_t *rctx,
 
             if (ngx_cached_time->sec  > next.sec ||
                (ngx_cached_time->sec == next.sec &&
-                ngx_cached_time->msec > next.msec)||
-                rctx->first_cutpic == 0)
+                ngx_cached_time->msec > next.msec))
             {
-                rctx->first_cutpic = 1;
                 ngx_rtmp_record_node_close(s, rctx);
-                ngx_rtmp_record_node_open(s, rctx, ctx);
-
+                ngx_rtmp_record_node_open(s, rctx);
             }
 
         } else if (!rctx->failed) {
-            ngx_rtmp_record_node_open(s, rctx, ctx);
+            ngx_rtmp_record_node_open(s, rctx);
         }
     }
 
@@ -1958,6 +1197,7 @@ ngx_rtmp_record_recorder(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_int_t                   i;
     ngx_str_t                  *value;
     ngx_conf_t                  save;
+    ngx_module_t              **modules;
     ngx_rtmp_module_t          *module;
     ngx_rtmp_core_app_conf_t   *cacf, **pcacf, *rcacf;
     ngx_rtmp_record_app_conf_t *racf, **pracf, *rracf;
@@ -1984,17 +1224,22 @@ ngx_rtmp_record_recorder(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return NGX_CONF_ERROR;
     }
 
-    for (i = 0; ngx_modules[i]; i++) {
-        if (ngx_modules[i]->type != NGX_RTMP_MODULE) {
+#if (nginx_version >= 1009011)
+    modules = cf->cycle->modules;
+#else
+    modules = ngx_modules;
+#endif
+
+    for (i = 0; modules[i]; i++) {
+        if (modules[i]->type != NGX_RTMP_MODULE) {
             continue;
         }
 
-        module = ngx_modules[i]->ctx;
+        module = modules[i]->ctx;
 
         if (module->create_app_conf) {
-            ctx->app_conf[ngx_modules[i]->ctx_index] =
-                                module->create_app_conf(cf);
-            if (ctx->app_conf[ngx_modules[i]->ctx_index] == NULL) {
+            ctx->app_conf[modules[i]->ctx_index] = module->create_app_conf(cf);
+            if (ctx->app_conf[modules[i]->ctx_index] == NULL) {
                 return NGX_CONF_ERROR;
             }
         }
@@ -2019,6 +1264,7 @@ ngx_rtmp_record_recorder(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     *pracf = rracf;
 
     rracf->id = value[1];
+
 
     save = *cf;
     cf->ctx = ctx;

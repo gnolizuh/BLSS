@@ -198,7 +198,7 @@ ngx_rtmp_control_redirect_handler(ngx_http_request_t *r, ngx_rtmp_session_t *s)
 
         ngx_memzero(&vpublish, sizeof(ngx_rtmp_publish_t));
 
-        ngx_memcpy(vpublish.name, name.data, ngx_min(name.len, sizeof(vpublish.name) - 1));
+        ngx_memcpy(vpublish.name, name.data, name.len);
 
         ngx_rtmp_cmd_fill_args(vpublish.name, vpublish.args);
 
@@ -211,7 +211,7 @@ ngx_rtmp_control_redirect_handler(ngx_http_request_t *r, ngx_rtmp_session_t *s)
 
         ngx_memzero(&vplay, sizeof(ngx_rtmp_play_t));
 
-        ngx_memcpy(vplay.name, name.data, ngx_min(name.len, sizeof(vplay.name) - 1));
+        ngx_memcpy(vplay.name, name.data, name.len);
 
         ngx_rtmp_cmd_fill_args(vplay.name, vplay.args);
 
@@ -310,56 +310,33 @@ ngx_rtmp_control_walk_stream(ngx_http_request_t *r,
 
 static const char *
 ngx_rtmp_control_walk_app(ngx_http_request_t *r,
-    ngx_rtmp_core_app_conf_t *cacf, ngx_rtmp_live_dyn_app_t *cacf_r)
+    ngx_rtmp_core_app_conf_t *cacf)
 {
     size_t                     len;
     ngx_str_t                  name;
     const char                *s;
-    ngx_uint_t                 n, m;
-    ngx_rtmp_live_stream_t    *ls = NULL;
-    ngx_rtmp_live_app_conf_t  *lacf = NULL;
-    ngx_uint_t                 nbuckets=0;
+    ngx_uint_t                 n;
+    ngx_rtmp_live_stream_t    *ls;
+    ngx_rtmp_live_app_conf_t  *lacf;
 
-#define NGX_RTMP_SET_STREAM(app, n) ((app)->streams[n])
+    lacf = cacf->app_conf[ngx_rtmp_live_module.ctx_index];
 
-    if (ngx_rtmp_remote_conf()) {  //remote confiugre
-
-        nbuckets = NGX_RTMP_MAX_STREAM_NBUCKET;
-    }else{   
-    
-        lacf = cacf->app_conf[ngx_rtmp_live_module.ctx_index];
-        nbuckets = (ngx_uint_t) lacf->nbuckets;
-    }//local configure
-   
     if (ngx_http_arg(r, (u_char *) "name", sizeof("name") - 1, &name) != NGX_OK)
     {
-        for (n = 0; n < nbuckets; ++n) {
-
-            if (cacf && !cacf_r) {                        //local configure
-                ls = NGX_RTMP_SET_STREAM(lacf, n);
-            }else if(!cacf && cacf_r){                  //remote configure
-                ls = NGX_RTMP_SET_STREAM(cacf_r, n);
-            }	
-			
-            for (; ls; ls = ls->next) {
-				
+        for (n = 0; n < (ngx_uint_t) lacf->nbuckets; ++n) {
+            for (ls = lacf->streams[n]; ls; ls = ls->next) {
                 s = ngx_rtmp_control_walk_stream(r, ls);
                 if (s != NGX_CONF_OK) {
                     return s;
                 }
             }
         }
+
         return NGX_CONF_OK;
     }
 
-    m = ngx_hash_key(name.data, name.len) % nbuckets;
-    if (cacf && !cacf_r) {                        //local configure
-        ls = NGX_RTMP_SET_STREAM(lacf, m);
-    }else if(!cacf && cacf_r){                  //remote configure
-        ls = NGX_RTMP_SET_STREAM(cacf_r, m);
-    }	
-	
-    for (; ls; ls = ls->next) 
+    for (ls = lacf->streams[ngx_hash_key(name.data, name.len) % lacf->nbuckets];
+         ls; ls = ls->next) 
     {
         len = ngx_strlen(ls->name);
         if (name.len != len || ngx_strncmp(name.data, ls->name, name.len)) {
@@ -378,51 +355,29 @@ ngx_rtmp_control_walk_app(ngx_http_request_t *r,
 
 static const char *
 ngx_rtmp_control_walk_server(ngx_http_request_t *r,
-    ngx_rtmp_core_srv_conf_t *cscf, ngx_rtmp_live_dyn_srv_t *cscf_dyn)
+    ngx_rtmp_core_srv_conf_t *cscf)
 {
     ngx_str_t                   app;
-    ngx_uint_t                  n, i;
+    ngx_uint_t                  n;
     const char                 *s;
     ngx_rtmp_core_app_conf_t  **pcacf;
-    ngx_rtmp_live_dyn_app_t    **pcacf_r;
 
     if (ngx_http_arg(r, (u_char *) "app", sizeof("app") - 1, &app) != NGX_OK) {
         app.len = 0;
     }
 
-    if (ngx_rtmp_remote_conf()) {    //remote configure
+    pcacf = cscf->applications.elts;
 
-        for (i =0; i< NGX_RTMP_MAX_APP_NBUCKET; i++) {
-        
-            pcacf_r =  &cscf_dyn->apps[i];
-            for(; *pcacf_r; pcacf_r = &(*pcacf_r)->next) {
-				
-                if (app.len && (ngx_strlen((*pcacf_r)->name) != app.len ||
-                                ngx_strncmp((*pcacf_r)->name, app.data, app.len)))
-                {
-                    continue;
-                }
-        
-                s = ngx_rtmp_control_walk_app(r, NULL , *pcacf_r);   //remote 
-                if (s != NGX_CONF_OK) {
-                    return s;
-                }            
-            }
+    for (n = 0; n < cscf->applications.nelts; ++n, ++pcacf) {
+        if (app.len && ((*pcacf)->name.len != app.len ||
+                        ngx_strncmp((*pcacf)->name.data, app.data, app.len)))
+        {
+            continue;
         }
-    } else {    //local configure
-    
-        pcacf = cscf->applications.elts;
-        for (n = 0; n < cscf->applications.nelts; ++n, ++pcacf) {
-            if (app.len && ((*pcacf)->name.len != app.len ||
-                ngx_strncmp((*pcacf)->name.data, app.data, app.len)))
-            {
-                continue;
-            }
-    
-            s = ngx_rtmp_control_walk_app(r, *pcacf , NULL);   //local 
-            if (s != NGX_CONF_OK) {
-                return s;
-            }
+
+        s = ngx_rtmp_control_walk_app(r, *pcacf);
+        if (s != NGX_CONF_OK) {
+            return s;
         }
     }
 
@@ -435,65 +390,28 @@ ngx_rtmp_control_walk(ngx_http_request_t *r, ngx_rtmp_control_handler_t h)
 {
     ngx_rtmp_core_main_conf_t  *cmcf = ngx_rtmp_core_main_conf;
 
-    ngx_str_t                   unique_name;
-    ngx_uint_t                  n;
+    ngx_str_t                   srv;
+    ngx_uint_t                  sn, n;
     const char                 *msg;
     ngx_rtmp_session_t        **s;
     ngx_rtmp_control_ctx_t     *ctx;
-    ngx_rtmp_core_srv_conf_t  **pcscf, *cscf = NULL;
-    ngx_rtmp_live_dyn_srv_t   **cscf_r;
+    ngx_rtmp_core_srv_conf_t  **pcscf;
 
-    if (ngx_http_arg(r, (u_char *) "unique_name", sizeof("unique_name") - 1, &unique_name) != NGX_OK) {
-        return "With no vhost information";
+    sn = 0;
+    if (ngx_http_arg(r, (u_char *) "srv", sizeof("srv") - 1, &srv) == NGX_OK) {
+        sn = ngx_atoi(srv.data, srv.len);
     }
 
-    if (ngx_rtmp_remote_conf()) {   // remote configure
+    if (sn >= cmcf->servers.nelts) {
+        return "Server index out of range";
+    }
 
-        if (ngx_rtmp_live_main_conf) {
+    pcscf  = cmcf->servers.elts;
+    pcscf += sn;
 
-            cscf_r = ngx_rtmp_live_get_srv_dynamic(ngx_rtmp_live_main_conf, &unique_name, 0); 
-            if(cscf_r && *cscf_r) {
-
-                msg = ngx_rtmp_control_walk_server(r, NULL, *cscf_r);
-                if (msg != NGX_CONF_OK) {
-                    return msg;
-                }
-            } else {
-
-                ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-                    "ngx_rtmp_control_walk: cscf_r is NULL");
-                return NGX_CONF_ERROR;
-            }
-        } else {
-
-            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, 
-                "ngx_rtmp_control_walk: ngx_rtmp_live_main_conf is NULL");
-            return NGX_CONF_ERROR;
-        }
-    } else {   // local configure
-    
-        pcscf  = cmcf->servers.elts;
-        for (n = 0; n < cmcf->servers.nelts; n++) {
-
-            if (pcscf[n]->unique_name.len == unique_name.len && 
-                0 == ngx_strncasecmp(unique_name.data, pcscf[n]->unique_name.data, unique_name.len)) {
-                cscf = pcscf[n];
-                break;
-            }
-
-            if (cscf) {
-                break;
-            }
-        }
-
-        if (!cscf) {
-            return "No vhost match the server";
-        }
-
-        msg = ngx_rtmp_control_walk_server(r, cscf, NULL);
-        if (msg != NGX_CONF_OK) {
-            return msg;
-        }
+    msg = ngx_rtmp_control_walk_server(r, *pcscf);
+    if (msg != NGX_CONF_OK) {
+        return msg;
     }
 
     ctx = ngx_http_get_module_ctx(r, ngx_rtmp_control_module);

@@ -14,36 +14,9 @@
 #include "ngx_rtmp.h"
 
 
-#define NGX_RTMP_CMD_HLS_PLAY     0
-#define NGX_RTMP_CMD_HDL_PLAY     1
-#define NGX_RTMP_CMD_RTMP_PLAY    2
-#define NGX_RTMP_CMD_RTMP_PUBLISH 3
-
-
 #define NGX_RTMP_MAX_NAME           256
 #define NGX_RTMP_MAX_URL            256
-#define NGX_RTMP_MAX_RESULT         2048
-#define NGX_RTMP_MAX_CODE           256
 #define NGX_RTMP_MAX_ARGS           NGX_RTMP_MAX_NAME
-#define NGX_RTMP_MAX_X_FORWARD      NGX_RTMP_MAX_NAME
-
-#define NGX_RTMP_SET_STRPAR(name) \
-    do { \
-        s->name.len = ngx_strlen(v.name); \
-        if (s->name.len > 0) { \
-            s->name.data = ngx_palloc(s->pool, s->name.len); \
-            ngx_memcpy(s->name.data, v.name, s->name.len); \
-        } \
-    }while(0)
-
-#define NGX_RTMP_SET_PAR(name) \
-    do { \
-        s->name.len = name.len; \
-        if (s->name.len > 0) { \
-            s->name.data = ngx_palloc(s->pool, s->name.len); \
-            ngx_memcpy(s->name.data, name.data, s->name.len); \
-        } \
-    }while(0)
 
 
 /* Basic RTMP call support */
@@ -59,8 +32,6 @@ typedef struct {
     double                          vcodecs;
     u_char                          page_url[NGX_RTMP_MAX_URL];
     double                          object_encoding;
-    ngx_uint_t                      relay_type;
-    u_char                          x_forwarded_for[NGX_RTMP_MAX_X_FORWARD];
 } ngx_rtmp_connect_t;
 
 
@@ -125,26 +96,10 @@ typedef struct {
     uint32_t                        buflen;
 } ngx_rtmp_set_buflen_t;
 
-typedef struct {
-	uint32_t                        msid;
-    uint64_t                        frag;
-	uint64_t                        frag_ts;
-} ngx_rtmp_start_hls_slice_t;
 
 void ngx_rtmp_cmd_fill_args(u_char name[NGX_RTMP_MAX_NAME],
         u_char args[NGX_RTMP_MAX_ARGS]);
-ngx_int_t
-ngx_rtmp_cmd_parse_tcurl(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v);
-ngx_int_t
-ngx_rtmp_cmd_start_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v);
-ngx_int_t
-ngx_rtmp_cmd_start_connect(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v);
-ngx_int_t
-ngx_rtmp_cmd_get_core_srv_conf(ngx_rtmp_session_t *s, ngx_int_t type, ngx_str_t *host, ngx_str_t *app,
-    ngx_rtmp_core_srv_conf_t **pcscf, ngx_rtmp_core_app_conf_t **pcacf);
-void
-ngx_rtmp_cmd_fill_vhost(ngx_str_t *tc_url,
-    ngx_str_t *host_in, ngx_int_t *port_in);
+
 
 typedef ngx_int_t (*ngx_rtmp_connect_pt)(ngx_rtmp_session_t *s,
         ngx_rtmp_connect_t *v);
@@ -174,8 +129,6 @@ typedef ngx_int_t (*ngx_rtmp_recorded_pt)(ngx_rtmp_session_t *s,
         ngx_rtmp_recorded_t *v);
 typedef ngx_int_t (*ngx_rtmp_set_buflen_pt)(ngx_rtmp_session_t *s,
         ngx_rtmp_set_buflen_t *v);
-typedef ngx_int_t (*ngx_rtmp_start_hls_slice_pt)(ngx_rtmp_session_t *s,
-        ngx_rtmp_start_hls_slice_t *v);
 
 
 extern ngx_rtmp_connect_pt          ngx_rtmp_connect;

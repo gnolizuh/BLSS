@@ -6,11 +6,11 @@
 
 #include <ngx_config.h>
 #include <ngx_core.h>
+#include <nginx.h>
 #include "ngx_rtmp_play_module.h"
 #include "ngx_rtmp_cmd_module.h"
 #include "ngx_rtmp_netcall_module.h"
 #include "ngx_rtmp_streams.h"
-#include "ngx_rtmp_log_module.h"
 
 
 static ngx_rtmp_play_pt                 next_play;
@@ -432,9 +432,9 @@ ngx_rtmp_play_do_stop(ngx_rtmp_session_t *s)
     }
 
 #if (nginx_version >= 1007005)
-        if (ctx->send_evt.posted)
+    if (ctx->send_evt.posted)
 #else
-        if (ctx->send_evt.prev)
+    if (ctx->send_evt.prev)
 #endif
     {
         ngx_delete_posted_event((&ctx->send_evt));
@@ -634,7 +634,6 @@ ngx_rtmp_play_pause(ngx_rtmp_session_t *s, ngx_rtmp_pause_t *v)
                    (ngx_int_t) v->pause, v->position);
 
     if (v->pause) {
-        
         if (ngx_rtmp_send_status(s, "NetStream.Pause.Notify", "status",
                                  "Paused video on demand")
             != NGX_OK)
@@ -645,7 +644,6 @@ ngx_rtmp_play_pause(ngx_rtmp_session_t *s, ngx_rtmp_pause_t *v)
         ngx_rtmp_play_do_stop(s);
 
     } else {
-    
         if (ngx_rtmp_send_status(s, "NetStream.Unpause.Notify", "status",
                                  "Unpaused video on demand")
             != NGX_OK)
@@ -734,7 +732,7 @@ ngx_rtmp_play_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
     }
 
     if (ctx == NULL) {
-        ctx = ngx_palloc(s->pool, sizeof(ngx_rtmp_play_ctx_t));
+        ctx = ngx_palloc(s->connection->pool, sizeof(ngx_rtmp_play_ctx_t));
         ngx_rtmp_set_ctx(s, ctx, ngx_rtmp_play_module);
     }
 
@@ -904,7 +902,7 @@ ngx_rtmp_play_open(ngx_rtmp_session_t *s, double start)
     if (ngx_rtmp_send_stream_begin(s, NGX_RTMP_MSID) != NGX_OK) {
         return NGX_ERROR;
     }
-    
+
     if (ngx_rtmp_send_status(s, "NetStream.Play.Start", "status",
                              "Start video on demand")
         != NGX_OK)
@@ -955,9 +953,9 @@ ngx_rtmp_play_remote_create(ngx_rtmp_session_t *s, void *arg, ngx_pool_t *pool)
 
     ngx_rtmp_play_ctx_t            *ctx;
     ngx_rtmp_play_entry_t          *pe;
-    ngx_str_t                      *addr_text, uri, args;
+    ngx_str_t                      *addr_text, uri;
     u_char                         *p, *name;
-    size_t                          name_len, len;
+    size_t                          args_len, name_len, len;
     static ngx_str_t                text_plain = ngx_string("text/plain");
 
     ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_play_module);
@@ -967,19 +965,18 @@ ngx_rtmp_play_remote_create(ngx_rtmp_session_t *s, void *arg, ngx_pool_t *pool)
     name = v->name + ctx->pfx_size;
 
     name_len = ngx_strlen(name);
+    args_len = ngx_strlen(v->args);
     addr_text = &s->connection->addr_text;
 
     len = pe->url->uri.len + 1 +
           name_len + ctx->sfx.len +
-          sizeof("?addr=") + addr_text->len * 3;
+          sizeof("?addr=") + addr_text->len * 3 +
+          1 + args_len;
 
     uri.data = ngx_palloc(pool, len);
     if (uri.data == NULL) {
         return NULL;
     }
-
-	args.data = v->args;
-	args.len = ngx_strlen(v->args);
 
     p = uri.data;
 
@@ -994,12 +991,16 @@ ngx_rtmp_play_remote_create(ngx_rtmp_session_t *s, void *arg, ngx_pool_t *pool)
     p = ngx_cpymem(p, (u_char*)"?addr=", sizeof("&addr=") -1);
     p = (u_char*)ngx_escape_uri(p, addr_text->data, addr_text->len,
                                 NGX_ESCAPE_ARGS);
+    if (args_len) {
+        *p++ = '&';
+        p = (u_char *) ngx_cpymem(p, v->args, args_len);
+    }
 
     uri.len = p - uri.data;
 
     return ngx_rtmp_netcall_http_format_request(NGX_RTMP_NETCALL_HTTP_GET,
-                                                &pe->url->host, pe->url->family, &uri, &args,
-                                                NULL, s->x_forwarded_for, NULL, pool, &text_plain);
+                                                &pe->url->host, &uri,
+                                                NULL, NULL, pool, &text_plain);
 }
 
 
@@ -1055,7 +1056,7 @@ ngx_rtmp_play_remote_sink(ngx_rtmp_session_t *s, ngx_chain_t *in)
             }
             /* 10th header byte is HTTP response header */
             if (++ctx->nheader == 10 && *b->pos != (u_char) '2') {
-                ngx_log_error(NGX_LOG_WARN, s->connection->log, 0,
+                ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
                               "play: remote HTTP response code: %cxx",
                               *b->pos);
                 return NGX_ERROR;
@@ -1078,7 +1079,7 @@ ngx_rtmp_play_remote_sink(ngx_rtmp_session_t *s, ngx_chain_t *in)
         rc = ngx_write_fd(ctx->file.fd, b->pos, b->last - b->pos);
 
         if (rc == NGX_ERROR) {
-            ngx_log_error(NGX_LOG_ERR, s->connection->log, ngx_errno,
+            ngx_log_error(NGX_LOG_INFO, s->connection->log, ngx_errno,
                           "play: error writing to temp file");
             return NGX_ERROR;
         }
@@ -1151,7 +1152,7 @@ ngx_rtmp_play_open_remote(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
         if (err != NGX_EEXIST) {
             ctx->file_id = 0;
 
-            ngx_log_error(NGX_LOG_ERR, s->connection->log, err,
+            ngx_log_error(NGX_LOG_INFO, s->connection->log, err,
                           "play: failed to create temp file");
 
             return NGX_ERROR;

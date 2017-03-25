@@ -35,7 +35,6 @@
             <th colspan="4">Audio</th>
             <th>In bytes</th>
             <th>Out bytes</th>
-            <th>Real bits/s</th>
             <th>In bits/s</th>
             <th>Out bits/s</th>
             <th>State</th>
@@ -59,13 +58,6 @@
             <td>
                 <xsl:call-template name="showsize">
                     <xsl:with-param name="size" select="bytes_out"/>
-                </xsl:call-template>
-            </td>
-            <td>
-                <xsl:call-template name="showsize">
-                    <xsl:with-param name="size" select="bw_real"/>
-                    <xsl:with-param name="bits" select="1"/>
-                    <xsl:with-param name="persec" select="1"/>
                 </xsl:call-template>
             </td>
             <td>
@@ -193,13 +185,6 @@
         <td>
             <xsl:call-template name="showsize">
                 <xsl:with-param name="size" select="bytes_out"/>
-            </xsl:call-template>
-        </td>
-        <td>
-            <xsl:call-template name="showsize">
-                <xsl:with-param name="size" select="bw_real"/>
-                <xsl:with-param name="bits" select="1"/>
-                <xsl:with-param name="persec" select="1"/>
             </xsl:call-template>
         </td>
         <td>
