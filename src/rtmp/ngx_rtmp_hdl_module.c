@@ -789,7 +789,7 @@ ngx_rtmp_hdl_merge_app_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_rtmp_hdl_app_conf_t    *prev = parent;
     ngx_rtmp_hdl_app_conf_t    *conf = child;
 
-    ngx_conf_merge_value(conf->hdl, prev->hdl, 1);
+    ngx_conf_merge_value(conf->hdl, prev->hdl, 0);
 
     return NGX_CONF_OK;
 }
