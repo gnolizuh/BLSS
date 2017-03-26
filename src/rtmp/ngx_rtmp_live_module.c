@@ -6,7 +6,6 @@
 
 #include <ngx_config.h>
 #include <ngx_core.h>
-#include <ngx_rtmp.h>
 #include "ngx_rtmp_live_module.h"
 #include "ngx_rtmp_cmd_module.h"
 #include "ngx_rtmp_codec_module.h"
@@ -29,6 +28,9 @@ static ngx_rtmp_close_stream_pt         next_close_stream;
 static ngx_rtmp_pause_pt                next_pause;
 static ngx_rtmp_stream_begin_pt         next_stream_begin;
 static ngx_rtmp_stream_eof_pt           next_stream_eof;
+
+
+extern ngx_uint_t ngx_rtmp_playing;
 
 
 static ngx_int_t ngx_rtmp_live_postconfiguration(ngx_conf_t *cf);
@@ -1277,10 +1279,6 @@ ngx_rtmp_live_gop_cache_send(ngx_rtmp_session_t *ss)
 
     player = ngx_rtmp_get_module_ctx(ss, ngx_rtmp_live_module);
     if (player == NULL || player->stream == NULL) {
-        return;
-    }
-
-    if (!ngx_rtmp_type(ss->protocol)) {
         return;
     }
 
