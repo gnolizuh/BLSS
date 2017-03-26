@@ -699,7 +699,7 @@ ngx_rtmp_hls_append_sps_pps(ngx_rtmp_session_t *s, ngx_buf_t *out)
         return NGX_ERROR;
     }
 
-    in = codec_ctx->avc_header;
+    in = codec_ctx->video_header;
     if (in == NULL) {
         return NGX_ERROR;
     }
@@ -1742,7 +1742,7 @@ ngx_rtmp_hls_audio(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
      * do it in video handler
      */
 
-    ngx_rtmp_hls_update_fragment(s, pts, codec_ctx->avc_header == NULL, 2);
+    ngx_rtmp_hls_update_fragment(s, pts, codec_ctx->video_header == NULL, 2);
 
     if (b->last + size > b->end) {
         ngx_rtmp_hls_flush_audio(s);
@@ -1860,7 +1860,7 @@ ngx_rtmp_hls_video(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     codec_ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_codec_module);
 
     if (hacf == NULL || !hacf->hls || ctx == NULL || codec_ctx == NULL ||
-        codec_ctx->avc_header == NULL || h->mlen < 1)
+        codec_ctx->video_header == NULL || h->mlen < 1)
     {
         return NGX_OK;
     }
