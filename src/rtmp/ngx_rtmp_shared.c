@@ -16,7 +16,6 @@ ngx_rtmp_alloc_shared_buf(ngx_rtmp_core_srv_conf_t *cscf)
     ngx_chain_t                *out;
     ngx_buf_t                  *b;
     size_t                      size;
-    ngx_rtmp_chunk_info_t      *ci;
 
     if (cscf->free) {
         out = cscf->free;
@@ -26,8 +25,7 @@ ngx_rtmp_alloc_shared_buf(ngx_rtmp_core_srv_conf_t *cscf)
 
         size = cscf->chunk_size + NGX_RTMP_MAX_CHUNK_HEADER;
 
-        p = ngx_pcalloc(cscf->pool, sizeof(ngx_rtmp_chunk_info_t)
-                + NGX_RTMP_REFCOUNT_BYTES
+        p = ngx_pcalloc(cscf->pool, NGX_RTMP_REFCOUNT_BYTES
                 + sizeof(ngx_chain_t)
                 + sizeof(ngx_buf_t)
                 + size);
@@ -35,7 +33,7 @@ ngx_rtmp_alloc_shared_buf(ngx_rtmp_core_srv_conf_t *cscf)
             return NULL;
         }
 
-        p += sizeof(ngx_rtmp_chunk_info_t) + NGX_RTMP_REFCOUNT_BYTES;
+        p += NGX_RTMP_REFCOUNT_BYTES;
         out = (ngx_chain_t *)p;
 
         p += sizeof(ngx_chain_t);
@@ -53,9 +51,6 @@ ngx_rtmp_alloc_shared_buf(ngx_rtmp_core_srv_conf_t *cscf)
 
     /* buffer has refcount =1 when created! */
     ngx_rtmp_ref_set(out, 1);
-
-    ci = ngx_rtmp_get_chunk_info(out);
-    ngx_memzero(ci, sizeof(ngx_rtmp_chunk_info_t));
 
     return out;
 }
