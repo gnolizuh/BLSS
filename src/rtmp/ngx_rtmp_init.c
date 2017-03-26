@@ -6,7 +6,6 @@
 
 #include <ngx_config.h>
 #include <ngx_core.h>
-#include "ngx_http.h"
 #include "ngx_rtmp.h"
 #include "ngx_rtmp_proxy_protocol.h"
 
@@ -272,7 +271,6 @@ ngx_rtmp_close_session_handler(ngx_event_t *e)
 {
     ngx_rtmp_session_t                 *s;
     ngx_connection_t                   *c;
-    ngx_http_request_t                 *r;
     ngx_rtmp_core_srv_conf_t           *cscf;
 
     s = e->data;
@@ -281,12 +279,6 @@ ngx_rtmp_close_session_handler(ngx_event_t *e)
     cscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_core_module);
 
     ngx_log_debug0(NGX_LOG_DEBUG_RTMP, c->log, 0, "close session");
-
-    if (!ngx_rtmp_type(s->protocol)) {
-        r = s->r;
-        ngx_http_finalize_request(r, s->rc);
-        return;
-    }
 
     ngx_rtmp_fire_event(s, NGX_RTMP_DISCONNECT, NULL, NULL);
 
