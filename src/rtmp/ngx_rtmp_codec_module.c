@@ -1202,7 +1202,8 @@ ngx_rtmp_codec_parse_ptl(ngx_rtmp_bit_reader_t *br,ngx_uint_t max_sub_layers)
     return NGX_OK;
 }
 
-void
+#if (NGX_DEBUG)
+static void
 ngx_rtmp_codec_dump_header(ngx_rtmp_session_t *s, const char *type,
     ngx_chain_t *in)
 {

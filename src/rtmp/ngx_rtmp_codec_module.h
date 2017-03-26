@@ -68,7 +68,7 @@ typedef struct {
     ngx_uint_t                  avc_profile;
     ngx_uint_t                  avc_compat;
     ngx_uint_t                  avc_level;
-    u_char                      avc_conf_record[21];
+    u_char                      avc_conf_record[21]; /* TODO */
     ngx_uint_t                  avc_nal_bytes;
     ngx_uint_t                  avc_ref_frames;
     ngx_uint_t                  sample_rate;    /* 5512, 11025, 22050, 44100 */
