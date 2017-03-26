@@ -1008,7 +1008,7 @@ ngx_rtmp_hdl_gop_cache_send(ngx_rtmp_session_t *ss)
     s       = pushctx->session;
     ss      = pullctx->session;
 
-    if (!ngx_rtmp_get_attr_conf(lacf, gop_cache)) {
+    if (!lacf->gop_cache) {
         return;
     }
 
@@ -1141,16 +1141,12 @@ ngx_rtmp_hdl_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
         return NGX_ERROR;
     }
 
-    if (!ngx_rtmp_get_attr_conf(lacf, live)) {
-        return NGX_OK;
-    }
-
     hacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_hdl_module);
     if (hacf == NULL) {
         return NGX_ERROR;
     }
 
-    if (!ngx_rtmp_get_attr_conf(hacf, hdl)) {
+    if (!lacf->live || !hacf->hdl) {
         return NGX_OK;
     }
 
@@ -1295,7 +1291,7 @@ ngx_rtmp_hdl_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
             }
 
             if (lacf->wait_video && h->type == NGX_RTMP_MSG_AUDIO &&
-                !pctx->cs[0].active && !ngx_rtmp_get_attr_conf(lacf, gop_cache))
+                !pctx->cs[0].active && !lacf->gop_cache)
             {
                 ngx_log_debug0(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
                                "live_hdl: waiting for video");
@@ -1304,7 +1300,7 @@ ngx_rtmp_hdl_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
             if (lacf->wait_key && prio != NGX_RTMP_VIDEO_KEY_FRAME &&
                (lacf->interleave || h->type == NGX_RTMP_MSG_VIDEO) &&
-               !ngx_rtmp_get_attr_conf(lacf, gop_cache))
+               !lacf->gop_cache)
             {
                 ngx_log_debug0(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
                                "live_hdl: skip non-key");
@@ -1388,16 +1384,12 @@ ngx_rtmp_hdl_message(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
         return NGX_ERROR;
     }
 
-    if (!ngx_rtmp_get_attr_conf(lacf, live)) {
-        return NGX_OK;
-    }
-
     hacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_hdl_module);
     if (hacf == NULL) {
         return NGX_ERROR;
     }
 
-    if (!ngx_rtmp_get_attr_conf(hacf, hdl)) {
+    if (!lacf->live || !hacf->hdl) {
         return NGX_OK;
     }
 
@@ -1498,18 +1490,14 @@ ngx_rtmp_hdl_play_done(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
     lacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_hdl_module);
     if (lacf == NULL) {
+        return NGX_ERROR;
+    }
+
+    if (!lacf->hdl) {
         return NGX_OK;
     }
 
     cscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_core_module);
-
-    if (!ngx_rtmp_get_attr_conf(lacf, hdl)) {
-        return NGX_OK;
-    }
-
-    if (!ngx_hdl_pull_type(s->protocol)) {
-        return NGX_OK;
-    }
 
     hctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_hdl_module);
     if (hctx == NULL) {

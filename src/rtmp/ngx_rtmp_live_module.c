@@ -1058,8 +1058,7 @@ ngx_rtmp_live_gop_update(ngx_rtmp_session_t *s)
 #endif
 
     lacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_live_module);
-    if (lacf == NULL ||
-        ngx_rtmp_get_attr_conf(lacf, gop_cache) == 0) {
+    if (lacf == NULL || lacf->gop_cache == 0) {
         return;
     }
 
@@ -1073,8 +1072,8 @@ ngx_rtmp_live_gop_update(ngx_rtmp_session_t *s)
         return;
     }
 
-    gop_cache_mintime = ngx_rtmp_get_attr_conf(lacf, gop_cache_mintime);
-    gop_cache_maxtime = ngx_rtmp_get_attr_conf(lacf, gop_cache_maxtime);
+    gop_cache_mintime = lacf->gop_cache_mintime;
+    gop_cache_maxtime = lacf->gop_cache_maxtime;
 
     clean_status = NGX_RTMP_GOP_CLEAN_NO;
 
@@ -1161,11 +1160,7 @@ ngx_rtmp_live_gop_cache_frame(ngx_rtmp_session_t *s, ngx_uint_t prio, ngx_rtmp_h
     ngx_rtmp_live_gop_frame_t      *gop_frame;
 
     lacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_live_module);
-    if (lacf == NULL) {
-        return;
-    }
-
-    if (!ngx_rtmp_get_attr_conf(lacf, gop_cache)) {
+    if (lacf == NULL || !lacf->gop_cache) {
         return;
     }
 
@@ -1308,7 +1303,7 @@ ngx_rtmp_live_gop_cache_send(ngx_rtmp_session_t *ss)
     s         = publisher->session;
     ss        = player->session;
 
-    if (!ngx_rtmp_get_attr_conf(lacf, gop_cache)) {
+    if (!lacf->gop_cache) {
         return;
     }
 
