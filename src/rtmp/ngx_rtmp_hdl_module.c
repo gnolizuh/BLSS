@@ -544,7 +544,7 @@ ngx_rtmp_http_hdl_init_connection(ngx_http_request_t *r, ngx_rtmp_conf_port_t *c
          */
 
         if (ngx_connection_local_sockaddr(c, NULL, 0) != NGX_OK) {
-            ngx_rtmp_close_connection(c);
+            ngx_http_close_connection(c);
             return NGX_ERROR;
         }
 
