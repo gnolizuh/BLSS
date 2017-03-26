@@ -10,7 +10,7 @@
 #include "ngx_rtmp_live_module.h"
 #include "ngx_rtmp_cmd_module.h"
 #include "ngx_rtmp_bitop.h"
-
+#include "hls/ngx_rtmp_hls_module.h"
 
 #define NGX_RTMP_CODEC_META_OFF     0
 #define NGX_RTMP_CODEC_META_ON      1
