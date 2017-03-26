@@ -7,7 +7,6 @@
 #include <ngx_config.h>
 #include <ngx_core.h>
 #include <ngx_rtmp.h>
-#include "ngx_rtmp_init.h"
 #include "ngx_rtmp_hdl_module.h"
 #include "ngx_rtmp_log_module.h"
 
