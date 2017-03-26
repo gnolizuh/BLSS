@@ -271,20 +271,12 @@ ngx_rtmp_cmd_connect(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
     h.csid = NGX_RTMP_CSID_AMF_INI;
     h.type = NGX_RTMP_MSG_AMF_CMD;
 
-
-#define NGX_RTMP_SET_STRPAR(name)                                             \
-    s->name.len = ngx_strlen(v->name);                                        \
-    s->name.data = ngx_palloc(s->connection->pool, s->name.len);              \
-    ngx_memcpy(s->name.data, v->name, s->name.len)
-
     NGX_RTMP_SET_STRPAR(app);
     NGX_RTMP_SET_STRPAR(args);
     NGX_RTMP_SET_STRPAR(flashver);
     NGX_RTMP_SET_STRPAR(swf_url);
     NGX_RTMP_SET_STRPAR(tc_url);
     NGX_RTMP_SET_STRPAR(page_url);
-
-#undef NGX_RTMP_SET_STRPAR
 
     p = ngx_strlchr(s->app.data, s->app.data + s->app.len, '?');
     if (p) {

@@ -18,6 +18,15 @@
 #define NGX_RTMP_MAX_URL            256
 #define NGX_RTMP_MAX_ARGS           NGX_RTMP_MAX_NAME
 
+#define NGX_RTMP_SET_STRPAR(name) \
+    do { \
+        s->name.len = ngx_strlen(v.name); \
+        if (s->name.len > 0) { \
+            s->name.data = ngx_palloc(s->pool, s->name.len); \
+            ngx_memcpy(s->name.data, v.name, s->name.len); \
+        } \
+    }while(0)
+
 
 /* Basic RTMP call support */
 

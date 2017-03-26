@@ -292,7 +292,6 @@ ngx_rtmp_http_hdl_play_local(ngx_http_request_t *r)
     ngx_rtmp_hdl_ctx_t         *ctx;
     ngx_rtmp_http_hdl_ctx_t    *httpctx;
     ngx_rtmp_core_srv_conf_t   *cscf;
-    ngx_rtmp_core_app_conf_t   *cacf;
 
     httpctx = ngx_http_get_module_ctx(r, ngx_rtmp_http_hdl_module);
 
@@ -375,20 +374,12 @@ ngx_rtmp_http_hdl_connect_local(ngx_http_request_t *r, ngx_str_t *app, ngx_str_t
     ngx_memcpy(v.tc_url, "HDL tc_url", ngx_strlen("HDL tc_url"));
     ngx_memcpy(v.page_url, "HDL page_url", ngx_strlen("HDL page_url"));
 
-
-#define NGX_RTMP_SET_STRPAR(name)                                             \
-    s->name.len = ngx_strlen(v->name);                                        \
-    s->name.data = ngx_palloc(s->connection->pool, s->name.len);              \
-    ngx_memcpy(s->name.data, v->name, s->name.len)
-
     NGX_RTMP_SET_STRPAR(app);
     NGX_RTMP_SET_STRPAR(args);
     NGX_RTMP_SET_STRPAR(flashver);
     NGX_RTMP_SET_STRPAR(swf_url);
     NGX_RTMP_SET_STRPAR(tc_url);
     NGX_RTMP_SET_STRPAR(page_url);
-
-#undef NGX_RTMP_SET_STRPAR
 
     s->name.len = name->len;
     s->name.data = ngx_pstrdup(s->pool, name);
