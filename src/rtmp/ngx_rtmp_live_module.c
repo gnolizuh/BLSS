@@ -6,6 +6,7 @@
 
 #include <ngx_config.h>
 #include <ngx_core.h>
+#include <ngx_rtmp.h>
 #include "ngx_rtmp_live_module.h"
 #include "ngx_rtmp_cmd_module.h"
 #include "ngx_rtmp_codec_module.h"
@@ -1323,11 +1324,6 @@ ngx_rtmp_live_gop_cache_send(ngx_rtmp_session_t *ss)
         if (meta && meta_version != player->meta_version) {
             ngx_log_debug0(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
                            "live: meta");
-
-            ss->log_bpos = ss->log_buf;
-            *ngx_sprintf(ss->log_bpos, BLANK_SPACE"rtmp_msg_type:%d"BLANK_SPACE"amf_msg_name:%s",
-                         NGX_RTMP_MSG_AMF_META, "onMetaData") = 0;
-            ngx_rtmp_log_evt_out(ss);
 
             if (ngx_rtmp_send_message(ss, meta, 0) == NGX_OK) {
                 player->meta_version = meta_version;
