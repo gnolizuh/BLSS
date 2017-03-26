@@ -380,12 +380,20 @@ ngx_rtmp_http_hdl_connect_local(ngx_http_request_t *r, ngx_str_t *app, ngx_str_t
     ngx_memcpy(v.tc_url, "HDL tc_url", ngx_strlen("HDL tc_url"));
     ngx_memcpy(v.page_url, "HDL page_url", ngx_strlen("HDL page_url"));
 
+
+#define NGX_RTMP_SET_STRPAR(name)                                             \
+    s->name.len = ngx_strlen(v->name);                                        \
+    s->name.data = ngx_palloc(s->connection->pool, s->name.len);              \
+    ngx_memcpy(s->name.data, v->name, s->name.len)
+
     NGX_RTMP_SET_STRPAR(app);
     NGX_RTMP_SET_STRPAR(args);
     NGX_RTMP_SET_STRPAR(flashver);
     NGX_RTMP_SET_STRPAR(swf_url);
     NGX_RTMP_SET_STRPAR(tc_url);
     NGX_RTMP_SET_STRPAR(page_url);
+
+#undef NGX_RTMP_SET_STRPAR
 
     s->name.len = name->len;
     s->name.data = ngx_pstrdup(s->pool, name);
@@ -799,12 +807,7 @@ static ngx_int_t
 ngx_rtmp_hdl_connect_done(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     ngx_chain_t *in)
 {
-    ngx_http_request_t             *r;
-
-    if (!ngx_hdl_pull_type(s->protocol)) {
-
-        return NGX_OK;
-    }
+    ngx_http_request_t    *r;
 
     r = s->r;
 
@@ -1485,9 +1488,6 @@ ngx_rtmp_hdl_play_done(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
     if (!hctx->initialized) { 
         hctx->initialized = 1;
-
-        s->status_code = 200;
-        ngx_rtmp_log_evt_hdl_out(s);
     }
 
     return NGX_OK;

@@ -273,6 +273,8 @@ typedef struct {
     unsigned                static_relay:1;
 
     ngx_uint_t              protocol;
+    ngx_pool_t             *pool;
+    void                   *r;
 
     /* input stream 0 (reserved by RTMP spec)
      * is used as free chain link */
