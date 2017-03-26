@@ -124,7 +124,7 @@ ngx_module_t  ngx_rtmp_hdl_module = {
 
 
 static void
-ngx_rtmp_http_flv_send(ngx_event_t *wev)
+ngx_rtmp_hdl_send(ngx_event_t *wev)
 {
     ngx_connection_t           *c;
     ngx_http_request_t         *r;
@@ -249,7 +249,7 @@ ngx_rtmp_hdl_send_message(ngx_rtmp_session_t *s, ngx_chain_t *out,
 
     if (!s->connection->write->active) {
 
-        ngx_rtmp_send(s->connection->write);
+        ngx_rtmp_hdl_send(s->connection->write);
     }
 
     return NGX_OK;
@@ -410,7 +410,7 @@ ngx_rtmp_http_hdl_cleanup(void *data)
 {
     ngx_http_request_t         *r = data;
     ngx_rtmp_session_t		   *s;
-    ngx_rtmp_http_hls_ctx_t    *httpctx;
+    ngx_rtmp_http_hdl_ctx_t    *httpctx;
 
     httpctx = ngx_http_get_module_ctx(r, ngx_rtmp_http_hdl_module);
 
@@ -457,7 +457,6 @@ ngx_rtmp_http_hdl_init_session(ngx_http_request_t *r, ngx_rtmp_addr_conf_t *addr
     s->pool = r->pool;
 
     s->r = r;
-    s->rc = NGX_OK;
 
     s->addr_conf = addr_conf;
 
@@ -625,7 +624,7 @@ ngx_rtmp_http_hdl_init_connection(ngx_http_request_t *r, ngx_rtmp_conf_port_t *c
     r->read_event_handler = ngx_http_test_reading;
     r->blocked = 1;
 
-    c->write->handler = ngx_rtmp_http_flv_send;
+    c->write->handler = ngx_rtmp_hdl_send;
 	// c->read->handler = ngx_rtmp_http_flv_recv;  TODO: We do not need to be careful of http read handler.
 
 	s->auto_pushed = unix_socket;
