@@ -48,12 +48,6 @@ case $ZLIB in
     *)     echo "  + using zlib library: $ZLIB" ;;
 esac
 
-case $JSON in
-    YES)   echo "  + using system json library" ;;
-    NONE)  echo "  + json library is not used" ;;
-    *)     echo "  + using json library: $JSON" ;;
-esac
-
 case $NGX_LIBATOMIC in
     YES)   echo "  + using system libatomic_ops library" ;;
     NO)    ;; # not used

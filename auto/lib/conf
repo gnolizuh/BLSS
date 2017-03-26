@@ -54,10 +54,6 @@ if [ $USE_SHA1 = YES ]; then
 
 fi
 
-if [ $USE_JSON = YES ]; then
-    . auto/lib/json/conf
-fi
-
 if [ $USE_ZLIB = YES ]; then
     . auto/lib/zlib/conf
 fi

@@ -146,9 +146,6 @@ SHA1=NONE
 SHA1_OPT=
 SHA1_ASM=NO
 
-USE_JSON=YES
-JSON=NONE
-
 USE_ZLIB=NO
 ZLIB=NONE
 ZLIB_OPT=
@@ -343,8 +340,6 @@ use the \"--with-mail_ssl_module\" option instead"
         --with-sha1=*)                   SHA1="$value"              ;;
         --with-sha1-opt=*)               SHA1_OPT="$value"          ;;
         --with-sha1-asm)                 SHA1_ASM=YES               ;;
-        
-        --with-json)                     USE_JSON=YES               ;;
 
         --with-zlib=*)                   ZLIB="$value"              ;;
         --with-zlib-opt=*)               ZLIB_OPT="$value"          ;;
