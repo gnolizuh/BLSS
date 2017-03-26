@@ -1711,14 +1711,8 @@ ngx_rtmp_codec_meta_data(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_chain_
     skip = !(in->buf->last > in->buf->pos
             && *in->buf->pos == NGX_RTMP_AMF_STRING);
 
-    if (cacf->meta == NGX_RTMP_CODEC_META_APPEND) {
-        elt_ex = ngx_rtmp_receive_amf_meta(s, in, in_elts + skip,
-                sizeof(in_elts) / sizeof(in_elts[0]) - skip);
-        if ((ngx_int_t)elt_ex == NGX_ERROR) {
-            return NGX_OK;
-        }
-    } else if (ngx_rtmp_receive_amf(s, in, in_elts + skip,
-                sizeof(in_elts) / sizeof(in_elts[0]) - skip)) {
+    if (ngx_rtmp_receive_amf(s, in, in_elts + skip,
+        sizeof(in_elts) / sizeof(in_elts[0]) - skip)) {
         ngx_log_error(NGX_LOG_ERR, s->connection->log, 0,
                 "codec: error parsing data frame");
         return NGX_OK;

@@ -882,8 +882,6 @@ ngx_int_t ngx_rtmp_append_amf(ngx_rtmp_session_t *s,
         ngx_rtmp_amf_elt_t *elts, size_t nelts);
 ngx_int_t ngx_rtmp_receive_amf(ngx_rtmp_session_t *s, ngx_chain_t *in,
         ngx_rtmp_amf_elt_t *elts, size_t nelts);
-ngx_rtmp_amf_elt_ex_t *ngx_rtmp_receive_amf_meta(ngx_rtmp_session_t *s,
-        ngx_chain_t *in, ngx_rtmp_amf_elt_t *elts, size_t nelts);
 
 ngx_chain_t * ngx_rtmp_create_amf(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
         ngx_rtmp_amf_elt_t *elts, size_t nelts);
