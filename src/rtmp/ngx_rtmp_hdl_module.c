@@ -8,7 +8,6 @@
 #include <ngx_core.h>
 #include <ngx_rtmp.h>
 #include "ngx_rtmp_hdl_module.h"
-#include "ngx_rtmp_log_module.h"
 
 
 extern ngx_uint_t ngx_rtmp_playing;
@@ -182,19 +181,8 @@ ngx_rtmp_http_flv_send(ngx_event_t *wev)
 
         s->out_bytes += n;
         s->ping_reset = 1;
-
-      	ngx_rtmp_update_bandwidth(&ngx_rtmp_bw_out, n);
-
-      	if(ctx && ctx->stream){
-            ngx_rtmp_update_bandwidth(&ctx->stream->bw_out, n);
-
-            if (s->relay_type == NGX_NONE_RELAY) {
-
-                ngx_rtmp_update_bandwidth(&ctx->stream->bw_out_bytes, n);
-            }
-      	}
-
         s->out_bpos += n;
+
         if (s->out_bpos == s->out_chain->buf->last) {
             s->out_chain = s->out_chain->next;
             if (s->out_chain == NULL) {
@@ -320,22 +308,9 @@ ngx_rtmp_http_hdl_play_local(ngx_http_request_t *r)
     ngx_memcpy(v.name, s->name.data, ngx_min(s->name.len, sizeof(v.name) - 1));
     ngx_memcpy(v.args, s->args.data, ngx_min(s->args.len, sizeof(v.args) - 1));
 
-    if (!ngx_rtmp_remote_conf()) {
+    cscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_core_module);
 
-        if (ngx_rtmp_cmd_get_core_srv_conf(s, NGX_RTMP_CMD_HDL_PLAY, &s->host_in, &s->app, &cscf, &cacf) != NGX_OK) {
-
-            ngx_log_error(NGX_LOG_ERR, s->connection->log, 0, "hdl_play: forbidden");
-            return NGX_ERROR;
-        }
-
-        s->app_conf = cacf->app_conf;
-
-    } else {
-
-        cscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_core_module);
-
-        s->app_conf = cscf->ctx->app_conf;
-    }
+    s->app_conf = cscf->ctx->app_conf;
 
     ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_hdl_module);
     if (ctx == NULL) {
@@ -405,19 +380,12 @@ ngx_rtmp_http_hdl_connect_local(ngx_http_request_t *r, ngx_str_t *app, ngx_str_t
     ngx_memcpy(v.tc_url, "HDL tc_url", ngx_strlen("HDL tc_url"));
     ngx_memcpy(v.page_url, "HDL page_url", ngx_strlen("HDL page_url"));
 
-    ngx_str_set(&s->host_in, "default_host");
-    s->port_in = 8080;
-
     NGX_RTMP_SET_STRPAR(app);
     NGX_RTMP_SET_STRPAR(args);
     NGX_RTMP_SET_STRPAR(flashver);
     NGX_RTMP_SET_STRPAR(swf_url);
     NGX_RTMP_SET_STRPAR(tc_url);
     NGX_RTMP_SET_STRPAR(page_url);
-
-    ngx_rtmp_parse_host(s->pool, r->headers_in.host->value, &s->host_in, &s->port_in);
-
-    ngx_http_arg(r, (u_char*)"vhost", 5, &s->host_in);
 
     s->name.len = name->len;
     s->name.data = ngx_pstrdup(s->pool, name);
@@ -505,14 +473,6 @@ ngx_rtmp_http_hdl_init_session(ngx_http_request_t *r, ngx_rtmp_addr_conf_t *addr
     cln->handler = ngx_rtmp_http_hdl_cleanup;
     cln->data = r;
 
-    s->last_audio_ts = NGX_RTMP_INVALID_TIMESTAMP;
-    s->audio_ts_min = NGX_RTMP_INVALID_TIMESTAMP;
-    s->audio_ts_max = NGX_RTMP_INVALID_TIMESTAMP;
-    s->last_video_ts = NGX_RTMP_INVALID_TIMESTAMP;
-    s->video_ts_min = NGX_RTMP_INVALID_TIMESTAMP;
-    s->video_ts_max = NGX_RTMP_INVALID_TIMESTAMP;
-    s->last_video_cts = NGX_RTMP_INVALID_CTS_TIMESTAMP;
-
     s->ctx = ngx_pcalloc(s->pool, sizeof(void *) * ngx_rtmp_max_module);
     if (s->ctx == NULL) {
         ngx_rtmp_finalize_session(s);
@@ -544,10 +504,6 @@ ngx_rtmp_http_hdl_init_session(ngx_http_request_t *r, ngx_rtmp_addr_conf_t *addr
        ngx_rtmp_finalize_session(s);
        return NULL;
    }
-
-   /** to init the session event'log **/
-   s->connect_time = ngx_time();
-   s->stream_stat = NGX_RTMP_STREAM_BEGIN;
 
     return s;
 }
