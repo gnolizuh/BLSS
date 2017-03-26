@@ -374,14 +374,10 @@ ngx_rtmp_http_hdl_connect_local(ngx_http_request_t *r, ngx_str_t *app, ngx_str_t
     ngx_memcpy(v.tc_url, "HDL tc_url", ngx_strlen("HDL tc_url"));
     ngx_memcpy(v.page_url, "HDL page_url", ngx_strlen("HDL page_url"));
 
-#define NGX_RTMP_SET_STRPAR(name) \
-    do { \
-        s->name.len = ngx_strlen(v.name); \
-        if (s->name.len > 0) { \
-            s->name.data = ngx_palloc(s->pool, s->name.len); \
-            ngx_memcpy(s->name.data, v.name, s->name.len); \
-        } \
-    }while(0)
+#define NGX_RTMP_SET_STRPAR(name)                                             \
+    s->name.len = ngx_strlen(v.name);                                        \
+    s->name.data = ngx_palloc(s->connection->pool, s->name.len);              \
+    ngx_memcpy(s->name.data, v.name, s->name.len)
 
     NGX_RTMP_SET_STRPAR(app);
     NGX_RTMP_SET_STRPAR(args);
@@ -935,10 +931,6 @@ ngx_rtmp_hdl_gop_cache_send(ngx_rtmp_session_t *ss)
         return;
     }
 
-    if (!ngx_hdl_pull_type(ss->protocol)) {
-        return;
-    }
-
     for (pctx = pullctx->stream->ctx; pctx; pctx = pctx->next) {
         if (pctx->publishing) {
             break;
@@ -1196,10 +1188,6 @@ ngx_rtmp_hdl_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
         ss = pctx->session;
         cs = &pctx->cs[csidx];
 
-        if (!ngx_hdl_pull_type(ss->protocol)) {
-            continue;
-        }
-
         /* send metadata */
 
         if (meta && meta_version != pctx->meta_version) {
@@ -1388,10 +1376,6 @@ ngx_rtmp_hdl_message(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
         }
 
         ss = pctx->session;
-
-        if (!ngx_hdl_pull_type(ss->protocol)) {
-            continue;
-        }
 
         if (ngx_rtmp_hdl_send_message(ss, mpkt, 0) == NGX_OK) {
 #if (NGX_DEBUG)
