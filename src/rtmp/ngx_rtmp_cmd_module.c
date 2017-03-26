@@ -520,14 +520,6 @@ ngx_rtmp_cmd_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
 ngx_int_t
 ngx_rtmp_cmd_start_connect(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
 {
-    ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
-            "slot=%i, connect: app='%s' args='%s' flashver='%s' swf_url='%s' "
-            "tc_url='%s' page_url='%s' acodecs=%uD vcodecs=%uD "
-            "object_encoding=%ui relay_type='%d'",
-            ngx_process_slot, v->app, v->args, v->flashver, v->swf_url, v->tc_url, v->page_url,
-            (uint32_t)v->acodecs, (uint32_t)v->vcodecs,
-            (ngx_int_t)v->object_encoding, v->relay_type);
-
     return ngx_rtmp_connect(s, v);
 }
 
@@ -535,13 +527,6 @@ ngx_rtmp_cmd_start_connect(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
 ngx_int_t
 ngx_rtmp_cmd_start_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
 {
-	ngx_log_debug7(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
-                  "slot=%i, cmd_start_play: name='%s' args='%s' start=%i duration=%i "
-                  "reset=%i silent=%i",
-                  ngx_process_slot, v->name, v->args, (ngx_int_t) v->start,
-                  (ngx_int_t) v->duration, (ngx_int_t) v->reset,
-                  (ngx_int_t) v->silent);
-
     return ngx_rtmp_play(s, v);
 }
 
