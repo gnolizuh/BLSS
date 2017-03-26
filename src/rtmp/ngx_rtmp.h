@@ -226,6 +226,7 @@ typedef struct {
     void                  **main_conf;
     void                  **srv_conf;
     void                  **app_conf;
+    ngx_rtmp_addr_conf_t   *addr_conf;
 
     ngx_str_t              *addr_text;
     int                     connected;
@@ -242,6 +243,7 @@ typedef struct {
 
     /* connection parameters */
     ngx_str_t               app;
+    ngx_str_t               name;
     ngx_str_t               args;
     ngx_str_t               flashver;
     ngx_str_t               swf_url;

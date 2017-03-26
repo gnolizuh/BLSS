@@ -214,11 +214,6 @@ ngx_rtmp_hdl_send_message(ngx_rtmp_session_t *s, ngx_chain_t *out,
 {
     ngx_uint_t                      nmsg;
 
-    if (!ngx_hdl_type(s->protocol)) {
-
-        return NGX_OK;
-    }
-
     nmsg = (s->out_last - s->out_pos) % s->out_queue + 1;
 
     if (priority > 3) {
