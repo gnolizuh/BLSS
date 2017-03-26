@@ -32,6 +32,11 @@ enum {
     NGX_RTMP_AUDIO_DEVSPEC          = 15,
 };
 
+enum {
+    NGX_RTMP_AUDIO_FRAME_SIZE_AAC   = 1024,
+    NGX_RTMP_AUDIO_FRAME_SIZE_MP3   = 1152,
+};
+
 
 /* Video codecs */
 enum {
