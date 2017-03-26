@@ -11,8 +11,8 @@
 #include <ngx_config.h>
 #include <ngx_core.h>
 #include <ngx_event.h>
-#include <ngx_inet.h>
 #include <ngx_event_connect.h>
+#include <nginx.h>
 
 #include "ngx_rtmp_amf.h"
 #include "ngx_rtmp_bandwidth.h"
@@ -32,24 +32,12 @@ typedef struct {
 
 
 typedef struct {
-    union {
-        struct sockaddr        sockaddr;
-        struct sockaddr_in     sockaddr_in;
-#if (NGX_HAVE_INET6)
-        struct sockaddr_in6    sockaddr_in6;
-#endif
-#if (NGX_HAVE_UNIX_DOMAIN)
-        struct sockaddr_un     sockaddr_un;
-#endif
-        u_char                 sockaddr_data[NGX_SOCKADDRLEN];
-    } u;
     u_char                  sockaddr[NGX_SOCKADDRLEN];
     socklen_t               socklen;
 
     /* server ctx */
     ngx_rtmp_conf_ctx_t    *ctx;
 
-    unsigned                default_server:1;
     unsigned                bind:1;
     unsigned                wildcard:1;
 #if (NGX_HAVE_INET6 && defined IPV6_V6ONLY)
@@ -71,6 +59,28 @@ typedef struct {
 
 
 typedef struct {
+    ngx_rtmp_conf_ctx_t    *ctx;
+    ngx_str_t               addr_text;
+    unsigned                proxy_protocol:1;
+} ngx_rtmp_addr_conf_t;
+
+typedef struct {
+    in_addr_t               addr;
+    ngx_rtmp_addr_conf_t    conf;
+} ngx_rtmp_in_addr_t;
+
+
+#if (NGX_HAVE_INET6)
+
+typedef struct {
+    struct in6_addr         addr6;
+    ngx_rtmp_addr_conf_t    conf;
+} ngx_rtmp_in6_addr_t;
+
+#endif
+
+
+typedef struct {
     void                   *addrs;
     ngx_uint_t              naddrs;
 } ngx_rtmp_port_t;
@@ -79,18 +89,30 @@ typedef struct {
 typedef struct {
     int                     family;
     in_port_t               port;
-    ngx_array_t             ports;
     ngx_array_t             addrs;       /* array of ngx_rtmp_conf_addr_t */
 } ngx_rtmp_conf_port_t;
 
-#define NGX_BUFF_LEN             1024
 
-#define NGX_RTMP_LOG_DIR_ACCESS        	 0744
-#define NGX_RTMP_LOG_FILE_ACCESS         0777
+typedef struct {
+    struct sockaddr        *sockaddr;
+    socklen_t               socklen;
 
-#define NGX_RTMP_RELAY_NAME             "ngx-relay"
+    ngx_rtmp_conf_ctx_t    *ctx;
 
-#define NGX_RTMP_SERVER_TYPE            "ORI"
+    unsigned                bind:1;
+    unsigned                wildcard:1;
+#if (NGX_HAVE_INET6 && defined IPV6_V6ONLY)
+    unsigned                ipv6only:2;
+#endif
+    unsigned                so_keepalive:2;
+    unsigned                proxy_protocol:1;
+#if (NGX_HAVE_KEEPALIVE_TUNABLE)
+    int                     tcp_keepidle;
+    int                     tcp_keepintvl;
+    int                     tcp_keepcnt;
+#endif
+} ngx_rtmp_conf_addr_t;
+
 
 #define NGX_RTMP_VERSION                3
 
@@ -110,14 +132,6 @@ typedef struct {
 #define NGX_RTMP_PULL_TYPE_HDL          3
 #define NGX_RTMP_PUSH_TYPE_RTMP         4
 #define NGX_RTMP_PUSH_TYPE_HDL          5
-
-#define NGX_RTMP_STREAM_PRIVATE			0
-#define NGX_RTMP_STREAM_PUBLIC			1
-#define NGX_RTMP_ERROR_PUBLIC			2
-
-#define	NGX_RTMP_STREAM_NDRM			0
-#define NGX_RTMP_STREAM_DRM				1
-#define NGX_RTMP_ERROR_DRM				2
 
 /* RTMP message types */
 #define NGX_RTMP_MSG_CHUNK_SIZE         1
@@ -159,40 +173,6 @@ typedef struct {
 #define NGX_RTMP_USER_UNKNOWN           8
 #define NGX_RTMP_USER_BUFFER_END        31
 
-#define NGX_RTMP_INVALID_TIMESTAMP      ((ngx_uint_t)(-1)) /* 2^63*/
-#define NGX_RTMP_INVALID_CTS_TIMESTAMP  ((ngx_int_t)(0)) /*0*/
-
-/** publish finalize log **/
-
-typedef enum {
-    NGX_RTMP_LOG_FINALIZE_CLIENT_CLOSE_SESSION_CODE,
-    NGX_RTMP_LOG_FINALIZE_HANDSHAKE_RECV_ERR_CODE,
-    NGX_RTMP_LOG_FINALIZE_HANDSHAKE_SEND_ERR_CODE,
-    NGX_RTMP_LOG_FINALIZE_RTMP_PUBLISHER_CLOSE_CODE,
-    NGX_RTMP_LOG_FINALIZE_RTMP_RECV_ERR_CODE,
-    NGX_RTMP_LOG_FINALIZE_PARSE_RTMP_HEAD_ERR_CODE,
-    NGX_RTMP_LOG_FINALIZE_RTMP_PING_ERR_CODE,
-    NGX_RTMP_LOG_FINALIZE_DROP_IDLE_CODE,
-    NGX_RTMP_LOG_FINALIZE_MANDATORY_PACKET_ERR_CODE,
-    NGX_RTMP_LOG_FINALIZE_CONNECT_APP_NAME_ILLEGAL,
-    NGX_RTMP_LOG_FINALIZE_PUBLISH_STREAM_NAME_ILLEGAL,
-    NGX_RTMP_LOG_FINALIZE_DS_CLOSE_PUBLISHER,
-    NGX_RTMP_LOG_FINALIZE_PUBLISH_VDOID_ILLEGAL,
-    NGX_RTMP_LOG_FINALIZE_MAX_CODE
-} ngx_rtmp_log_finalize_code_t;
-
-
-/* stream_stat */
-typedef enum {
-    NGX_RTMP_STREAM_BEGIN,
-    NGX_RTMP_STREAM_END,
-    NGX_RTMP_STREAM_PUBLISHING
-} ngx_rtmp_stream_stat_t;
-
-
-/* NGX_RTMP_MAX_CHUNK_HEADER > NGX_RTMP_MAX_FLV_TAG_HEADER */
-
-#define NGX_RTMP_MAX_LOG_SIZE           4096
 
 /* Chunk header:
  *   max 3  basic header
@@ -210,70 +190,6 @@ typedef enum {
 #define NGX_RTMP_MAX_FLV_TAG_HEADER     11
 
 #define NGX_RTMP_MAX_FLV_TAG_SIZE_HEADER 4
-
-
-#define NGX_RTMP_CORE_LOAD_CONF_LOCAL   1
-#define NGX_RTMP_CORE_LOAD_CONF_REMOTE  2
-
-#define NGX_RTMP_MAX_BUF_SIZE       1024
-
-#define NGX_RTMP_MAX_NAME_LEN       128  
-
-#define BLANK_SPACE " "
-
-
-typedef struct {
-    ngx_int_t               user_id;
-    ngx_str_t               unique_name;
-    ngx_uint_t              live:1;
-    ngx_uint_t              auth:1;
-    ngx_uint_t              gop_cache:1;
-    ngx_uint_t              gop_cache_mintime;
-    ngx_uint_t              gop_cache_maxtime;
-    ngx_uint_t              rtmp_status_code:1;
-    ngx_msec_t              idle_timeout;
-    ngx_uint_t              hdl:1;
-    ngx_uint_t              hls:1;
-    ngx_msec_t              hls_fragment;
-    ngx_msec_t              hls_playlist_length;
-
-    ngx_uint_t              screenshot:1;
-    ngx_uint_t              screenshot_is_public:1;
-    ngx_uint_t              screenshot_monitor;
-    ngx_str_t               screenshot_bucket;
-    ngx_str_t               screenshot_url;
-    ngx_uint_t              screenshot_is_cover;
-    ngx_msec_t              screenshot_interval;
-
-    ngx_uint_t              hls_vod:1;
-    ngx_msec_t              hls_vod_fragment;
-    ngx_uint_t              hls_vod_ts_zero:1;
-    ngx_uint_t              hls_vod_is_public:1;
-    ngx_str_t               hls_vod_bucket;
-    ngx_str_t               hls_vod_url;
-
-    ngx_uint_t              mp4_vod:1;
-    ngx_uint_t              mp4_vod_is_public:1;
-    ngx_str_t               mp4_vod_bucket;
-    ngx_str_t               mp4_vod_url;
-    ngx_uint_t              mp4_vod_name_format;
-
-    ngx_str_t               region_hls;
-    ngx_str_t               region_pic;
-    ngx_str_t               region_mp4;
-
-    ngx_str_t               host_hls;
-    ngx_str_t               host_pic;
-    ngx_str_t               host_mp4;
-
-    ngx_flag_t              hls_vod_auto_merge;
-    ngx_uint_t              publish_extime_fix:1;
-
-    ngx_uint_t              live_delay:1;
-    ngx_msec_t              live_delay_time;
-    ngx_str_t               live_delay_host;
-    ngx_str_t               live_delay_app;
-} ngx_rtmp_conf_t;
 
 typedef struct {
     uint32_t                csid;       /* chunk stream id */
@@ -301,163 +217,6 @@ typedef struct {
 #endif
 
 
-#if (NGX_WIN32)
-#pragma warning(pop)
-#endif
-
-#define NGX_RTMP_MAX_SRV_NBUCKET    64
-#define NGX_RTMP_MAX_APP_NBUCKET    8
-#define NGX_RTMP_MAX_STREAM_NBUCKET 1024
-
-#define NGX_RTMP_UNIX_TIME_LEN_MIN  10
-#define NGX_RTMP_UNIX_TIME_LEN_MAX  20
-
-typedef struct {
-    ngx_array_t             servers;    /* ngx_rtmp_core_srv_conf_t */
-    ngx_array_t             listen;     /* ngx_rtmp_listen_t */
-
-    ngx_array_t             events[NGX_RTMP_MAX_EVENT];
-
-    ngx_hash_t              amf_hash;
-    ngx_array_t             amf_arrays;
-    ngx_array_t             amf;
-	ngx_array_t 			ports;
-
-    ngx_uint_t              server_names_hash_max_size;
-    ngx_uint_t              server_names_hash_bucket_size;
-    ngx_uint_t              load_conf_from;          /* load configure from local or remote */
-} ngx_rtmp_core_main_conf_t;
-
-extern ngx_rtmp_core_main_conf_t   *ngx_rtmp_core_main_conf;
-
-typedef struct ngx_rtmp_core_srv_conf_s {
-    ngx_array_t             applications;
-
-    ngx_array_t             hls_play_domains;
-    ngx_array_t             rtmp_play_domains;
-    ngx_array_t             hdl_play_domains;
-    ngx_array_t             rtmp_publish_domains;
-    ngx_str_t               unique_name;
-
-    ngx_msec_t              timeout;
-    ngx_msec_t              ping;
-    ngx_msec_t              ping_timeout;
-    ngx_flag_t              so_keepalive;
-    ngx_int_t               max_streams;
-
-    ngx_uint_t              ack_window;
-
-    ngx_int_t               chunk_size;
-    ngx_pool_t             *pool;
-    ngx_chain_t            *free;
-    ngx_chain_t            *free_hs;
-    size_t                  max_message;
-    ngx_flag_t              play_time_fix;
-    ngx_flag_t              publish_time_fix;
-    ngx_flag_t              publish_extime_fix;
-    ngx_flag_t              rtmp_status_code;
-    ngx_flag_t              busy;
-    size_t                  out_queue;
-    size_t                  out_cork;
-    ngx_msec_t              buflen;
-
-    ngx_rtmp_conf_ctx_t    *ctx;
-    unsigned                listen:1;     /*liten flag*/
-} ngx_rtmp_core_srv_conf_t;
-
-typedef struct {
-    ngx_array_t             applications; /* ngx_rtmp_core_app_conf_t */
-    ngx_str_t               name;
-    void                  **app_conf;
-} ngx_rtmp_core_app_conf_t;
-
-typedef struct {
-    ngx_rtmp_core_srv_conf_t  *server;    /* virtual name server conf */
-    ngx_str_t                  name;
-} ngx_rtmp_server_name_t;
-
-typedef struct {
-     ngx_hash_combined_t       hls_play_names;
-     ngx_hash_combined_t       rtmp_play_names;
-     ngx_hash_combined_t       hdl_play_names;
-     ngx_hash_combined_t       rtmp_publish_names;
-     ngx_uint_t                nregex;
-     ngx_rtmp_server_name_t   *regex;
-} ngx_rtmp_virtual_names_t;
-
-typedef struct {
-    ngx_rtmp_conf_ctx_t    *ctx;
-    ngx_str_t               addr_text;
-
-/*added by andrew, for srver_name
-  * the default server configuration for this address:port */
-    ngx_rtmp_core_srv_conf_t  *default_server;
-    ngx_rtmp_virtual_names_t  *vnames;
-
-    unsigned                proxy_protocol:1;
-} ngx_rtmp_addr_conf_t;
-
-typedef struct {
-    in_addr_t               addr;
-    ngx_rtmp_addr_conf_t    conf;
-} ngx_rtmp_in_addr_t;
-#if (NGX_HAVE_INET6)
-
-typedef struct {
-    struct in6_addr         addr6;
-    ngx_rtmp_addr_conf_t    conf;
-} ngx_rtmp_in6_addr_t;
-
-#endif
-typedef struct {
-    ngx_rtmp_listen_t       opt; /*added by andrew, for server_name*/
-
-    struct sockaddr        *sockaddr;
-    socklen_t               socklen;
-
-    ngx_rtmp_conf_ctx_t    *ctx;
-
-    ngx_hash_t                 hls_play_hash;
-    ngx_hash_wildcard_t       *hls_play_wc_head;
-    ngx_hash_wildcard_t       *hls_play_wc_tail;
-
-    ngx_hash_t                 rtmp_play_hash;
-    ngx_hash_wildcard_t       *rtmp_play_wc_head;
-    ngx_hash_wildcard_t       *rtmp_play_wc_tail;
-
-    ngx_hash_t                 hdl_play_hash;
-    ngx_hash_wildcard_t       *hdl_play_wc_head;
-    ngx_hash_wildcard_t       *hdl_play_wc_tail;
-
-    ngx_hash_t                 rtmp_publish_hash;
-    ngx_hash_wildcard_t       *rtmp_publish_wc_head;
-    ngx_hash_wildcard_t       *rtmp_publish_wc_tail;
-
-	ngx_rtmp_core_srv_conf_t  *default_server;
-    ngx_array_t                servers;       /* array of ngx_rtmp_core_srv_conf_t */
-
-    unsigned                bind:1;
-    unsigned                wildcard:1;
-#if (NGX_HAVE_INET6 && defined IPV6_V6ONLY)
-    unsigned                ipv6only:2;
-#endif
-    unsigned                so_keepalive:2;
-    unsigned                proxy_protocol:1;
-#if (NGX_HAVE_KEEPALIVE_TUNABLE)
-    int                     tcp_keepidle;
-    int                     tcp_keepintvl;
-    int                     tcp_keepcnt;
-#endif
-} ngx_rtmp_conf_addr_t;
-
-typedef struct {
-    ngx_uint_t              recv_time;      /*utc time (ms)*/
-    uint8_t                 type;           /*should be 8(audio) or 9(video)*/
-    uint8_t                 is_raw;
-    uint32_t                timestamp;
-} ngx_rtmp_chunk_info_t;
-
-
 typedef struct {
     uint32_t                signature;  /* "RTMP" */ /* <-- FIXME wtf */
 
@@ -467,16 +226,14 @@ typedef struct {
     void                  **main_conf;
     void                  **srv_conf;
     void                  **app_conf;
-    ngx_rtmp_addr_conf_t   *addr_conf;
-    ngx_rtmp_conf_ctx_t    *conf_ctx;
 
     ngx_str_t              *addr_text;
     int                     connected;
 
 #if (nginx_version >= 1007005)
-        ngx_queue_t             posted_dry_events;
+    ngx_queue_t             posted_dry_events;
 #else
-        ngx_event_t            *posted_dry_events;
+    ngx_event_t            *posted_dry_events;
 #endif
 
     /* client buffer time in msec */
@@ -485,35 +242,13 @@ typedef struct {
 
     /* connection parameters */
     ngx_str_t               app;
-    ngx_str_t               name;
-
     ngx_str_t               args;
     ngx_str_t               flashver;
     ngx_str_t               swf_url;
     ngx_str_t               tc_url;
-    ngx_str_t               hls_name;
     uint32_t                acodecs;
     uint32_t                vcodecs;
     ngx_str_t               page_url;
-
-    double                  start;
-    double                  duration;
-    int                     reset;
-    int                     silent;
-
-    ngx_str_t               x_forwarded_for;
-
-    /* host_in: input vhost  port_in: input port */
-    ngx_str_t               host_in;
-    ngx_int_t               port_in;
-    ngx_str_t               refer_in;
-
-    /* dynamic configuration */
-    ngx_rtmp_conf_t         conf;
-
-    /* standard parameters */
-    ngx_str_t               vdoid;
-    ngx_str_t               preset;
 
     /* handshake data */
     ngx_buf_t              *hs_buf;
@@ -525,18 +260,7 @@ typedef struct {
     ngx_msec_t              epoch;
     ngx_msec_t              peer_epoch;
     ngx_msec_t              base_time;
-    ngx_msec_t              end_time;
-    time_t                  connect_time;
-    time_t                  fin_time;
     uint32_t                current_time;
-
-    /**  flux last stat time **/
-    ngx_msec_t              last_time;
-    ngx_msec_t              log_time;
-    ngx_uint_t              stream_stat;
-
-    /**  publish finalize code **/
-    ngx_uint_t              finalize_code;
 
     /* ping */
     ngx_event_t             ping_evt;
@@ -549,17 +273,6 @@ typedef struct {
     unsigned                static_relay:1;
 
     ngx_uint_t              protocol;
-
-    /* hls play */
-    ngx_pool_t             *pool;
-    void                   *r;
-    ngx_int_t               rc;
-    ngx_int_t               status_code;
-    ngx_msec_t              hls_stime_ms;
-    ngx_msec_t              hls_etime_ms;
-
-    /* auto-pull? */
-    ngx_uint_t              relay_type;
 
     /* input stream 0 (reserved by RTMP spec)
      * is used as free chain link */
@@ -585,25 +298,13 @@ typedef struct {
     unsigned                out_buffer:1;
     size_t                  out_queue;
     size_t                  out_cork;
-
-    /* static buffer for log printing */
-    unsigned                audio_recved:1;
-    unsigned                video_recved:1;
-    u_char                 *log_bpos;
-    u_char                  log_buf[NGX_RTMP_MAX_BUF_SIZE];
-
-    /* timestamp log print*/
-    ngx_uint_t              last_audio_ts;
-    ngx_uint_t              last_video_ts;
-    ngx_uint_t              audio_ts_min;
-    ngx_uint_t              audio_ts_max;
-    ngx_uint_t              video_ts_min;
-    ngx_uint_t              video_ts_max;
-    ngx_int_t               last_video_cts;
-
     ngx_chain_t            *out[0];
-
 } ngx_rtmp_session_t;
+
+
+#if (NGX_WIN32)
+#pragma warning(pop)
+#endif
 
 
 /* handler result code:
@@ -619,6 +320,56 @@ typedef struct {
     ngx_str_t               name;
     ngx_rtmp_handler_pt     handler;
 } ngx_rtmp_amf_handler_t;
+
+
+typedef struct {
+    ngx_array_t             servers;    /* ngx_rtmp_core_srv_conf_t */
+    ngx_array_t             listen;     /* ngx_rtmp_listen_t */
+
+    ngx_array_t             events[NGX_RTMP_MAX_EVENT];
+
+    ngx_hash_t              amf_hash;
+    ngx_array_t             amf_arrays;
+    ngx_array_t             amf;
+} ngx_rtmp_core_main_conf_t;
+
+
+/* global main conf for stats */
+extern ngx_rtmp_core_main_conf_t   *ngx_rtmp_core_main_conf;
+
+
+typedef struct ngx_rtmp_core_srv_conf_s {
+    ngx_array_t             applications; /* ngx_rtmp_core_app_conf_t */
+
+    ngx_msec_t              timeout;
+    ngx_msec_t              ping;
+    ngx_msec_t              ping_timeout;
+    ngx_flag_t              so_keepalive;
+    ngx_int_t               max_streams;
+
+    ngx_uint_t              ack_window;
+
+    ngx_int_t               chunk_size;
+    ngx_pool_t             *pool;
+    ngx_chain_t            *free;
+    ngx_chain_t            *free_hs;
+    size_t                  max_message;
+    ngx_flag_t              play_time_fix;
+    ngx_flag_t              publish_time_fix;
+    ngx_flag_t              busy;
+    size_t                  out_queue;
+    size_t                  out_cork;
+    ngx_msec_t              buflen;
+
+    ngx_rtmp_conf_ctx_t    *ctx;
+} ngx_rtmp_core_srv_conf_t;
+
+
+typedef struct {
+    ngx_array_t             applications; /* ngx_rtmp_core_app_conf_t */
+    ngx_str_t               name;
+    void                  **app_conf;
+} ngx_rtmp_core_app_conf_t;
 
 
 typedef struct {
@@ -642,8 +393,6 @@ typedef struct {
     char                 *(*merge_app_conf)(ngx_conf_t *cf, void *prev,
                                     void *conf);
 } ngx_rtmp_module_t;
-
-extern ngx_module_t  ngx_rtmp_module;
 
 #define NGX_RTMP_MODULE                 0x504D5452     /* "RTMP" */
 
@@ -675,34 +424,11 @@ extern ngx_module_t  ngx_rtmp_module;
     ((ngx_rtmp_conf_ctx_t *) cf->ctx)->srv_conf[module.ctx_index]
 #define ngx_rtmp_conf_get_module_app_conf(cf, module)                        \
     ((ngx_rtmp_conf_ctx_t *) cf->ctx)->app_conf[module.ctx_index]
-#define ngx_rtmp_cycle_get_module_main_conf(cycle, module)                   \
-	(cycle->conf_ctx[ngx_rtmp_module.index] ?							     \
-		((ngx_rtmp_conf_ctx_t *) cycle->conf_ctx[ngx_rtmp_module.index])	 \
-			->main_conf[module.ctx_index]:									 \
-		NULL)
 
-#define ngx_rtmp_get_attr_conf(cf, attr) \
-    ((ngx_rtmp_core_main_conf->load_conf_from != NGX_RTMP_CORE_LOAD_CONF_LOCAL) ? (s->conf).attr : (cf)->attr)
 
-#define ngx_rtmp_get_attr_conf1(s, cf, attr) \
-    ((ngx_rtmp_core_main_conf->load_conf_from != NGX_RTMP_CORE_LOAD_CONF_LOCAL) ? ((s)->conf).attr : (cf)->attr)
-
-#define ngx_rtmp_remote_conf() (ngx_rtmp_core_main_conf->load_conf_from != NGX_RTMP_CORE_LOAD_CONF_LOCAL)
-
-#define ngx_rtmp_pull_type(type) ((type) == NGX_RTMP_PULL_TYPE_RTMP)
-#define ngx_hls_pull_type(type)  ((type) == NGX_RTMP_PULL_TYPE_HLS_TS || (type) == NGX_RTMP_PULL_TYPE_HLS_M3U8)
-#define ngx_hls_type(type) (ngx_hls_pull_type(type))
-#define ngx_hdl_pull_type(type)  ((type) == NGX_RTMP_PULL_TYPE_HDL)
-#define ngx_hdl_push_type(type)  ((type) == NGX_RTMP_PUSH_TYPE_HDL)
-#define ngx_hdl_type(type)  (ngx_hdl_push_type(type) || ngx_hdl_pull_type(type))
-#define ngx_rtmp_push_type(type)  ((type) == NGX_RTMP_PUSH_TYPE_RTMP)
-#define ngx_rtmp_type(type) (ngx_rtmp_push_type(type) || ngx_rtmp_pull_type(type))
-
-ngx_int_t ngx_rtmp_add_listen(ngx_conf_t *cf, ngx_rtmp_core_srv_conf_t *cscf,
-    ngx_rtmp_listen_t *lsopt);
 #ifdef NGX_DEBUG
-char *ngx_rtmp_message_type(uint8_t type);
-char *ngx_rtmp_user_message_type(uint16_t evt);
+char* ngx_rtmp_message_type(uint8_t type);
+char* ngx_rtmp_user_message_type(uint16_t evt);
 #endif
 
 void ngx_rtmp_init_connection(ngx_connection_t *c);
@@ -716,8 +442,7 @@ void ngx_rtmp_cycle(ngx_rtmp_session_t *s);
 void ngx_rtmp_reset_ping(ngx_rtmp_session_t *s);
 ngx_int_t ngx_rtmp_fire_event(ngx_rtmp_session_t *s, ngx_uint_t evt,
         ngx_rtmp_header_t *h, ngx_chain_t *in);
-void ngx_rtmp_recv(ngx_event_t *rev);
-void ngx_rtmp_send(ngx_event_t *rev);
+
 
 ngx_int_t ngx_rtmp_set_chunk_size(ngx_rtmp_session_t *s, ngx_uint_t size);
 
@@ -813,15 +538,6 @@ ngx_int_t ngx_rtmp_send_message(ngx_rtmp_session_t *s, ngx_chain_t *out,
 #define NGX_RTMP_LIMIT_HARD         1
 #define NGX_RTMP_LIMIT_DYNAMIC      2
 
-char * ngx_rtmp_stat_get_aac_profile(ngx_uint_t p, ngx_uint_t sbr, ngx_uint_t ps);
-char * ngx_rtmp_stat_get_avc_profile(ngx_uint_t p);
-ngx_int_t  ngx_rtmp_parse_tcurl(ngx_str_t args, ngx_str_t tcurl, ngx_str_t *host_in, ngx_int_t *port_in);
-ngx_int_t  ngx_rtmp_arg(ngx_str_t args, u_char *name, size_t len, ngx_str_t *value);
-ngx_int_t  ngx_rtmp_parse_host(ngx_pool_t *pool, ngx_str_t hosts, ngx_str_t *host_in, ngx_int_t *port_in);
-ngx_int_t  ngx_rtmp_parse_http_body(ngx_pool_t *pool, ngx_log_t *log, ngx_chain_t* in,
-        u_char *ret, u_char **content, ngx_uint_t *length);
-
-
 /* Protocol control messages */
 ngx_chain_t * ngx_rtmp_create_chunk_size(ngx_rtmp_session_t *s,
         uint32_t chunk_size);
@@ -900,8 +616,6 @@ ngx_int_t ngx_rtmp_send_status(ngx_rtmp_session_t *s, char *code,
 ngx_int_t ngx_rtmp_send_play_status(ngx_rtmp_session_t *s, char *code,
         char* level, ngx_uint_t duration, ngx_uint_t bytes);
 ngx_int_t ngx_rtmp_send_sample_access(ngx_rtmp_session_t *s);
-ngx_chain_t * ngx_rtmp_create_ret_status(ngx_rtmp_session_t *s, char *code, char *desc);
-ngx_int_t ngx_rtmp_send_ret_status(ngx_rtmp_session_t *s, char *code, char *desc);
 
 
 /* Frame types */
@@ -924,96 +638,9 @@ ngx_rtmp_is_codec_header(ngx_chain_t *in)
 }
 
 
-static ngx_inline ngx_uint_t
-ngx_rtmp_get_remote_port(ngx_rtmp_session_t *s)
-{
-    ngx_uint_t            port;
-    struct sockaddr_in   *sin;
-#if (NGX_HAVE_INET6)
-    struct sockaddr_in6  *sin6;
-#endif
-
-    if (s->connection != NULL &&
-        s->connection->sockaddr != NULL) {
-
-        switch (s->connection->sockaddr->sa_family) {
-
-#if (NGX_HAVE_INET6)
-            case AF_INET6:
-                sin6 = (struct sockaddr_in6 *) s->connection->sockaddr;
-                port = ntohs(sin6->sin6_port);
-                break;
-#endif
-
-#if (NGX_HAVE_UNIX_DOMAIN)
-            case AF_UNIX:
-                port = 0;
-                break;
-#endif
-
-            default: /* AF_INET */
-                sin = (struct sockaddr_in *) s->connection->sockaddr;
-                port = ntohs(sin->sin_port);
-                break;
-        }
-    } else {
-        port = 0;
-    }
-
-    return port;
-}
-
-
-static inline ngx_int_t
-ngx_rtmp_set_fincode(ngx_rtmp_session_t *s, ngx_uint_t fincode)
-{
-    s->finalize_code = fincode;
-    return NGX_OK;
-}
-
-
-static ngx_inline ngx_int_t
-ngx_rtmp_string_check(ngx_str_t *str)
-{
-    ngx_uint_t          i;
-    char               *table;
-
-#define ASCII_TABLE_LEN 256
-    // 1 for especial char; 0 for normal char
-    static char ascii_table[ASCII_TABLE_LEN] = {
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1,
-        1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0,
-        1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    };
-#undef ASCII_TABLE_LEN
-
-    for (i = 0, table = ascii_table; i < str->len; ++ i) {
-        if (*(table + str->data[i]) == 1) {
-            return NGX_ERROR;
-        }
-    }
-
-    return NGX_OK;
-}
-
-
-void ngx_rtmp_time_update_timer(ngx_event_t *ev);
-
 extern ngx_rtmp_bandwidth_t                 ngx_rtmp_bw_out;
 extern ngx_rtmp_bandwidth_t                 ngx_rtmp_bw_in;
+
 
 extern ngx_uint_t                           ngx_rtmp_naccepted;
 extern ngx_uint_t                           ngx_rtmp_hls_naccepted;
@@ -1027,14 +654,8 @@ extern ngx_thread_volatile ngx_queue_t      ngx_rtmp_init_queue;
 extern ngx_thread_volatile ngx_event_t     *ngx_rtmp_init_queue;
 #endif
 
-
 extern ngx_uint_t                           ngx_rtmp_max_module;
 extern ngx_module_t                         ngx_rtmp_core_module;
-extern ngx_module_t                         ngx_rtmp_netcall_module;
-extern ngx_module_t                         ngx_rtmp_notify_module;
-extern ngx_module_t                         ngx_rtmp_live_module;
-extern ngx_module_t                         ngx_rtmp_hdl_module;
-extern ngx_module_t                         ngx_rtmp_log_module;
 
 
 #endif /* _NGX_RTMP_H_INCLUDED_ */

@@ -10,7 +10,6 @@
 
 #include <ngx_config.h>
 #include <ngx_core.h>
-#include <nginx.h>
 #include "ngx_rtmp.h"
 
 
@@ -31,11 +30,6 @@ enum {
     NGX_RTMP_AUDIO_SPEEX            = 11,
     NGX_RTMP_AUDIO_MP3_8            = 14,
     NGX_RTMP_AUDIO_DEVSPEC          = 15,
-};
-
-enum {
-    NGX_RTMP_AUDIO_FRAME_SIZE_AAC   = 1024,
-    NGX_RTMP_AUDIO_FRAME_SIZE_MP3   = 1152,
 };
 
 
@@ -74,7 +68,6 @@ typedef struct {
     ngx_uint_t                  avc_profile;
     ngx_uint_t                  avc_compat;
     ngx_uint_t                  avc_level;
-    u_char                      avc_conf_record[21];
     ngx_uint_t                  avc_nal_bytes;
     ngx_uint_t                  avc_ref_frames;
     ngx_uint_t                  sample_rate;    /* 5512, 11025, 22050, 44100 */
@@ -94,9 +87,8 @@ typedef struct {
     ngx_uint_t                  meta_version;
 } ngx_rtmp_codec_ctx_t;
 
+
 extern ngx_module_t  ngx_rtmp_codec_module;
 
-void ngx_rtmp_codec_dump_header(ngx_rtmp_session_t *s, const char *type,
-       ngx_chain_t *in);
 
 #endif /* _NGX_RTMP_LIVE_H_INCLUDED_ */
