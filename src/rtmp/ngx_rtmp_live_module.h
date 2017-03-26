@@ -15,7 +15,7 @@
 #include "ngx_rtmp_bandwidth.h"
 #include "ngx_rtmp_streams.h"
 #include "ngx_rtmp_hdl_module.h"
-#include "hls/ngx_rtmp_hls_module.h"
+#include "ngx_rtmp_codec_module.h"
 
 
 #define NGX_RTMP_LIVE_PURE_AUDIO_GUESS_CNT    115

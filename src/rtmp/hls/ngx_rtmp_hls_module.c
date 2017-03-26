@@ -613,7 +613,7 @@ ngx_rtmp_hls_write_playlist(ngx_rtmp_session_t *s)
 }
 
 
-static ngx_int_t
+ngx_int_t
 ngx_rtmp_hls_copy(ngx_rtmp_session_t *s, void *dst, u_char **src, size_t n,
     ngx_chain_t **in)
 {
