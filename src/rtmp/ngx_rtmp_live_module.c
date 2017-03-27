@@ -217,7 +217,7 @@ ngx_rtmp_live_merge_app_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_conf_merge_msec_value(conf->sync, prev->sync, 300);
     ngx_conf_merge_msec_value(conf->idle_timeout, prev->idle_timeout, 0);
     ngx_conf_merge_value(conf->interleave, prev->interleave, 0);
-    ngx_conf_merge_value(conf->gop_cache, prev->gop_cache, 1);
+    ngx_conf_merge_value(conf->gop_cache, prev->gop_cache, 0);
     ngx_conf_merge_msec_value(conf->gop_cache_mintime, prev->gop_cache_mintime, 0);
     ngx_conf_merge_msec_value(conf->gop_cache_maxtime, prev->gop_cache_maxtime, NGX_RTMP_LIVE_PER_GOP_MAX_TIME);
     ngx_conf_merge_value(conf->wait_key, prev->wait_key, 1);
