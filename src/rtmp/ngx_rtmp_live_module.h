@@ -79,8 +79,8 @@ struct ngx_rtmp_live_ctx_s {
     ngx_rtmp_live_gop_frame_t          *free_frame;
     ngx_rtmp_bandwidth_t                bw_out;
     ngx_uint_t                          gcach_cnt;
-    ngx_uint_t                          vcach_cnt;
-    ngx_uint_t                          acach_cnt;
+    ngx_uint_t                          vframe_cnt;
+    ngx_uint_t                          aframe_cnt;
     ngx_pool_t                         *gop_pool;
     ngx_uint_t                          cached_video_cnt;
     ngx_uint_t                          audio_after_last_video_cnt;
