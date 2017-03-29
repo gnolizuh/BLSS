@@ -1187,7 +1187,7 @@ ngx_rtmp_gop_cache_frame(ngx_rtmp_session_t *s, ngx_uint_t prio, ngx_rtmp_header
 
         // drop video when not h.264 or h.265
         if (codec_ctx->video_codec_id != NGX_RTMP_VIDEO_H264 &&
-            codec_ctx->video_codec_id != NGX_RTMP_VIDEO_H265)) {
+            codec_ctx->video_codec_id != NGX_RTMP_VIDEO_H265) {
 
             return;
         }
