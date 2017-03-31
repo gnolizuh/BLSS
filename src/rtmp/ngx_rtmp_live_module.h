@@ -14,8 +14,8 @@
 #include "ngx_rtmp_cmd_module.h"
 #include "ngx_rtmp_bandwidth.h"
 #include "ngx_rtmp_streams.h"
-//#include "ngx_rtmp_hdl_module.h"
-//#include "ngx_rtmp_codec_module.h"
+#include "ngx_rtmp_hdl_module.h"
+#include "ngx_rtmp_codec_module.h"
 
 
 #define NGX_RTMP_LIVE_PURE_AUDIO_GUESS_CNT    115
@@ -23,9 +23,6 @@
 
 typedef struct ngx_rtmp_live_ctx_s ngx_rtmp_live_ctx_t;
 typedef struct ngx_rtmp_live_stream_s ngx_rtmp_live_stream_t;
-/*typedef struct ngx_rtmp_gop_cache_s ngx_rtmp_gop_cache_t;
-typedef struct ngx_rtmp_gop_frame_s ngx_rtmp_gop_frame_t;
-typedef struct ngx_rtmp_gop_cache_ctx_s ngx_rtmp_gop_cache_ctx_t;*/
 
 
 typedef struct {
@@ -35,7 +32,7 @@ typedef struct {
     uint32_t                            dropped;
 } ngx_rtmp_live_chunk_stream_t;
 
-/*
+
 typedef struct {
     ngx_uint_t                          fps;
     ngx_msec_t                          time_end;
@@ -43,15 +40,15 @@ typedef struct {
 } ngx_rtmp_live_frame_rate_t;
 
 
-struct ngx_rtmp_gop_frame_s {
+typedef struct {
     ngx_rtmp_header_t                   h;
     ngx_uint_t                          prio;
     ngx_chain_t                        *frame;
     ngx_rtmp_gop_frame_t               *next;
-};
+} ngx_rtmp_gop_frame_t;
 
 
-struct ngx_rtmp_gop_cache_s {
+typedef struct {
     ngx_rtmp_gop_frame_t               *head;
     ngx_rtmp_gop_frame_t               *tail;
     ngx_rtmp_gop_cache_t               *next_gop_cache;
@@ -61,10 +58,10 @@ struct ngx_rtmp_gop_cache_s {
     ngx_rtmp_header_t                   meta_header;
     ngx_int_t                           video_frame_cnt;
     ngx_int_t                           audio_frame_cnt;
-};
+} ngx_rtmp_gop_cache_t;
 
 
-struct ngx_rtmp_gop_cache_ctx_s {
+typedef struct {
     ngx_pool_t                         *pool;
     ngx_rtmp_gop_cache_t               *head;
     ngx_rtmp_gop_cache_t               *tail;
@@ -74,13 +71,14 @@ struct ngx_rtmp_gop_cache_ctx_s {
     ngx_uint_t                          video_frame_cnt;
     ngx_uint_t                          audio_frame_cnt;
     ngx_uint_t                          audio_after_last_video_cnt;
-};
-*/
+} ngx_rtmp_gop_cache_ctx_t;
+
+
 struct ngx_rtmp_live_ctx_s {
     ngx_rtmp_session_t                 *session;
     ngx_rtmp_live_stream_t             *stream;
     ngx_rtmp_live_ctx_t                *next;
-    //ngx_rtmp_gop_cache_ctx_t            gop_cache;
+    ngx_rtmp_gop_cache_ctx_t            gop_cache;
     ngx_rtmp_bandwidth_t                bw_out;
     ngx_uint_t                          ndropped;
     ngx_rtmp_live_chunk_stream_t        cs[2];
@@ -101,7 +99,7 @@ struct ngx_rtmp_live_stream_s {
     ngx_rtmp_bandwidth_t                bw_in_audio;
     ngx_rtmp_bandwidth_t                bw_in_video;
     ngx_rtmp_bandwidth_t                bw_out;
-	//ngx_rtmp_live_frame_rate_t          video_frame_rate;
+	ngx_rtmp_live_frame_rate_t          video_frame_rate;
     ngx_msec_t                          epoch;
     unsigned                            active:1;
     unsigned                            publishing:1;
