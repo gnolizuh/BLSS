@@ -8,6 +8,8 @@
 #include <ngx_core.h>
 #include <ngx_rtmp.h>
 #include "ngx_rtmp_hdl_module.h"
+#include "ngx_rtmp_live_module.h"
+#include "ngx_rtmp_codec_module.h"
 
 
 extern ngx_uint_t ngx_rtmp_playing;
