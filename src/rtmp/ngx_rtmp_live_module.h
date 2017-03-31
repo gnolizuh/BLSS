@@ -14,7 +14,6 @@
 #include "ngx_rtmp_cmd_module.h"
 #include "ngx_rtmp_bandwidth.h"
 #include "ngx_rtmp_streams.h"
-#include "ngx_rtmp_hdl_module.h"
 #include "ngx_rtmp_codec_module.h"
 
 
