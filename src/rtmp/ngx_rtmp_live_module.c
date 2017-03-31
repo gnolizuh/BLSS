@@ -41,7 +41,7 @@ static char *ngx_rtmp_live_set_msec_slot(ngx_conf_t *cf, ngx_command_t *cmd,
        void *conf);
 static void ngx_rtmp_live_start(ngx_rtmp_session_t *s);
 static void ngx_rtmp_live_stop(ngx_rtmp_session_t *s);
-static void ngx_rtmp_gop_cleanup(ngx_rtmp_session_t *s);
+// static void ngx_rtmp_gop_cleanup(ngx_rtmp_session_t *s);
 
 
 static ngx_command_t  ngx_rtmp_live_commands[] = {
@@ -733,7 +733,7 @@ ngx_rtmp_live_pause(ngx_rtmp_session_t *s, ngx_rtmp_pause_t *v)
 next:
     return next_pause(s, v);
 }
-
+/*
 
 static ngx_rtmp_gop_frame_t *
 ngx_rtmp_gop_alloc_frame(ngx_rtmp_session_t *s)
@@ -1388,7 +1388,7 @@ ngx_rtmp_gop_cache_send(ngx_rtmp_session_t *ss)
         }
     }
 }
-
+*/
 static ngx_int_t
 ngx_rtmp_live_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
                  ngx_chain_t *in)
@@ -1503,7 +1503,7 @@ ngx_rtmp_live_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
     ngx_rtmp_prepare_message(s, &ch, &lh, rpkt);
 	
-	ngx_rtmp_gop_cache_frame(s, prio, &ch, in);
+	// ngx_rtmp_gop_cache_frame(s, prio, &ch, in);
 
     codec_ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_codec_module);
 
@@ -1808,7 +1808,7 @@ ngx_rtmp_live_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
         ngx_rtmp_send_sample_access(s);
     }
 
-    ngx_rtmp_gop_cache_send(s);
+    // ngx_rtmp_gop_cache_send(s);
 
     ngx_rtmp_playing++;
 
