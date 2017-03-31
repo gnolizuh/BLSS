@@ -35,14 +35,14 @@ typedef struct {
     uint32_t                            dropped;
 } ngx_rtmp_live_chunk_stream_t;
 
-/*
+
 typedef struct {
     ngx_uint_t                          fps;
     ngx_msec_t                          time_end;
     ngx_uint_t                          frame_cnt;
 } ngx_rtmp_live_frame_rate_t;
 
-
+/*
 struct ngx_rtmp_gop_frame_s {
     ngx_rtmp_header_t                   h;
     ngx_uint_t                          prio;
