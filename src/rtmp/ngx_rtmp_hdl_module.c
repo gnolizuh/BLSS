@@ -909,8 +909,9 @@ ngx_rtmp_hdl_gop_cache_send(ngx_rtmp_session_t *ss)
     ngx_rtmp_codec_ctx_t           *codec_ctx;
     ngx_rtmp_core_srv_conf_t       *cscf;
     ngx_rtmp_live_app_conf_t       *lacf;
-    ngx_rtmp_live_gop_cache_t      *cache;
-    ngx_rtmp_live_gop_frame_t       *gop_frame;
+    ngx_rtmp_gop_cache_t           *cache;
+    ngx_rtmp_gop_cache_ctx_t       *gop_cache_ctx;
+    ngx_rtmp_gop_frame_t           *gop_frame;
     ngx_rtmp_header_t               ch, lh, mh;
     ngx_uint_t                      meta_version;
     uint32_t                        delta;
@@ -943,6 +944,8 @@ ngx_rtmp_hdl_gop_cache_send(ngx_rtmp_session_t *ss)
         return;
     }
 
+    gop_cache_ctx = &pctx->gop_cache_ctx;
+
     pkt = NULL;
     apkt = NULL;
     mpkt = NULL;
@@ -966,11 +969,11 @@ ngx_rtmp_hdl_gop_cache_send(ngx_rtmp_session_t *ss)
         return;
     }
 
-    for (cache = pushctx->gop_cache; cache; cache = cache->next) {
-        if (cache->gop_codec_info.meta) {
-            mh = cache->gop_codec_info.metah;
-            meta = cache->gop_codec_info.meta;
-            meta_version = cache->gop_codec_info.meta_version;
+    for (cache = gop_cache_ctx->head; cache; cache = cache->next) {
+        if (cache->meta_data) {
+            mh = cache->meta_header;
+            meta = cache->meta_data;
+            meta_version = cache->meta_version;
         }
 
         /* send metadata */
@@ -998,7 +1001,7 @@ ngx_rtmp_hdl_gop_cache_send(ngx_rtmp_session_t *ss)
         }
 
 
-        for (gop_frame = cache->gop_frame_head; gop_frame; gop_frame = gop_frame->next) {
+        for (gop_frame = cache->head; gop_frame; gop_frame = gop_frame->next) {
             csidx = !(lacf->interleave || gop_frame->h.type == NGX_RTMP_MSG_VIDEO);
 
             cs = &pullctx->cs[csidx];
@@ -1014,7 +1017,7 @@ ngx_rtmp_hdl_gop_cache_send(ngx_rtmp_session_t *ss)
 
             if (!cs->active) {
 
-                header = gop_frame->h.type == NGX_RTMP_MSG_VIDEO ? cache->gop_codec_info.video_header : codec_ctx->aac_header;
+                header = gop_frame->h.type == NGX_RTMP_MSG_VIDEO ? cache->video_seq_header_data : codec_ctx->aac_header;
                 if (header) {
 
                     apkt = ngx_rtmp_hdl_append_tag_bufs(s, header, &lh);
