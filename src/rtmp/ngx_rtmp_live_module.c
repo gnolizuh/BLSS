@@ -747,7 +747,7 @@ ngx_rtmp_gop_alloc_frame(ngx_rtmp_session_t *s)
         return NULL;
     }
 
-    gop_cache_ctx = &ctx->gop_cache;
+    gop_cache_ctx = &ctx->gop_cache_ctx;
 
     if (gop_cache_ctx->free_frame) {
         frame = gop_cache_ctx->free_frame;
@@ -782,7 +782,7 @@ ngx_rtmp_gop_free_frame(ngx_rtmp_session_t *s, ngx_rtmp_gop_frame_t *frame)
         return NULL;
     }
 
-    gop_cache_ctx = &ctx->gop_cache;
+    gop_cache_ctx = &ctx->gop_cache_ctx;
 
     if (frame->frame) {
         ngx_rtmp_free_shared_chain(cscf, frame->frame);
@@ -811,7 +811,7 @@ ngx_rtmp_gop_link_frame(ngx_rtmp_session_t *s, ngx_rtmp_gop_frame_t *frame)
         return NGX_ERROR;
     }
 
-    gop_cache_ctx = &ctx->gop_cache;
+    gop_cache_ctx = &ctx->gop_cache_ctx;
 
     // get tail gop cache.
     cache = gop_cache_ctx->tail;
@@ -857,7 +857,7 @@ ngx_rtmp_gop_alloc_cache(ngx_rtmp_session_t *s)
         return NGX_ERROR;
     }
 
-    gop_cache_ctx = &ctx->gop_cache;
+    gop_cache_ctx = &ctx->gop_cache_ctx;
 
     codec_ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_codec_module);
     if (codec_ctx == NULL) {
@@ -976,7 +976,7 @@ ngx_rtmp_gop_cleanup(ngx_rtmp_session_t *s)
         return;
     }
 
-    gop_cache_ctx = &ctx->gop_cache;
+    gop_cache_ctx = &ctx->gop_cache_ctx;
 
     cscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_core_module);
     if (cscf == NULL) {
@@ -1068,7 +1068,7 @@ ngx_rtmp_gop_update(ngx_rtmp_session_t *s)
         return;
     }
 
-    gop_cache_ctx = &ctx->gop_cache;
+    gop_cache_ctx = &ctx->gop_cache_ctx;
 
     gop_cache_mintime = lacf->gop_cache_mintime;
     gop_cache_maxtime = lacf->gop_cache_maxtime;
