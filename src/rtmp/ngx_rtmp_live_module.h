@@ -23,6 +23,7 @@ typedef struct ngx_rtmp_live_ctx_s ngx_rtmp_live_ctx_t;
 typedef struct ngx_rtmp_live_stream_s ngx_rtmp_live_stream_t;
 typedef struct ngx_rtmp_gop_frame_s ngx_rtmp_gop_frame_t;
 typedef struct ngx_rtmp_gop_cache_s ngx_rtmp_gop_cache_t;
+typedef struct ngx_rtmp_gop_cache_ctx_s ngx_rtmp_gop_cache_ctx_t;
 
 
 typedef struct {
@@ -61,7 +62,7 @@ struct ngx_rtmp_gop_cache_s {
 };
 
 
-typedef struct {
+struct ngx_rtmp_gop_cache_ctx_s {
     ngx_pool_t                         *pool;
     ngx_rtmp_gop_cache_t               *head;
     ngx_rtmp_gop_cache_t               *tail;
@@ -71,7 +72,7 @@ typedef struct {
     ngx_uint_t                          video_frame_cnt;
     ngx_uint_t                          audio_frame_cnt;
     ngx_uint_t                          audio_after_last_video_cnt;
-} ngx_rtmp_gop_cache_ctx_t;
+};
 
 
 struct ngx_rtmp_live_ctx_s {
