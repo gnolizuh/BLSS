@@ -723,37 +723,6 @@ next:
 }
 
 
-static ngx_msec_t
-ngx_rtmp_calculate_audio_interval(ngx_uint_t audio_cnt,
-                                  ngx_uint_t audio_codec_id,
-                                  ngx_uint_t sample_rate)
-{
-    ngx_msec_t interval;
-
-    interval = audio_cnt * (audio_codec_id == NGX_RTMP_AUDIO_AAC
-                ? NGX_RTMP_AUDIO_FRAME_SIZE_AAC
-                : NGX_RTMP_AUDIO_FRAME_SIZE_MP3) * 1000 / ( sample_rate > 0
-                ? sample_rate
-                : 44100);
-
-    return interval;
-}
-
-
-static ngx_msec_t
-ngx_rtmp_calculate_video_interval(ngx_uint_t video_cnt,
-                                  ngx_rtmp_live_frame_rate_t video_frame_rate)
-{
-    ngx_msec_t interval;
-
-    interval = video_frame_rate.fps > 0
-                ? video_cnt * 1000 * 1000 / video_frame_rate.fps
-                : 0;
-
-    return interval;
-}
-
-
 static ngx_int_t
 ngx_rtmp_live_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
                  ngx_chain_t *in)
