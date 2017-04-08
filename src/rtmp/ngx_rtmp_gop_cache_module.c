@@ -411,25 +411,25 @@ ngx_rtmp_gop_cleanup(ngx_rtmp_session_t *s)
 void
 ngx_rtmp_gop_update(ngx_rtmp_session_t *s)
 {
-    ngx_rtmp_live_app_conf_t   *lacf;
-    ngx_rtmp_live_ctx_t        *ctx;
-    ngx_rtmp_codec_ctx_t       *codec_ctx;
-    ngx_msec_t                  max_time;
-    ngx_msec_t                  catime, cvtime; // whole time duration in gop.
-    ngx_msec_t                  dvtime, datime; // time duration expect first gop.
-    ngx_msec_t                  rvtime, ratime, rtime; //remained duration after delete
-    ngx_msec_t                  gop_cache_mintime;
-    ngx_msec_t                  gop_cache_maxtime;
-    ngx_rtmp_gop_clean_t        clean_status;
-    ngx_rtmp_gop_cache_ctx_t   *gop_cache_ctx;
-    ngx_rtmp_gop_cache_t       *next;
+    ngx_rtmp_gop_cache_app_conf_t *gacf;
+    ngx_rtmp_live_ctx_t           *ctx;
+    ngx_rtmp_codec_ctx_t          *codec_ctx;
+    ngx_msec_t                     max_time;
+    ngx_msec_t                     catime, cvtime; // whole time duration in gop.
+    ngx_msec_t                     dvtime, datime; // time duration expect first gop.
+    ngx_msec_t                     rvtime, ratime, rtime; //remained duration after delete
+    ngx_msec_t                     gop_cache_mintime;
+    ngx_msec_t                     gop_cache_maxtime;
+    ngx_rtmp_gop_clean_t           clean_status;
+    ngx_rtmp_gop_cache_ctx_t      *gop_cache_ctx;
+    ngx_rtmp_gop_cache_t          *next;
 
 #if(NGX_DEBUG)
-    ngx_rtmp_gop_cache_t       *cache;
+    ngx_rtmp_gop_cache_t          *cache;
 #endif
 
-    lacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_live_module);
-    if (lacf == NULL || lacf->gop_cache == 0) {
+    gacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_gop_cache_module);
+    if (gacf == NULL || gacf->gop_cache == 0) {
         return;
     }
 
@@ -445,8 +445,8 @@ ngx_rtmp_gop_update(ngx_rtmp_session_t *s)
 
     gop_cache_ctx = &ctx->gop_cache_ctx;
 
-    gop_cache_mintime = lacf->gop_cache_mintime;
-    gop_cache_maxtime = lacf->gop_cache_maxtime;
+    gop_cache_mintime = gacf->gop_cache_mintime;
+    gop_cache_maxtime = gacf->gop_cache_maxtime;
 
     clean_status = NGX_RTMP_GOP_CLEAN_NO;
 
@@ -536,12 +536,12 @@ ngx_rtmp_gop_cache_frame(ngx_rtmp_session_t *s, ngx_uint_t prio, ngx_rtmp_header
     ngx_rtmp_live_ctx_t            *ctx;
     ngx_rtmp_codec_ctx_t           *codec_ctx;
     ngx_rtmp_core_srv_conf_t       *cscf;
-    ngx_rtmp_live_app_conf_t       *lacf;
+    ngx_rtmp_gop_cache_app_conf_t  *gacf;
     ngx_rtmp_gop_cache_ctx_t       *gop_cache_ctx;
     ngx_rtmp_gop_frame_t           *gop_frame;
 
-    lacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_live_module);
-    if (lacf == NULL || !lacf->gop_cache) {
+    gacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_gop_cache_module);
+    if (gacf == NULL || !gacf->gop_cache) {
         return;
     }
 
@@ -633,17 +633,23 @@ ngx_rtmp_gop_cache_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 {
     ngx_rtmp_live_ctx_t            *ctx;
     ngx_rtmp_live_app_conf_t       *lacf;
+    ngx_rtmp_gop_cache_app_conf_t  *gacf;
     ngx_rtmp_header_t               ch;
     ngx_uint_t                      prio;
     ngx_uint_t                      csidx;
     ngx_rtmp_live_chunk_stream_t   *cs;
 
-    lacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_live_module);
+    lacf = ngx_rtmp_get_module_app_conf(ss, ngx_rtmp_live_module);
     if (lacf == NULL) {
+        return;
+    }
+
+    gacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_gop_cache_module);
+    if (gacf == NULL) {
         return NGX_ERROR;
     }
 
-    if (!lacf->live || in == NULL || in->buf == NULL) {
+    if (!gacf->live || in == NULL || in->buf == NULL) {
         return NGX_OK;
     }
 
