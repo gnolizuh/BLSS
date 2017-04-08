@@ -631,6 +631,41 @@ static ngx_int_t
 ngx_rtmp_gop_cache_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
                       ngx_chain_t *in)
 {
+    ngx_rtmp_live_ctx_t            *ctx;
+    ngx_rtmp_live_app_conf_t       *lacf;
+    ngx_rtmp_header_t               ch;
+    ngx_uint_t                      prio;
+
+    lacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_live_module);
+    if (lacf == NULL) {
+        return NGX_ERROR;
+    }
+
+    if (!lacf->live || in == NULL || in->buf == NULL) {
+        return NGX_OK;
+    }
+
+    ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_live_module);
+    if (ctx == NULL || ctx->stream == NULL) {
+        return NGX_OK;
+    }
+
+    if (ctx->publishing == 0) {
+        return NGX_OK;
+    }
+
+    prio = (h->type == NGX_RTMP_MSG_VIDEO ?
+            ngx_rtmp_get_video_frame_type(in) : 0);
+
+    ngx_memzero(&ch, sizeof(ch));
+
+    ch.timestamp = h->timestamp;
+    ch.msid = NGX_RTMP_MSID;
+    ch.csid = cs->csid;
+    ch.type = h->type;
+
+    ngx_rtmp_gop_cache_frame(s, prio, &ch, in);
+
     return NGX_OK;
 }
 
