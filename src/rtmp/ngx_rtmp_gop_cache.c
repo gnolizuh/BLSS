@@ -6,6 +6,7 @@
 
 #include "ngx_rtmp_gop_cache.h"
 #include "ngx_rtmp_codec_module.h"
+#include "ngx_rtmp_live_module.h"
 
 
 static ngx_msec_t
