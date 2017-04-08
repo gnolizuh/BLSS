@@ -895,7 +895,7 @@ ngx_rtmp_hdl_dump_message(ngx_rtmp_session_t *s, const char *type,
 #endif
 
 static void
-ngx_rtmp_hdl_gop_cache_send(ngx_rtmp_session_t *ss)
+ngx_rtmp_hdl_send_gop(ngx_rtmp_session_t *ss)
 {
     ngx_rtmp_session_t             *s;
     ngx_chain_t                    *pkt, *apkt, *mpkt, *meta, *header;
@@ -903,6 +903,7 @@ ngx_rtmp_hdl_gop_cache_send(ngx_rtmp_session_t *ss)
     ngx_rtmp_codec_ctx_t           *codec_ctx;
     ngx_rtmp_core_srv_conf_t       *cscf;
     ngx_rtmp_live_app_conf_t       *lacf;
+    ngx_rtmp_gop_cache_app_conf_t  *gacf;
     ngx_rtmp_gop_cache_t           *cache;
     ngx_rtmp_gop_cache_ctx_t       *gop_cache_ctx;
     ngx_rtmp_gop_frame_t           *gop_frame;
@@ -915,6 +916,11 @@ ngx_rtmp_hdl_gop_cache_send(ngx_rtmp_session_t *ss)
 
     lacf = ngx_rtmp_get_module_app_conf(ss, ngx_rtmp_live_module);
     if (lacf == NULL) {
+        return;
+    }
+
+    gacf = ngx_rtmp_get_module_app_conf(ss, ngx_rtmp_gop_cache_module);
+    if (gacf == NULL) {
         return;
     }
 
@@ -954,7 +960,7 @@ ngx_rtmp_hdl_gop_cache_send(ngx_rtmp_session_t *ss)
     s       = pushctx->session;
     ss      = pullctx->session;
 
-    if (!lacf->gop_cache) {
+    if (!gacf->gop_cache) {
         return;
     }
 
@@ -1463,7 +1469,7 @@ ngx_rtmp_hdl_play_done(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
     ngx_rtmp_free_shared_chain(cscf, pkt);
 
-    ngx_rtmp_hdl_gop_cache_send(s);
+    ngx_rtmp_hdl_send_gop(s);
 
     if (!hctx->initialized) { 
         hctx->initialized = 1;

@@ -230,6 +230,7 @@ ngx_rtmp_send_gop(ngx_rtmp_session_t *ss)
     ngx_rtmp_gop_cache_ctx_t       *gop_cache_ctx;
     ngx_rtmp_core_srv_conf_t       *cscf;
     ngx_rtmp_live_app_conf_t       *lacf;
+    ngx_rtmp_gop_cache_app_conf_t  *gacf;
     ngx_rtmp_gop_cache_t           *cache;
     ngx_rtmp_gop_frame_t           *gop_frame;
     ngx_rtmp_header_t               ch, lh;
@@ -240,6 +241,11 @@ ngx_rtmp_send_gop(ngx_rtmp_session_t *ss)
 
     lacf = ngx_rtmp_get_module_app_conf(ss, ngx_rtmp_live_module);
     if (lacf == NULL) {
+        return;
+    }
+
+    gacf = ngx_rtmp_get_module_app_conf(ss, ngx_rtmp_gop_cache_module);
+    if (gacf == NULL) {
         return;
     }
 
@@ -275,7 +281,7 @@ ngx_rtmp_send_gop(ngx_rtmp_session_t *ss)
     s         = publisher->session;
     ss        = player->session;
 
-    if (!lacf->gop_cache) {
+    if (!gacf->gop_cache) {
         return;
     }
 
