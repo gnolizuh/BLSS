@@ -69,27 +69,6 @@ static ngx_command_t  ngx_rtmp_live_commands[] = {
       offsetof(ngx_rtmp_live_app_conf_t, interleave),
       NULL },
 
-    { ngx_string("gop_cache"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
-      ngx_conf_set_flag_slot,
-      NGX_RTMP_APP_CONF_OFFSET,
-      offsetof(ngx_rtmp_live_app_conf_t, gop_cache),
-      NULL },
-
-    { ngx_string("gop_cache_mintime"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
-      ngx_rtmp_live_set_msec_slot,
-      NGX_RTMP_APP_CONF_OFFSET,
-      offsetof(ngx_rtmp_live_app_conf_t, gop_cache_mintime),
-      NULL },
-
-    { ngx_string("gop_cache_maxtime"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
-      ngx_rtmp_live_set_msec_slot,
-      NGX_RTMP_APP_CONF_OFFSET,
-      offsetof(ngx_rtmp_live_app_conf_t, gop_cache_maxtime),
-      NULL },
-
     { ngx_string("wait_key"),
       NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_flag_slot,
@@ -180,9 +159,6 @@ ngx_rtmp_live_create_app_conf(ngx_conf_t *cf)
     lacf->sync = NGX_CONF_UNSET_MSEC;
     lacf->idle_timeout = NGX_CONF_UNSET_MSEC;
     lacf->interleave = NGX_CONF_UNSET;
-    lacf->gop_cache_mintime = NGX_CONF_UNSET_MSEC;
-    lacf->gop_cache_maxtime = NGX_CONF_UNSET_MSEC;
-    lacf->gop_cache = NGX_CONF_UNSET;
     lacf->wait_key = NGX_CONF_UNSET;
     lacf->wait_video = NGX_CONF_UNSET;
     lacf->publish_notify = NGX_CONF_UNSET;
@@ -205,9 +181,6 @@ ngx_rtmp_live_merge_app_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_conf_merge_msec_value(conf->sync, prev->sync, 300);
     ngx_conf_merge_msec_value(conf->idle_timeout, prev->idle_timeout, 0);
     ngx_conf_merge_value(conf->interleave, prev->interleave, 0);
-    ngx_conf_merge_value(conf->gop_cache, prev->gop_cache, 0);
-    ngx_conf_merge_msec_value(conf->gop_cache_mintime, prev->gop_cache_mintime, 0);
-    ngx_conf_merge_msec_value(conf->gop_cache_maxtime, prev->gop_cache_maxtime, NGX_RTMP_LIVE_PER_GOP_MAX_TIME);
     ngx_conf_merge_value(conf->wait_key, prev->wait_key, 1);
     ngx_conf_merge_value(conf->wait_video, prev->wait_video, 0);
     ngx_conf_merge_value(conf->publish_notify, prev->publish_notify, 0);

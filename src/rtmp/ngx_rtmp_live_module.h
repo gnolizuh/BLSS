@@ -77,9 +77,6 @@ typedef struct {
     ngx_msec_t                          idle_timeout;
     ngx_flag_t                          atc;
     ngx_flag_t                          interleave;
-    ngx_flag_t                          gop_cache;
-    ngx_msec_t                          gop_cache_mintime;
-    ngx_msec_t                          gop_cache_maxtime;
     ngx_flag_t                          wait_key;
     ngx_flag_t                          wait_video;
     ngx_flag_t                          publish_notify;
