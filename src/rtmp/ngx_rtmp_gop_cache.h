@@ -8,6 +8,8 @@
 #define _NGX_RTMP_GOP_CACHE_H_INCLUDED_
 
 
+#include "ngx_rtmp.h"
+
 #define NGX_RTMP_LIVE_GOP_SIZE          100   /* gop cache */
 #define NGX_RTMP_LIVE_PER_GOP_MAX_TIME  30000 /* per gop cache`s max time */
 
