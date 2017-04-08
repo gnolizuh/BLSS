@@ -639,9 +639,9 @@ ngx_rtmp_gop_cache_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     ngx_uint_t                      csidx;
     ngx_rtmp_live_chunk_stream_t   *cs;
 
-    lacf = ngx_rtmp_get_module_app_conf(ss, ngx_rtmp_live_module);
+    lacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_live_module);
     if (lacf == NULL) {
-        return;
+        return NGX_ERROR;
     }
 
     gacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_gop_cache_module);
