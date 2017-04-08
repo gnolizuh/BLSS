@@ -10,8 +10,9 @@
 
 #include "ngx_rtmp.h"
 
-#define NGX_RTMP_LIVE_GOP_SIZE          100   /* gop cache */
-#define NGX_RTMP_LIVE_PER_GOP_MAX_TIME  30000 /* per gop cache`s max time */
+#define NGX_RTMP_LIVE_PURE_AUDIO_GUESS_CNT 115   /* pure audio */
+#define NGX_RTMP_LIVE_GOP_SIZE             100   /* gop cache */
+#define NGX_RTMP_LIVE_PER_GOP_MAX_TIME     30000 /* per gop cache`s max time */
 
 
 typedef enum {
@@ -61,6 +62,15 @@ typedef struct {
 } ngx_rtmp_gop_cache_ctx_t;
 
 
+typedef struct {
+    ngx_flag_t                          gop_cache;
+    ngx_msec_t                          gop_cache_mintime;
+    ngx_msec_t                          gop_cache_maxtime;
+} ngx_rtmp_gop_cache_app_conf_t;
+
+
+extern ngx_module_t  ngx_rtmp_gop_cache_module;
+
 ngx_rtmp_gop_frame_t *ngx_rtmp_gop_alloc_frame(ngx_rtmp_session_t *s);
 ngx_rtmp_gop_frame_t *ngx_rtmp_gop_free_frame(ngx_rtmp_session_t *s, ngx_rtmp_gop_frame_t *frame);
 ngx_int_t ngx_rtmp_gop_link_frame(ngx_rtmp_session_t *s, ngx_rtmp_gop_frame_t *frame);
@@ -69,6 +79,5 @@ ngx_rtmp_gop_cache_t *ngx_rtmp_gop_free_cache(ngx_rtmp_session_t *s, ngx_rtmp_go
 void ngx_rtmp_gop_cleanup(ngx_rtmp_session_t *s);
 void ngx_rtmp_gop_update(ngx_rtmp_session_t *s);
 void ngx_rtmp_gop_cache_frame(ngx_rtmp_session_t *s, ngx_uint_t prio, ngx_rtmp_header_t *ch, ngx_chain_t *frame);
-void ngx_rtmp_gop_cache_send(ngx_rtmp_session_t *ss);
 
 #endif /* _NGX_RTMP_LIVE_H_INCLUDED_ */

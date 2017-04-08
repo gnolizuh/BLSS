@@ -4,9 +4,101 @@
  */
 
 
-#include "ngx_rtmp_gop_cache.h"
+#include "ngx_rtmp_gop_cache_module.h"
 #include "ngx_rtmp_codec_module.h"
 #include "ngx_rtmp_live_module.h"
+
+
+static ngx_int_t ngx_rtmp_gop_cache_postconfiguration(ngx_conf_t *cf);
+static void * ngx_rtmp_gop_cache_create_app_conf(ngx_conf_t *cf);
+static char * ngx_rtmp_gop_cache_merge_app_conf(ngx_conf_t *cf, void *parent, void *child);
+
+
+static ngx_command_t  ngx_rtmp_gop_cache_commands[] = {
+
+    { ngx_string("gop_cache"),
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
+      ngx_conf_set_flag_slot,
+      NGX_RTMP_APP_CONF_OFFSET,
+      offsetof(ngx_rtmp_gop_cache_app_conf_t, gop_cache),
+      NULL },
+
+    { ngx_string("gop_cache_mintime"),
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
+      ngx_rtmp_set_msec_slot,
+      NGX_RTMP_APP_CONF_OFFSET,
+      offsetof(ngx_rtmp_gop_cache_app_conf_t, gop_cache_mintime),
+      NULL },
+
+    { ngx_string("gop_cache_maxtime"),
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
+      ngx_rtmp_set_msec_slot,
+      NGX_RTMP_APP_CONF_OFFSET,
+      offsetof(ngx_rtmp_gop_cache_app_conf_t, gop_cache_maxtime),
+      NULL },
+
+      ngx_null_command
+};
+
+
+static ngx_rtmp_module_t  ngx_rtmp_gop_cache_module_ctx = {
+    NULL,                                   /* preconfiguration */
+    ngx_rtmp_gop_cache_postconfiguration,   /* postconfiguration */
+    NULL,                                   /* create main configuration */
+    NULL,                                   /* init main configuration */
+    NULL,                                   /* create server configuration */
+    NULL,                                   /* merge server configuration */
+    ngx_rtmp_gop_cache_create_app_conf,     /* create app configuration */
+    ngx_rtmp_gop_cache_merge_app_conf       /* merge app configuration */
+};
+
+
+ngx_module_t  ngx_rtmp_gop_cache_module = {
+    NGX_MODULE_V1,
+    &ngx_rtmp_gop_cache_module_ctx,         /* module context */
+    ngx_rtmp_gop_cache_commands,            /* module directives */
+    NGX_RTMP_MODULE,                        /* module type */
+    NULL,                                   /* init master */
+    NULL,                                   /* init module */
+    NULL,                                   /* init process */
+    NULL,                                   /* init thread */
+    NULL,                                   /* exit thread */
+    NULL,                                   /* exit process */
+    NULL,                                   /* exit master */
+    NGX_MODULE_V1_PADDING
+};
+
+
+static void *
+ngx_rtmp_gop_cache_create_app_conf(ngx_conf_t *cf)
+{
+    ngx_rtmp_gop_cache_app_conf_t      *gacf;
+
+    gacf = ngx_pcalloc(cf->pool, sizeof(ngx_rtmp_gop_cache_app_conf_t));
+    if (gacf == NULL) {
+        return NULL;
+    }
+
+    gacf->gop_cache = NGX_CONF_UNSET;
+    gacf->gop_cache_mintime = NGX_CONF_UNSET_MSEC;
+    gacf->gop_cache_maxtime = NGX_CONF_UNSET_MSEC;
+
+    return gacf;
+}
+
+
+static char *
+ngx_rtmp_gop_cache_merge_app_conf(ngx_conf_t *cf, void *parent, void *child)
+{
+    ngx_rtmp_gop_cache_app_conf_t *prev = parent;
+    ngx_rtmp_gop_cache_app_conf_t *conf = child;
+
+    ngx_conf_merge_value(conf->gop_cache, prev->gop_cache, 0);
+    ngx_conf_merge_msec_value(conf->gop_cache_mintime, prev->gop_cache_mintime, 0);
+    ngx_conf_merge_msec_value(conf->gop_cache_maxtime, prev->gop_cache_maxtime, NGX_RTMP_LIVE_PER_GOP_MAX_TIME);
+
+    return NGX_CONF_OK;
+}
 
 
 static ngx_msec_t
@@ -535,140 +627,29 @@ ngx_rtmp_gop_cache_frame(ngx_rtmp_session_t *s, ngx_uint_t prio, ngx_rtmp_header
 }
 
 
-void
-ngx_rtmp_gop_cache_send(ngx_rtmp_session_t *ss)
+static ngx_int_t
+ngx_rtmp_gop_cache_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
+                      ngx_chain_t *in)
 {
-    ngx_rtmp_session_t             *s;
-    ngx_chain_t                    *pkt, *apkt, *meta, *header;
-    ngx_rtmp_live_ctx_t            *pctx, *publisher, *player;
-    ngx_rtmp_gop_cache_ctx_t       *gop_cache_ctx;
-    ngx_rtmp_core_srv_conf_t       *cscf;
-    ngx_rtmp_live_app_conf_t       *lacf;
-    ngx_rtmp_gop_cache_t           *cache;
-    ngx_rtmp_gop_frame_t           *gop_frame;
-    ngx_rtmp_header_t               ch, lh;
-    ngx_uint_t                      meta_version;
-    uint32_t                        delta;
-    ngx_int_t                       csidx;
-    ngx_rtmp_live_chunk_stream_t   *cs;
+    return NGX_OK;
+}
 
-    lacf = ngx_rtmp_get_module_app_conf(ss, ngx_rtmp_live_module);
-    if (lacf == NULL) {
-        return;
-    }
 
-    cscf = ngx_rtmp_get_module_srv_conf(ss, ngx_rtmp_core_module);
-    if (cscf == NULL) {
-        return;
-    }
+static ngx_int_t
+ngx_rtmp_gop_cache_postconfiguration(ngx_conf_t *cf)
+{
+    ngx_rtmp_core_main_conf_t          *cmcf;
+    ngx_rtmp_handler_pt                *h;
 
-    player = ngx_rtmp_get_module_ctx(ss, ngx_rtmp_live_module);
-    if (player == NULL || player->stream == NULL) {
-        return;
-    }
+    cmcf = ngx_rtmp_conf_get_module_main_conf(cf, ngx_rtmp_core_module);
 
-    for (pctx = player->stream->ctx; pctx; pctx = pctx->next) {
-        if (pctx->publishing) {
-            break;
-        }
-    }
+    /* register raw event handlers */
 
-    if (pctx == NULL) {
-        return;
-    }
+    h = ngx_array_push(&cmcf->events[NGX_RTMP_MSG_AUDIO]);
+    *h = ngx_rtmp_gop_cache_av;
 
-    gop_cache_ctx = &pctx->gop_cache_ctx;
+    h = ngx_array_push(&cmcf->events[NGX_RTMP_MSG_VIDEO]);
+    *h = ngx_rtmp_gop_cache_av;
 
-    pkt = NULL;
-    apkt = NULL;
-    meta = NULL;
-    header = NULL;
-    meta_version = 0;
-
-    publisher = pctx;
-    s         = publisher->session;
-    ss        = player->session;
-
-    if (!lacf->gop_cache) {
-        return;
-    }
-
-    for (cache = publisher->gop_cache_ctx.head; cache; cache = cache->next) {
-
-        if (cache->meta_data) {
-            meta = cache->meta_data;
-            meta_version = cache->meta_version;
-        }
-
-        /* send metadata */
-        if (meta && meta_version != player->meta_version) {
-            ngx_log_debug0(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
-                           "live: meta");
-
-            if (ngx_rtmp_send_message(ss, meta, 0) == NGX_OK) {
-                player->meta_version = meta_version;
-            }
-        }
-
-        for (gop_frame = cache->head; gop_frame; gop_frame = gop_frame->next) {
-            csidx = !(lacf->interleave || gop_frame->h.type == NGX_RTMP_MSG_VIDEO);
-
-            cs = &player->cs[csidx];
-
-            lh = ch = gop_frame->h;
-
-            if (cs->active) {
-                lh.timestamp = cs->timestamp;
-            }
-
-            delta = ch.timestamp - lh.timestamp;
-
-            if (!cs->active) {
-
-                header = gop_frame->h.type == NGX_RTMP_MSG_VIDEO ? cache->video_seq_header_data : cache->audio_seq_header_data;
-                if (header) {
-                    apkt = ngx_rtmp_append_shared_bufs(cscf, NULL, header);
-                    ngx_rtmp_prepare_message(s, &lh, NULL, apkt);
-                }
-
-                if (apkt && ngx_rtmp_send_message(ss, apkt, 0) == NGX_OK) {
-
-                    cs->timestamp = lh.timestamp;
-                    cs->active = 1;
-                    ss->current_time = cs->timestamp;
-                }
-
-                if (apkt) {
-                    ngx_rtmp_free_shared_chain(cscf, apkt);
-                    apkt = NULL;
-                }
-            }
-
-            pkt = ngx_rtmp_append_shared_bufs(cscf, NULL, gop_frame->frame);
-
-            ngx_rtmp_prepare_message(s, &ch, &lh, pkt);
-
-            if (ngx_rtmp_send_message(ss, pkt, gop_frame->prio) != NGX_OK) {
-                ++pctx->ndropped;
-
-                cs->dropped += delta;
-
-                return;
-            }
-
-            if (pkt) {
-                ngx_rtmp_free_shared_chain(cscf, pkt);
-                pkt = NULL;
-            }
-
-            ngx_log_debug3(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
-                           "gop_send: send tag type='%s' prio='%d' ltimestamp='%uD'",
-                           gop_frame->h.type == NGX_RTMP_MSG_AUDIO ? "audio" : "video",
-                           gop_frame->prio,
-                           lh.timestamp);
-
-            cs->timestamp += delta;
-            ss->current_time = cs->timestamp;
-        }
-    }
+    return NGX_OK;
 }
