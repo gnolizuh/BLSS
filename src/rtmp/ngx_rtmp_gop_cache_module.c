@@ -649,7 +649,7 @@ ngx_rtmp_gop_cache_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
         return NGX_ERROR;
     }
 
-    if (!gacf->live || in == NULL || in->buf == NULL) {
+    if (!lacf->live || in == NULL || in->buf == NULL) {
         return NGX_OK;
     }
 
