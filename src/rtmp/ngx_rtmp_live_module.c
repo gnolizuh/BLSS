@@ -30,7 +30,6 @@ static char *ngx_rtmp_live_set_msec_slot(ngx_conf_t *cf, ngx_command_t *cmd,
        void *conf);
 static void ngx_rtmp_live_start(ngx_rtmp_session_t *s);
 static void ngx_rtmp_live_stop(ngx_rtmp_session_t *s);
-static void ngx_rtmp_gop_cleanup(ngx_rtmp_session_t *s);
 
 
 static ngx_command_t  ngx_rtmp_live_commands[] = {
