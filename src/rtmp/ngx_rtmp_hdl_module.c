@@ -53,13 +53,10 @@ static ngx_command_t  ngx_rtmp_http_hdl_commands[] = {
 static ngx_http_module_t  ngx_rtmp_http_hdl_module_ctx = {
     NULL,                          /* preconfiguration */
     ngx_rtmp_http_hdl_init,        /* postconfiguration */
-
     NULL,                          /* create main configuration */
     NULL,                          /* init main configuration */
-
     NULL,                          /* create server configuration */
     NULL,                          /* merge server configuration */
-
     ngx_rtmp_http_hdl_create_conf, /* create location configuration */
     ngx_rtmp_http_hdl_merge_conf   /* merge location configuration */
 };
@@ -97,13 +94,10 @@ static ngx_command_t ngx_rtmp_hdl_commands[] = {
 static ngx_rtmp_module_t  ngx_rtmp_hdl_module_ctx = {
     NULL,                               /* preconfiguration */
     ngx_rtmp_hdl_postconfiguration,     /* postconfiguration */
-
     NULL,                               /* create main configuration */
     NULL,                               /* init main configuration */
-
     NULL,                               /* create server configuration */
     NULL,                               /* merge server configuration */
-
     ngx_rtmp_hdl_create_app_conf,       /* create application configuration */
     ngx_rtmp_hdl_merge_app_conf,        /* merge application configuration */
 };
@@ -1017,7 +1011,7 @@ ngx_rtmp_hdl_gop_cache_send(ngx_rtmp_session_t *ss)
 
             if (!cs->active) {
 
-                header = gop_frame->h.type == NGX_RTMP_MSG_VIDEO ? cache->video_seq_header_data : codec_ctx->aac_header;
+                header = gop_frame->h.type == NGX_RTMP_MSG_VIDEO ? cache->video_seq_header_data : cache->audio_seq_header_data;
                 if (header) {
 
                     apkt = ngx_rtmp_hdl_append_tag_bufs(s, header, &lh);

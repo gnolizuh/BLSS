@@ -890,6 +890,11 @@ ngx_rtmp_gop_alloc_cache(ngx_rtmp_session_t *s)
         cache->video_seq_header_data = ngx_rtmp_append_shared_bufs(cscf, NULL, codec_ctx->video_header);
     }
 
+    // save audio seq header.
+    if (codec_ctx->aac_header != NULL) {
+        cache->audio_seq_header_data = ngx_rtmp_append_shared_bufs(cscf, NULL, codec_ctx->aac_header);
+    }
+
     // save metadata.
     if (codec_ctx->meta != NULL) {
         cache->meta_header  = codec_ctx->metah;
@@ -942,6 +947,11 @@ ngx_rtmp_gop_free_cache(ngx_rtmp_session_t *s, ngx_rtmp_gop_cache_t *cache)
     if (cache->video_seq_header_data) {
         ngx_rtmp_free_shared_chain(cscf, cache->video_seq_header_data);
         cache->video_seq_header_data = NULL;
+    }
+
+    if (cache->audio_seq_header_data) {
+        ngx_rtmp_free_shared_chain(cscf, cache->audio_seq_header_data);
+        cache->audio_seq_header_data = NULL;
     }
 
     if (cache->meta_data) {
@@ -1258,7 +1268,6 @@ ngx_rtmp_gop_cache_send(ngx_rtmp_session_t *ss)
     ngx_rtmp_session_t             *s;
     ngx_chain_t                    *pkt, *apkt, *meta, *header;
     ngx_rtmp_live_ctx_t            *pctx, *publisher, *player;
-    ngx_rtmp_codec_ctx_t           *codec_ctx;
     ngx_rtmp_gop_cache_ctx_t       *gop_cache_ctx;
     ngx_rtmp_core_srv_conf_t       *cscf;
     ngx_rtmp_live_app_conf_t       *lacf;
@@ -1311,11 +1320,6 @@ ngx_rtmp_gop_cache_send(ngx_rtmp_session_t *ss)
         return;
     }
 
-    codec_ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_codec_module);
-    if (codec_ctx == NULL) {
-        return;
-    }
-
     for (cache = publisher->gop_cache_ctx.head; cache; cache = cache->next) {
 
         if (cache->meta_data) {
@@ -1348,7 +1352,7 @@ ngx_rtmp_gop_cache_send(ngx_rtmp_session_t *ss)
 
             if (!cs->active) {
 
-                header = gop_frame->h.type == NGX_RTMP_MSG_VIDEO ? cache->video_seq_header_data : codec_ctx->aac_header;
+                header = gop_frame->h.type == NGX_RTMP_MSG_VIDEO ? cache->video_seq_header_data : cache->audio_seq_header_data;
                 if (header) {
                     apkt = ngx_rtmp_append_shared_bufs(cscf, NULL, header);
                     ngx_rtmp_prepare_message(s, &lh, NULL, apkt);
