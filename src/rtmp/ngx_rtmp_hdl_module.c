@@ -1067,6 +1067,7 @@ static ngx_int_t
 ngx_rtmp_hdl_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
                  ngx_chain_t *in)
 {
+    ngx_rtmp_gop_cache_app_conf_t  *gacf;
     ngx_rtmp_live_app_conf_t       *lacf;
     ngx_rtmp_hdl_app_conf_t        *hacf;
     ngx_rtmp_core_srv_conf_t       *cscf;
@@ -1091,6 +1092,11 @@ ngx_rtmp_hdl_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     lacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_live_module);
     if (lacf == NULL) {
         return NGX_ERROR;
+    }
+
+    gacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_gop_cache_module);
+    if (gacf == NULL) {
+        return;
     }
 
     hacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_hdl_module);
@@ -1239,7 +1245,7 @@ ngx_rtmp_hdl_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
             }
 
             if (lacf->wait_video && h->type == NGX_RTMP_MSG_AUDIO &&
-                !pctx->cs[0].active && !lacf->gop_cache)
+                !pctx->cs[0].active && !gacf->gop_cache)
             {
                 ngx_log_debug0(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
                                "live_hdl: waiting for video");
@@ -1248,7 +1254,7 @@ ngx_rtmp_hdl_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
             if (lacf->wait_key && prio != NGX_RTMP_VIDEO_KEY_FRAME &&
                (lacf->interleave || h->type == NGX_RTMP_MSG_VIDEO) &&
-               !lacf->gop_cache)
+               !gacf->gop_cache)
             {
                 ngx_log_debug0(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
                                "live_hdl: skip non-key");
