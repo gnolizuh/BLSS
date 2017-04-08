@@ -1096,7 +1096,7 @@ ngx_rtmp_hdl_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
     gacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_gop_cache_module);
     if (gacf == NULL) {
-        return;
+        return NGX_ERROR;
     }
 
     hacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_hdl_module);
