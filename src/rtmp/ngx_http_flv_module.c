@@ -7,7 +7,7 @@
 #include <ngx_config.h>
 #include <ngx_core.h>
 #include <ngx_rtmp.h>
-#include "ngx_rtmp_hdl_module.h"
+#include "ngx_http_flv_rtmpmodule.h"
 #include "ngx_rtmp_live_module.h"
 #include "ngx_rtmp_codec_module.h"
 
@@ -16,7 +16,7 @@ extern ngx_uint_t ngx_rtmp_playing;
 ngx_uint_t  ngx_rtmp_hdl_naccepted;
 
 typedef struct {
-    ngx_flag_t                          hdl;
+    ngx_flag_t                          http_flv;
 } ngx_rtmp_http_hdl_loc_conf_t;
 
 
@@ -37,20 +37,20 @@ static ngx_int_t ngx_rtmp_hdl_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ng
 static ngx_int_t ngx_rtmp_hdl_play_done(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_chain_t *in);
 
 
-static ngx_command_t  ngx_rtmp_http_hdl_commands[] = {
+static ngx_command_t  ngx_http_flv_httpcommands[] = {
 
-    { ngx_string("hdl"),
+    { ngx_string("http_flv"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_flag_slot,
       NGX_HTTP_LOC_CONF_OFFSET,
-      offsetof(ngx_rtmp_http_hdl_loc_conf_t, hdl),
+      offsetof(ngx_rtmp_http_hdl_loc_conf_t, http_flv),
       NULL },
 
       ngx_null_command
 };
 
 
-static ngx_http_module_t  ngx_rtmp_http_hdl_module_ctx = {
+static ngx_http_module_t ngx_http_flv_httpmodule_ctx = {
     NULL,                          /* preconfiguration */
     ngx_rtmp_http_hdl_init,        /* postconfiguration */
     NULL,                          /* create main configuration */
@@ -62,10 +62,10 @@ static ngx_http_module_t  ngx_rtmp_http_hdl_module_ctx = {
 };
 
 
-ngx_module_t  ngx_rtmp_http_hdl_module = {
+ngx_module_t ngx_http_flv_httpmodule = {
     NGX_MODULE_V1,
-    &ngx_rtmp_http_hdl_module_ctx, /* module context */
-    ngx_rtmp_http_hdl_commands,    /* module directives */
+    &ngx_http_flv_httpmodule_ctx,  /* module context */
+    ngx_http_flv_httpcommands,     /* module directives */
     NGX_HTTP_MODULE,               /* module type */
     NULL,                          /* init master */
     NULL,                          /* init module */
@@ -78,20 +78,20 @@ ngx_module_t  ngx_rtmp_http_hdl_module = {
 };
 
 
-static ngx_command_t ngx_rtmp_hdl_commands[] = {
+static ngx_command_t ngx_http_flv_rtmpcommands[] = {
 
-    { ngx_string("hdl"),
+    { ngx_string("http_flv"),
       NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_flag_slot,
       NGX_RTMP_APP_CONF_OFFSET,
-      offsetof(ngx_rtmp_hdl_app_conf_t, hdl),
+      offsetof(ngx_rtmp_hdl_app_conf_t, http_flv),
       NULL },
 
     ngx_null_command
 };
 
 
-static ngx_rtmp_module_t  ngx_rtmp_hdl_module_ctx = {
+static ngx_rtmp_module_t ngx_http_flv_rtmpmodule_ctx = {
     NULL,                               /* preconfiguration */
     ngx_rtmp_hdl_postconfiguration,     /* postconfiguration */
     NULL,                               /* create main configuration */
@@ -103,10 +103,10 @@ static ngx_rtmp_module_t  ngx_rtmp_hdl_module_ctx = {
 };
 
 
-ngx_module_t  ngx_rtmp_hdl_module = {
+ngx_module_t ngx_http_flv_rtmpmodule = {
     NGX_MODULE_V1,
-    &ngx_rtmp_hdl_module_ctx,           /* module context */
-    ngx_rtmp_hdl_commands,              /* module directives */
+    &ngx_http_flv_rtmpmodule_ctx,       /* module context */
+    ngx_http_flv_rtmpcommands,          /* module directives */
     NGX_RTMP_MODULE,                    /* module type */
     NULL,                               /* init master */
     NULL,                               /* init module */
@@ -133,7 +133,7 @@ ngx_rtmp_hdl_send(ngx_event_t *wev)
     c = wev->data;
     r = c->data;
 
-    httpctx = ngx_http_get_module_ctx(r, ngx_rtmp_http_hdl_module);
+    httpctx = ngx_http_get_module_ctx(r, ngx_http_flv_httpmodule);
 
     s = httpctx->s;
 
@@ -289,7 +289,7 @@ ngx_rtmp_http_hdl_play_local(ngx_http_request_t *r)
     ngx_rtmp_http_hdl_ctx_t    *httpctx;
     ngx_rtmp_core_srv_conf_t   *cscf;
 
-    httpctx = ngx_http_get_module_ctx(r, ngx_rtmp_http_hdl_module);
+    httpctx = ngx_http_get_module_ctx(r, ngx_http_flv_httpmodule);
 
     s = httpctx->s;
 
@@ -302,10 +302,10 @@ ngx_rtmp_http_hdl_play_local(ngx_http_request_t *r)
 
     s->app_conf = cscf->ctx->app_conf;
 
-    ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_hdl_module);
+    ctx = ngx_rtmp_get_module_ctx(s, ngx_http_flv_rtmpmodule);
     if (ctx == NULL) {
         ctx = ngx_pcalloc(s->pool, sizeof(ngx_rtmp_hdl_ctx_t));
-        ngx_rtmp_set_ctx(s, ctx, ngx_rtmp_hdl_module);
+        ngx_rtmp_set_ctx(s, ctx, ngx_http_flv_rtmpmodule);
     }
 
 	return ngx_rtmp_cmd_start_play(s, &v);
@@ -321,7 +321,7 @@ ngx_rtmp_hdl_close_session_handler(ngx_rtmp_session_t *s)
 
     cscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_core_module);
 
-    ngx_log_error(NGX_LOG_INFO, c->log, 0, "hdl close session");
+    ngx_log_error(NGX_LOG_INFO, c->log, 0, "http_flv close session");
 
     ngx_rtmp_fire_event(s, NGX_RTMP_DISCONNECT, NULL, NULL);
 
@@ -356,7 +356,7 @@ ngx_rtmp_http_hdl_connect_local(ngx_http_request_t *r, ngx_str_t *app, ngx_str_t
     ngx_rtmp_hdl_ctx_t         *ctx;
     ngx_rtmp_http_hdl_ctx_t    *httpctx;
 
-    httpctx = ngx_http_get_module_ctx(r, ngx_rtmp_http_hdl_module);
+    httpctx = ngx_http_get_module_ctx(r, ngx_http_flv_httpmodule);
 
     s = httpctx->s;
     c = r->connection;
@@ -389,10 +389,10 @@ ngx_rtmp_http_hdl_connect_local(ngx_http_request_t *r, ngx_str_t *app, ngx_str_t
 
     s->protocol = protocol;
 
-    ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_hdl_module);
+    ctx = ngx_rtmp_get_module_ctx(s, ngx_http_flv_rtmpmodule);
     if (ctx == NULL) {
         ctx = ngx_pcalloc(s->pool, sizeof(ngx_rtmp_hdl_ctx_t));
-        ngx_rtmp_set_ctx(s, ctx, ngx_rtmp_hdl_module);
+        ngx_rtmp_set_ctx(s, ctx, ngx_http_flv_rtmpmodule);
     }
 
     return ngx_rtmp_cmd_start_connect(s, &v);
@@ -406,11 +406,11 @@ ngx_rtmp_http_hdl_cleanup(void *data)
     ngx_rtmp_session_t		   *s;
     ngx_rtmp_http_hdl_ctx_t    *httpctx;
 
-    httpctx = ngx_http_get_module_ctx(r, ngx_rtmp_http_hdl_module);
+    httpctx = ngx_http_get_module_ctx(r, ngx_http_flv_httpmodule);
 
     s = httpctx->s;
 
-    ngx_log_error(NGX_LOG_INFO, s->connection->log, 0, "hdl close connection");
+    ngx_log_error(NGX_LOG_INFO, s->connection->log, 0, "http_flv close connection");
 
     -- ngx_rtmp_hdl_naccepted;
 
@@ -443,7 +443,7 @@ ngx_rtmp_http_hdl_init_session(ngx_http_request_t *r, ngx_rtmp_addr_conf_t *addr
         return NULL;
     }
 
-    ngx_http_set_ctx(r, httpctx, ngx_rtmp_http_hdl_module);
+    ngx_http_set_ctx(r, httpctx, ngx_http_flv_httpmodule);
 
     // attach rtmp session to http ctx.
     httpctx->s = s;
@@ -608,7 +608,7 @@ ngx_rtmp_http_hdl_init_connection(ngx_http_request_t *r, ngx_rtmp_conf_port_t *c
         }
     }
 
-	ngx_log_error(NGX_LOG_INFO, c->log, 0, "hdl client connected '%V'", &c->addr_text);
+	ngx_log_error(NGX_LOG_INFO, c->log, 0, "http_flv client connected '%V'", &c->addr_text);
 
     s = ngx_rtmp_http_hdl_init_session(r, addr_conf);
     if (s == NULL) {
@@ -643,8 +643,8 @@ ngx_rtmp_http_hdl_handler(ngx_http_request_t *r)
         return NGX_ERROR;
     }
 
-    hlcf = ngx_http_get_module_loc_conf(r, ngx_rtmp_http_hdl_module);
-    if (hlcf == NULL || !hlcf->hdl) {
+    hlcf = ngx_http_get_module_loc_conf(r, ngx_http_flv_httpmodule);
+    if (hlcf == NULL || !hlcf->http_flv) {
     	return NGX_DECLINED;
     }
 
@@ -745,7 +745,7 @@ ngx_rtmp_http_hdl_create_conf(ngx_conf_t *cf)
         return NULL;
     }
 
-    hlcf->hdl = NGX_CONF_UNSET;
+    hlcf->http_flv = NGX_CONF_UNSET;
 
     return hlcf;
 }
@@ -757,7 +757,7 @@ ngx_rtmp_http_hdl_merge_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_rtmp_http_hdl_loc_conf_t *prev = parent;
     ngx_rtmp_http_hdl_loc_conf_t *conf = child;
 
-    ngx_conf_merge_value(conf->hdl, prev->hdl, 0);
+    ngx_conf_merge_value(conf->http_flv, prev->http_flv, 0);
 
     return NGX_CONF_OK;
 }
@@ -773,7 +773,7 @@ ngx_rtmp_hdl_create_app_conf(ngx_conf_t *cf)
         return NULL;
     }
 
-    conf->hdl = NGX_CONF_UNSET;
+    conf->http_flv = NGX_CONF_UNSET;
 
     return conf;
 }
@@ -785,7 +785,7 @@ ngx_rtmp_hdl_merge_app_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_rtmp_hdl_app_conf_t    *prev = parent;
     ngx_rtmp_hdl_app_conf_t    *conf = child;
 
-    ngx_conf_merge_value(conf->hdl, prev->hdl, 0);
+    ngx_conf_merge_value(conf->http_flv, prev->http_flv, 0);
 
     return NGX_CONF_OK;
 }
@@ -892,7 +892,7 @@ ngx_rtmp_hdl_dump_message(ngx_rtmp_session_t *s, const char *type,
     *pp = 0;
 
     ngx_log_error(NGX_LOG_ERR, s->connection->log, 0,
-                   "hdl: %s message %s", type, buf);
+                   "http_flv: %s message %s", type, buf);
 }
 #endif
 
@@ -980,7 +980,7 @@ ngx_rtmp_hdl_send_gop(ngx_rtmp_session_t *ss)
         /* send metadata */
         if (meta && meta_version != player->meta_version) {
             ngx_log_debug0(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
-                           "hdl: meta");
+                           "http_flv: meta");
 
             if (ngx_http_flv_send_message(ss, meta, 0) == NGX_OK) {
                 player->meta_version = meta_version;
@@ -1082,12 +1082,12 @@ ngx_rtmp_hdl_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
         return NGX_ERROR;
     }
 
-    hacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_hdl_module);
+    hacf = ngx_rtmp_get_module_app_conf(s, ngx_http_flv_rtmpmodule);
     if (hacf == NULL) {
         return NGX_ERROR;
     }
 
-    if (!lacf->live || !hacf->hdl) {
+    if (!lacf->live || !hacf->http_flv) {
         return NGX_OK;
     }
 
@@ -1316,12 +1316,12 @@ ngx_rtmp_hdl_message(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
         return NGX_ERROR;
     }
 
-    hacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_hdl_module);
+    hacf = ngx_rtmp_get_module_app_conf(s, ngx_http_flv_rtmpmodule);
     if (hacf == NULL) {
         return NGX_ERROR;
     }
 
-    if (!lacf->live || !hacf->hdl) {
+    if (!lacf->live || !hacf->http_flv) {
         return NGX_OK;
     }
 
@@ -1410,18 +1410,18 @@ ngx_rtmp_hdl_play_done(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     ngx_chain_t                     c1, c2, *pkt;
     ngx_buf_t                       b1, b2;
 
-    lacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_hdl_module);
+    lacf = ngx_rtmp_get_module_app_conf(s, ngx_http_flv_rtmpmodule);
     if (lacf == NULL) {
         return NGX_ERROR;
     }
 
-    if (!lacf->hdl) {
+    if (!lacf->http_flv) {
         return NGX_OK;
     }
 
     cscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_core_module);
 
-    hctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_hdl_module);
+    hctx = ngx_rtmp_get_module_ctx(s, ngx_http_flv_rtmpmodule);
     if (hctx == NULL) {
         return NGX_OK;
     }

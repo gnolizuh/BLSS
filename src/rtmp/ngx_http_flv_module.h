@@ -22,7 +22,7 @@ typedef struct {
 
 
 typedef struct {
-    ngx_flag_t                          hdl;
+    ngx_flag_t                          http_flv;
 } ngx_rtmp_hdl_app_conf_t;
 
 
