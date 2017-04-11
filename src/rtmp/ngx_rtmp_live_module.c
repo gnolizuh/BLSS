@@ -285,7 +285,7 @@ ngx_rtmp_send_gop(ngx_rtmp_session_t *ss)
         return;
     }
 
-    for (cache = publisher->gop_cache_ctx.head; cache; cache = cache->next) {
+    for (cache = gop_cache_ctx->head; cache; cache = cache->next) {
 
         if (cache->meta_data) {
             meta = cache->meta_data;

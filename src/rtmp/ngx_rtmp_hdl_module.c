@@ -899,7 +899,7 @@ ngx_rtmp_hdl_send_gop(ngx_rtmp_session_t *ss)
 {
     ngx_rtmp_session_t             *s;
     ngx_chain_t                    *pkt, *apkt, *mpkt, *meta, *header;
-    ngx_rtmp_live_ctx_t            *pctx, *pushctx, *pullctx;
+    ngx_rtmp_live_ctx_t            *pctx, *publisher, *player;
     ngx_rtmp_codec_ctx_t           *codec_ctx;
     ngx_rtmp_core_srv_conf_t       *cscf;
     ngx_rtmp_live_app_conf_t       *lacf;
@@ -929,12 +929,12 @@ ngx_rtmp_hdl_send_gop(ngx_rtmp_session_t *ss)
         return;
     }
 
-    pullctx = ngx_rtmp_get_module_ctx(ss, ngx_rtmp_live_module);
-    if (pullctx == NULL || pullctx->stream == NULL) {
+    player = ngx_rtmp_get_module_ctx(ss, ngx_rtmp_live_module);
+    if (player == NULL || player->stream == NULL) {
         return;
     }
 
-    for (pctx = pullctx->stream->ctx; pctx; pctx = pctx->next) {
+    for (pctx = player->stream->ctx; pctx; pctx = pctx->next) {
         if (pctx->publishing) {
             break;
         }
@@ -956,9 +956,9 @@ ngx_rtmp_hdl_send_gop(ngx_rtmp_session_t *ss)
     ngx_memzero(&ch, sizeof(ch));
     ngx_memzero(&mh, sizeof(mh));
 
-    pushctx = pctx;
-    s       = pushctx->session;
-    ss      = pullctx->session;
+    publisher = pctx;
+    s         = publisher->session;
+    ss        = player->session;
 
     if (!gacf->gop_cache) {
         return;
@@ -970,6 +970,7 @@ ngx_rtmp_hdl_send_gop(ngx_rtmp_session_t *ss)
     }
 
     for (cache = gop_cache_ctx->head; cache; cache = cache->next) {
+
         if (cache->meta_data) {
             mh = cache->meta_header;
             meta = cache->meta_data;
@@ -977,7 +978,7 @@ ngx_rtmp_hdl_send_gop(ngx_rtmp_session_t *ss)
         }
 
         /* send metadata */
-        if (meta && meta->buf && meta_version != pullctx->meta_version) {
+        if (meta && meta_version != player->meta_version) {
             ngx_log_debug0(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
                            "hdl: meta");
 
@@ -989,10 +990,7 @@ ngx_rtmp_hdl_send_gop(ngx_rtmp_session_t *ss)
             meta->buf->pos = pos;
 
             if (ngx_rtmp_hdl_send_message(ss, mpkt, 0) == NGX_OK) {
-#ifdef NGX_DEBUG
-                ngx_rtmp_hdl_dump_message(ss, "Send Meta", mpkt);
-#endif
-                pullctx->meta_version = meta_version;
+                player->meta_version = meta_version;
             }
 
             if (mpkt) {
@@ -1004,12 +1002,11 @@ ngx_rtmp_hdl_send_gop(ngx_rtmp_session_t *ss)
         for (gop_frame = cache->head; gop_frame; gop_frame = gop_frame->next) {
             csidx = !(lacf->interleave || gop_frame->h.type == NGX_RTMP_MSG_VIDEO);
 
-            cs = &pullctx->cs[csidx];
+            cs = &player->cs[csidx];
 
             lh = ch = gop_frame->h;
 
             if (cs->active) {
-
                 lh.timestamp = cs->timestamp;
             }
 
