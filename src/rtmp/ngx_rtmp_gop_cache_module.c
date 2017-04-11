@@ -296,15 +296,15 @@ ngx_rtmp_gop_alloc_cache(ngx_rtmp_session_t *s)
         cache->meta_header  = codec_ctx->meta_header;
         cache->meta_version = codec_ctx->meta_version;
 
-        cache->meta_data = ngx_rtmp_append_shared_bufs(cscf, NULL, codec_ctx->meta);
-
         meta = codec_ctx->meta;
         pos = meta->buf->pos;
         meta->buf->pos = meta->buf->start + NGX_RTMP_MAX_CHUNK_HEADER;
 
-        cache->meta_data_flv = ngx_rtmp_hdl_append_tag_bufs(s, meta, &cache->meta_header);
+        cache->meta_data = ngx_rtmp_append_shared_bufs(cscf, NULL, codec_ctx->meta);
 
         meta->buf->pos = pos;
+
+        ngx_rtmp_prepare_message(s, &codec_ctx->metah, NULL, cache->meta_data);
     }
 
     if (gop_cache_ctx->head == NULL) {
