@@ -804,16 +804,15 @@ ngx_rtmp_hdl_connect_done(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
 
 static ngx_chain_t *
-ngx_rtmp_hdl_append_tag_bufs(ngx_rtmp_session_t *s, ngx_chain_t *tag,
-    ngx_rtmp_header_t *ch)
+ngx_http_flv_append_shared_bufs(ngx_rtmp_core_srv_conf_t *cscf, ngx_rtmp_header_t *h, ngx_chain_t *in)
 {
     ngx_chain_t                    *tail, *head, *taghead, prepkt;
     ngx_buf_t                       prebuf;
     uint32_t                        presize, presizebuf;
-    u_char                         *p, *ph;
-    ngx_rtmp_core_srv_conf_t       *cscf;
+    u_char                         *p, *ph, *pos;
 
-    cscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_core_module);
+    pos = in->buf->pos;
+    in->buf->pos = in->buf->start + NGX_RTMP_MAX_CHUNK_HEADER;
 
     ngx_memzero(&prebuf, sizeof(prebuf));
     prebuf.start = prebuf.pos = (u_char*)&presizebuf;
@@ -821,12 +820,12 @@ ngx_rtmp_hdl_append_tag_bufs(ngx_rtmp_session_t *s, ngx_chain_t *tag,
     prepkt.buf   = &prebuf;
     prepkt.next  = NULL;
 
-    head = tag;
-    tail = tag;
+    head = in;
+    tail = in;
     taghead = NULL;
 
-    for (presize = 0, tail = tag; tag; tail = tag, tag = tag->next) {
-        presize += (tag->buf->last - tag->buf->pos);
+    for (presize = 0, tail = in; in; tail = in, in = in->next) {
+        presize += (in->buf->last - in->buf->pos);
     }
 
     presize += NGX_RTMP_MAX_FLV_TAG_HEADER;
@@ -851,14 +850,14 @@ ngx_rtmp_hdl_append_tag_bufs(ngx_rtmp_session_t *s, ngx_chain_t *tag,
     taghead->buf->pos -= NGX_RTMP_MAX_FLV_TAG_HEADER;
     ph = taghead->buf->pos;
 
-    *ph++ = (u_char)ch->type;
+    *ph++ = (u_char)h->type;
 
     p = (u_char*)&presize;
     *ph++ = p[2];
     *ph++ = p[1];
     *ph++ = p[0];
 
-    p = (u_char*)&ch->timestamp;
+    p = (u_char*)&h->timestamp;
     *ph++ = p[2];
     *ph++ = p[1];
     *ph++ = p[0];
@@ -867,6 +866,8 @@ ngx_rtmp_hdl_append_tag_bufs(ngx_rtmp_session_t *s, ngx_chain_t *tag,
     *ph++ = 0;
     *ph++ = 0;
     *ph++ = 0;
+
+    in->buf->pos = pos;
 
     return taghead;
 }
@@ -1052,14 +1053,7 @@ ngx_rtmp_hdl_send_gop(ngx_rtmp_session_t *ss)
             ngx_log_debug0(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
                            "hdl: meta");
 
-            mod->send_meta(ss, cache);
-
-            pos = meta->buf->pos;
-            meta->buf->pos = meta->buf->start + NGX_RTMP_MAX_CHUNK_HEADER;
-
-            mpkt = ngx_rtmp_hdl_append_tag_bufs(ss, meta, &mh);
-
-            meta->buf->pos = pos;
+            mpkt = ngx_http_flv_append_shared_bufs(cscf, &mh, meta);
 
             if (ngx_rtmp_hdl_send_message(ss, mpkt, 0) == NGX_OK) {
                 player->meta_version = meta_version;
@@ -1088,7 +1082,7 @@ ngx_rtmp_hdl_send_gop(ngx_rtmp_session_t *ss)
 
                 header = gop_frame->h.type == NGX_RTMP_MSG_VIDEO ? cache->video_seq_header_data : cache->audio_seq_header_data;
                 if (header) {
-                    apkt = ngx_rtmp_hdl_append_tag_bufs(s, header, &lh);
+                    apkt = ngx_http_flv_append_shared_bufs(cscf, &lh, header);
                 }
 
                 if (apkt && ngx_rtmp_hdl_send_message(ss, apkt, 0) == NGX_OK) {
@@ -1103,7 +1097,7 @@ ngx_rtmp_hdl_send_gop(ngx_rtmp_session_t *ss)
                 }
             }
 
-            pkt = ngx_rtmp_hdl_append_tag_bufs(s, gop_frame->frame, &ch);
+            pkt = ngx_http_flv_append_shared_bufs(cscf, &ch, gop_frame->frame);
 
             if (ngx_rtmp_hdl_send_message(ss, pkt, gop_frame->prio) != NGX_OK) {
                 ++pctx->ndropped;
@@ -1256,7 +1250,7 @@ ngx_rtmp_hdl_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     }
 
     /* broadcast to all subscribers */
-    fpkt = ngx_rtmp_hdl_append_tag_bufs(s, in, &ch);
+    fpkt = ngx_http_flv_append_shared_bufs(cscf, &ch, in);
 
     for (pctx = ctx->stream->ctx; pctx; pctx = pctx->next) {
         if (pctx == ctx || pctx->paused) {
@@ -1272,12 +1266,7 @@ ngx_rtmp_hdl_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
             ngx_log_debug0(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
                            "live_hdl: meta");
 
-            pos = meta->buf->pos;
-            meta->buf->pos = meta->buf->start + NGX_RTMP_MAX_CHUNK_HEADER;
-
-            mpkt = ngx_rtmp_hdl_append_tag_bufs(ss, meta, &mh);
-
-            meta->buf->pos = pos;
+            mpkt = ngx_http_flv_append_shared_bufs(cscf, &mh, meta);
 
             if (ngx_rtmp_hdl_send_message(ss, mpkt, 0) == NGX_OK) {
                 pctx->meta_version = meta_version;
@@ -1336,7 +1325,7 @@ ngx_rtmp_hdl_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
                                "live_hdl: abs %s header timestamp=%uD",
                                type_s, lh.timestamp);
 
-                apkt = ngx_rtmp_hdl_append_tag_bufs(s, header, &lh);
+                apkt = ngx_http_flv_append_shared_bufs(cscf, &lh, header);
 
                 if (ngx_rtmp_hdl_send_message(ss, apkt, 0) != NGX_OK) {
                     continue;
@@ -1435,13 +1424,7 @@ ngx_rtmp_hdl_message(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
         return NGX_OK;
     }
 
-    msg = codec_ctx->msg;
-    pos = msg->buf->pos;
-    msg->buf->pos = msg->buf->start + NGX_RTMP_MAX_CHUNK_HEADER;
-
-    mpkt = ngx_rtmp_hdl_append_tag_bufs(s, codec_ctx->msg, &codec_ctx->msgh);
-
-    msg->buf->pos = pos;
+    mpkt = ngx_http_flv_append_shared_bufs(cscf, &codec_ctx->msgh, codec_ctx->msg);
 
     if(mpkt == NULL) {
         return NGX_ERROR;
