@@ -285,7 +285,7 @@ ngx_rtmp_send_gop(ngx_rtmp_session_t *ss)
         return;
     }
 
-    for (cache = publisher->gop_cache_ctx.head; cache; cache = cache->next) {
+    for (cache = gop_cache_ctx->head; cache; cache = cache->next) {
 
         if (cache->meta_data) {
             meta = cache->meta_data;
@@ -324,7 +324,6 @@ ngx_rtmp_send_gop(ngx_rtmp_session_t *ss)
                 }
 
                 if (apkt && ngx_rtmp_send_message(ss, apkt, 0) == NGX_OK) {
-
                     cs->timestamp = lh.timestamp;
                     cs->active = 1;
                     ss->current_time = cs->timestamp;

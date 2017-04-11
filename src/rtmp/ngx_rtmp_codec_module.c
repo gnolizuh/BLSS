@@ -1383,14 +1383,14 @@ ngx_rtmp_codec_prepare_meta(ngx_rtmp_session_t *s, uint32_t timestamp)
     ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_codec_module);
 
     ngx_memzero(&h, sizeof(h));
-    ngx_memzero(&ctx->metah, sizeof(ctx->metah));
     h.csid = NGX_RTMP_CSID_AMF;
     h.msid = NGX_RTMP_MSID;
     h.type = NGX_RTMP_MSG_AMF_META;
     h.timestamp = timestamp;
-    ctx->metah = h;
     ngx_rtmp_prepare_message(s, &h, NULL, ctx->meta);
 
+    ngx_memzero(&ctx->meta_header, sizeof(ctx->meta_header));
+    ctx->meta_header = h;
     ctx->meta_version = ngx_rtmp_codec_get_next_version();
 
     return NGX_OK;
