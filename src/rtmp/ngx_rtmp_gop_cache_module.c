@@ -300,7 +300,7 @@ ngx_rtmp_gop_alloc_cache(ngx_rtmp_session_t *s)
         pos = meta->buf->pos;
         meta->buf->pos = meta->buf->start + NGX_RTMP_MAX_CHUNK_HEADER;
 
-        cache->meta_data = ngx_rtmp_append_shared_bufs(cscf, NULL, codec_ctx->meta);
+        cache->meta_data = ngx_rtmp_append_shared_bufs(cscf, NULL, meta);
 
         meta->buf->pos = pos;
 
