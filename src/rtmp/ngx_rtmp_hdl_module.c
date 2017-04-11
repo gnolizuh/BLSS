@@ -20,7 +20,7 @@ typedef struct {
 } ngx_rtmp_http_hdl_loc_conf_t;
 
 
-static ngx_int_t ngx_rtmp_hdl_send_message(ngx_rtmp_session_t *s, ngx_chain_t *out, ngx_uint_t priority);
+static ngx_int_t ngx_http_flv_send_message(ngx_rtmp_session_t *s, ngx_chain_t *out, ngx_uint_t priority);
 static ngx_int_t ngx_rtmp_http_hdl_handler(ngx_http_request_t *r);
 static ngx_int_t ngx_rtmp_http_hdl_init(ngx_conf_t *cf);
 static void * ngx_rtmp_http_hdl_create_conf(ngx_conf_t *cf);
@@ -205,7 +205,7 @@ ngx_rtmp_hdl_send(ngx_event_t *wev)
 
 
 static ngx_int_t
-ngx_rtmp_hdl_send_message(ngx_rtmp_session_t *s, ngx_chain_t *out,
+ngx_http_flv_send_message(ngx_rtmp_session_t *s, ngx_chain_t *out,
         ngx_uint_t priority)
 {
     ngx_uint_t                      nmsg;
@@ -986,7 +986,7 @@ ngx_rtmp_hdl_send_gop(ngx_rtmp_session_t *ss)
 
             mpkt = ngx_http_flv_append_shared_bufs(cscf, &mh, meta);
 
-            if (ngx_rtmp_hdl_send_message(ss, mpkt, 0) == NGX_OK) {
+            if (ngx_http_flv_send_message(ss, mpkt, 0) == NGX_OK) {
                 player->meta_version = meta_version;
             }
 
@@ -1016,7 +1016,7 @@ ngx_rtmp_hdl_send_gop(ngx_rtmp_session_t *ss)
                     apkt = ngx_http_flv_append_shared_bufs(cscf, &lh, header);
                 }
 
-                if (apkt && ngx_rtmp_hdl_send_message(ss, apkt, 0) == NGX_OK) {
+                if (apkt && ngx_http_flv_send_message(ss, apkt, 0) == NGX_OK) {
                     cs->timestamp = lh.timestamp;
                     cs->active = 1;
                     ss->current_time = cs->timestamp;
@@ -1030,7 +1030,7 @@ ngx_rtmp_hdl_send_gop(ngx_rtmp_session_t *ss)
 
             pkt = ngx_http_flv_append_shared_bufs(cscf, &ch, gop_frame->frame);
 
-            if (ngx_rtmp_hdl_send_message(ss, pkt, gop_frame->prio) != NGX_OK) {
+            if (ngx_http_flv_send_message(ss, pkt, gop_frame->prio) != NGX_OK) {
                 ++pctx->ndropped;
 
                 cs->dropped += delta;
@@ -1199,7 +1199,7 @@ ngx_rtmp_hdl_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
             mpkt = ngx_http_flv_append_shared_bufs(cscf, &mh, meta);
 
-            if (ngx_rtmp_hdl_send_message(ss, mpkt, 0) == NGX_OK) {
+            if (ngx_http_flv_send_message(ss, mpkt, 0) == NGX_OK) {
                 pctx->meta_version = meta_version;
 #ifdef NGX_DEBUG
                 ngx_rtmp_hdl_dump_message(ss, "Send Meta", mpkt);
@@ -1258,7 +1258,7 @@ ngx_rtmp_hdl_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
                 apkt = ngx_http_flv_append_shared_bufs(cscf, &lh, header);
 
-                if (ngx_rtmp_hdl_send_message(ss, apkt, 0) != NGX_OK) {
+                if (ngx_http_flv_send_message(ss, apkt, 0) != NGX_OK) {
                     continue;
                 }
 
@@ -1279,7 +1279,7 @@ ngx_rtmp_hdl_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
                        "live_hdl: rel %s prio '%d' packet delta=%uD",
                        type_s, prio, delta);
 
-        if (ngx_rtmp_hdl_send_message(ss, fpkt, prio) != NGX_OK) {
+        if (ngx_http_flv_send_message(ss, fpkt, prio) != NGX_OK) {
             ++pctx->ndropped;
 
             cs->dropped += delta;
@@ -1369,7 +1369,7 @@ ngx_rtmp_hdl_message(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
         ss = pctx->session;
 
-        if (ngx_rtmp_hdl_send_message(ss, mpkt, 0) == NGX_OK) {
+        if (ngx_http_flv_send_message(ss, mpkt, 0) == NGX_OK) {
 #if (NGX_DEBUG)
             ngx_rtmp_hdl_dump_message(s, "onMessage", mpkt);
 #endif
@@ -1452,7 +1452,7 @@ ngx_rtmp_hdl_play_done(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
     pkt = ngx_rtmp_append_shared_bufs(cscf, NULL, &c1);
 
-    ngx_rtmp_hdl_send_message(s, pkt, 0);
+    ngx_http_flv_send_message(s, pkt, 0);
 
     ngx_rtmp_free_shared_chain(cscf, pkt);
 
