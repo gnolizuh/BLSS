@@ -871,6 +871,76 @@ ngx_rtmp_hdl_append_tag_bufs(ngx_rtmp_session_t *s, ngx_chain_t *tag,
     return taghead;
 }
 
+
+static ngx_chain_t *
+ngx_rtmp_hdl_prepare_message(ngx_rtmp_session_t *s, ngx_chain_t *tag,
+    ngx_rtmp_header_t *ch)
+{
+    ngx_chain_t                    *tail, *head, *taghead, prepkt;
+    ngx_buf_t                       prebuf;
+    uint32_t                        presize, presizebuf;
+    u_char                         *p, *ph;
+    ngx_rtmp_core_srv_conf_t       *cscf;
+
+    cscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_core_module);
+
+    ngx_memzero(&prebuf, sizeof(prebuf));
+    prebuf.start = prebuf.pos = (u_char*)&presizebuf;
+    prebuf.end   = prebuf.last = (u_char*)(((u_char*)&presizebuf) + sizeof(presizebuf));
+    prepkt.buf   = &prebuf;
+    prepkt.next  = NULL;
+
+    head = tag;
+    tail = tag;
+    taghead = NULL;
+
+    for (presize = 0, tail = tag; tag; tail = tag, tag = tag->next) {
+        presize += (tag->buf->last - tag->buf->pos);
+    }
+
+    presize += NGX_RTMP_MAX_FLV_TAG_HEADER;
+
+    ph = (u_char*)&presizebuf;
+    p  = (u_char*)&presize;
+
+    *ph++ = p[3];
+    *ph++ = p[2];
+    *ph++ = p[1];
+    *ph++ = p[0];
+
+    /* Link chain of PreviousTagSize after the last packet. */
+    tail->next = &prepkt;
+
+    taghead = ngx_rtmp_append_shared_bufs(cscf, NULL, head);
+
+    tail->next = NULL;
+    presize -= NGX_RTMP_MAX_FLV_TAG_HEADER;
+
+    /* tag header */
+    taghead->buf->pos -= NGX_RTMP_MAX_FLV_TAG_HEADER;
+    ph = taghead->buf->pos;
+
+    *ph++ = (u_char)ch->type;
+
+    p = (u_char*)&presize;
+    *ph++ = p[2];
+    *ph++ = p[1];
+    *ph++ = p[0];
+
+    p = (u_char*)&ch->timestamp;
+    *ph++ = p[2];
+    *ph++ = p[1];
+    *ph++ = p[0];
+    *ph++ = p[3];
+
+    *ph++ = 0;
+    *ph++ = 0;
+    *ph++ = 0;
+
+    return taghead;
+}
+
+
 #ifdef NGX_DEBUG
 static void
 ngx_rtmp_hdl_dump_message(ngx_rtmp_session_t *s, const char *type,
@@ -982,6 +1052,8 @@ ngx_rtmp_hdl_send_gop(ngx_rtmp_session_t *ss)
             ngx_log_debug0(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
                            "hdl: meta");
 
+            mod->send_meta(ss, cache);
+
             pos = meta->buf->pos;
             meta->buf->pos = meta->buf->start + NGX_RTMP_MAX_CHUNK_HEADER;
 
@@ -1016,15 +1088,18 @@ ngx_rtmp_hdl_send_gop(ngx_rtmp_session_t *ss)
 
                 header = gop_frame->h.type == NGX_RTMP_MSG_VIDEO ? cache->video_seq_header_data : cache->audio_seq_header_data;
                 if (header) {
-
                     apkt = ngx_rtmp_hdl_append_tag_bufs(s, header, &lh);
                 }
 
                 if (apkt && ngx_rtmp_hdl_send_message(ss, apkt, 0) == NGX_OK) {
-
                     cs->timestamp = lh.timestamp;
                     cs->active = 1;
                     ss->current_time = cs->timestamp;
+                }
+
+                if (apkt) {
+                    ngx_rtmp_free_shared_chain(cscf, apkt);
+                    apkt = NULL;
                 }
             }
 
@@ -1041,11 +1116,6 @@ ngx_rtmp_hdl_send_gop(ngx_rtmp_session_t *ss)
             if (pkt) {
                 ngx_rtmp_free_shared_chain(cscf, pkt);
                 pkt = NULL;
-            }
-
-            if (apkt) {
-                ngx_rtmp_free_shared_chain(cscf, apkt);
-                apkt = NULL;
             }
 
             ngx_log_debug3(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
@@ -1179,7 +1249,7 @@ ngx_rtmp_hdl_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
         }
 
         if (codec_ctx->meta) {
-            mh = codec_ctx->metah;
+            mh = codec_ctx->meta_header;
             meta = codec_ctx->meta;
             meta_version = codec_ctx->meta_version;
         }
