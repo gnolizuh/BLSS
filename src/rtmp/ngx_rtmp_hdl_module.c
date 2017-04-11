@@ -811,6 +811,9 @@ ngx_http_flv_append_shared_bufs(ngx_rtmp_core_srv_conf_t *cscf, ngx_rtmp_header_
     uint32_t                        presize, presizebuf;
     u_char                         *p, *ph, *pos;
 
+    pos = in->buf->pos;
+    in->buf->pos = in->buf->start + NGX_RTMP_MAX_CHUNK_HEADER;
+
     ngx_memzero(&prebuf, sizeof(prebuf));
     prebuf.start = prebuf.pos = (u_char*)&presizebuf;
     prebuf.end   = prebuf.last = (u_char*)(((u_char*)&presizebuf) + sizeof(presizebuf));
@@ -863,6 +866,8 @@ ngx_http_flv_append_shared_bufs(ngx_rtmp_core_srv_conf_t *cscf, ngx_rtmp_header_
     *ph++ = 0;
     *ph++ = 0;
     *ph++ = 0;
+
+    in->buf->pos = pos;
 
     return taghead;
 }
@@ -977,12 +982,7 @@ ngx_rtmp_hdl_send_gop(ngx_rtmp_session_t *ss)
             ngx_log_debug0(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
                            "hdl: meta");
 
-            pos = meta->buf->pos;
-            meta->buf->pos = meta->buf->start + NGX_RTMP_MAX_CHUNK_HEADER;
-
             mpkt = ngx_http_flv_append_shared_bufs(cscf, &mh, meta);
-
-            meta->buf->pos = pos;
 
             if (ngx_rtmp_hdl_send_message(ss, mpkt, 0) == NGX_OK) {
 #ifdef NGX_DEBUG
@@ -1201,12 +1201,7 @@ ngx_rtmp_hdl_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
             ngx_log_debug0(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
                            "live_hdl: meta");
 
-            pos = meta->buf->pos;
-            meta->buf->pos = meta->buf->start + NGX_RTMP_MAX_CHUNK_HEADER;
-
             mpkt = ngx_http_flv_append_shared_bufs(cscf, &mh, meta);
-
-            meta->buf->pos = pos;
 
             if (ngx_rtmp_hdl_send_message(ss, mpkt, 0) == NGX_OK) {
                 pctx->meta_version = meta_version;
@@ -1364,13 +1359,7 @@ ngx_rtmp_hdl_message(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
         return NGX_OK;
     }
 
-    msg = codec_ctx->msg;
-    pos = msg->buf->pos;
-    msg->buf->pos = msg->buf->start + NGX_RTMP_MAX_CHUNK_HEADER;
-
     mpkt = ngx_http_flv_append_shared_bufs(cscf, &codec_ctx->msgh, codec_ctx->msg);
-
-    msg->buf->pos = pos;
 
     if(mpkt == NULL) {
         return NGX_ERROR;
