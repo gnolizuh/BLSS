@@ -336,7 +336,6 @@ ngx_rtmp_send_gop(ngx_rtmp_session_t *ss)
             }
 
             pkt = ngx_rtmp_append_shared_bufs(cscf, NULL, gop_frame->frame);
-
             ngx_rtmp_prepare_message(s, &ch, &lh, pkt);
 
             if (ngx_rtmp_send_message(ss, pkt, gop_frame->prio) != NGX_OK) {
