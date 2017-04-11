@@ -14,15 +14,11 @@
 #include "ngx_rtmp_cmd_module.h"
 #include "ngx_rtmp_bandwidth.h"
 #include "ngx_rtmp_streams.h"
-
-
-#define NGX_RTMP_LIVE_PURE_AUDIO_GUESS_CNT    115
+#include "ngx_rtmp_gop_cache_module.h"
 
 
 typedef struct ngx_rtmp_live_ctx_s ngx_rtmp_live_ctx_t;
 typedef struct ngx_rtmp_live_stream_s ngx_rtmp_live_stream_t;
-typedef struct ngx_rtmp_gop_frame_s ngx_rtmp_gop_frame_t;
-typedef struct ngx_rtmp_gop_cache_s ngx_rtmp_gop_cache_t;
 
 
 typedef struct {
@@ -38,40 +34,6 @@ typedef struct {
     ngx_msec_t                          time_end;
     ngx_uint_t                          frame_cnt;
 } ngx_rtmp_live_frame_rate_t;
-
-
-struct ngx_rtmp_gop_frame_s {
-    ngx_rtmp_header_t                   h;
-    ngx_uint_t                          prio;
-    ngx_chain_t                        *frame;
-    ngx_rtmp_gop_frame_t               *next;
-};
-
-
-struct ngx_rtmp_gop_cache_s {
-    ngx_rtmp_gop_frame_t               *head;
-    ngx_rtmp_gop_frame_t               *tail;
-    ngx_rtmp_gop_cache_t               *next;
-    ngx_chain_t                        *video_seq_header_data;
-    ngx_chain_t                        *meta_data;
-    ngx_uint_t                          meta_version;
-    ngx_rtmp_header_t                   meta_header;
-    ngx_int_t                           video_frame_cnt;
-    ngx_int_t                           audio_frame_cnt;
-};
-
-
-typedef struct {
-    ngx_pool_t                         *pool;
-    ngx_rtmp_gop_cache_t               *head;
-    ngx_rtmp_gop_cache_t               *tail;
-    ngx_rtmp_gop_cache_t               *free_cache;
-    ngx_rtmp_gop_frame_t               *free_frame;
-    ngx_uint_t                          cache_cnt;
-    ngx_uint_t                          video_frame_cnt;
-    ngx_uint_t                          audio_frame_cnt;
-    ngx_uint_t                          audio_after_last_video_cnt;
-} ngx_rtmp_gop_cache_ctx_t;
 
 
 struct ngx_rtmp_live_ctx_s {
@@ -115,9 +77,6 @@ typedef struct {
     ngx_msec_t                          idle_timeout;
     ngx_flag_t                          atc;
     ngx_flag_t                          interleave;
-    ngx_flag_t                          gop_cache;
-    ngx_msec_t                          gop_cache_mintime;
-    ngx_msec_t                          gop_cache_maxtime;
     ngx_flag_t                          wait_key;
     ngx_flag_t                          wait_video;
     ngx_flag_t                          publish_notify;
