@@ -53,7 +53,7 @@ cd to BLSS source directory & run this:
 
                 application news {
 
-                    hdl on;
+                    http_flv on;
                     hls on;
                 }
             }
@@ -77,8 +77,8 @@ cd to BLSS source directory & run this:
             listen 80   reuseport;
     
             location / {
+                http_flv on;
                 hls  on;
-                hdl  on;
     
                 root /dev/shm;
 
