@@ -803,7 +803,7 @@ ngx_rtmp_hdl_connect_done(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 }
 
 
-static ngx_chain_t *
+ngx_chain_t *
 ngx_http_flv_append_shared_bufs(ngx_rtmp_core_srv_conf_t *cscf, ngx_rtmp_header_t *h, ngx_chain_t *in)
 {
     ngx_chain_t                    *tail, *head, *taghead, prepkt;
