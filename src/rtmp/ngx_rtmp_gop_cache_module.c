@@ -693,7 +693,7 @@ ngx_rtmp_gop_cache_close_stream(ngx_rtmp_session_t *s, ngx_rtmp_close_stream_t *
     }
 
     lacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_live_module);
-    if (lacf == NULL || !lacf->live)) {
+    if (lacf == NULL || !lacf->live) {
         goto next;
     }
 
