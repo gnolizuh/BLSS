@@ -912,7 +912,6 @@ ngx_rtmp_hdl_send_gop(ngx_rtmp_session_t *ss)
     ngx_rtmp_header_t               ch, lh;
     ngx_uint_t                      meta_version;
     uint32_t                        delta;
-    u_char                         *pos;
     ngx_int_t                       csidx;
     ngx_rtmp_live_chunk_stream_t   *cs;
 
@@ -1059,7 +1058,6 @@ ngx_rtmp_hdl_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     ngx_rtmp_header_t               ch, lh, mh;
     ngx_rtmp_session_t             *ss;
     ngx_int_t                       mandatory;
-    u_char                         *pos;
     ngx_uint_t                      csidx;
     ngx_uint_t                      prio;
     ngx_uint_t                      meta_version;
@@ -1303,8 +1301,6 @@ ngx_rtmp_hdl_message(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     ngx_chain_t                    *mpkt;
     ngx_rtmp_session_t             *ss;
     ngx_rtmp_codec_ctx_t           *codec_ctx;
-    ngx_chain_t                    *msg;
-    u_char                         *pos;
 #ifdef NGX_DEBUG
     const char                     *type_s; 
 
