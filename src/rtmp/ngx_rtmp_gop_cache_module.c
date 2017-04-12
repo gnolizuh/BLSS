@@ -296,7 +296,7 @@ ngx_rtmp_gop_alloc_cache(ngx_rtmp_session_t *s)
         cache->meta_header  = codec_ctx->meta_header;
         cache->meta_version = codec_ctx->meta_version;
         cache->meta_data = ngx_rtmp_append_shared_bufs(cscf, NULL, codec_ctx->meta_orig);
-        cache->meta_data_flv = ngx_http_flv_append_shared_bufs(cscf, &codec_ctx->meta_header, codec_ctx->meta_orig));
+        cache->meta_data_flv = ngx_http_flv_append_shared_bufs(cscf, &codec_ctx->meta_header, codec_ctx->meta_orig);
 
         ngx_rtmp_prepare_message(s, &codec_ctx->metah, NULL, cache->meta_data);
     }
