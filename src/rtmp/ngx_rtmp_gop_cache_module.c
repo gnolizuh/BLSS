@@ -7,6 +7,7 @@
 #include "ngx_rtmp_gop_cache_module.h"
 #include "ngx_rtmp_codec_module.h"
 #include "ngx_rtmp_live_module.h"
+#include "ngx_http_flv_module.h"
 
 
 static ngx_int_t ngx_rtmp_gop_cache_postconfiguration(ngx_conf_t *cf);
