@@ -650,7 +650,7 @@ extern ngx_rtmp_bandwidth_t                 ngx_rtmp_bw_in;
 
 extern ngx_uint_t                           ngx_rtmp_naccepted;
 extern ngx_uint_t                           ngx_rtmp_hls_naccepted;
-extern ngx_uint_t                           ngx_rtmp_hdl_naccepted;
+extern ngx_uint_t                           ngx_http_flv_naccepted;
 
 #if (nginx_version >= 1007011)
 extern ngx_queue_t                          ngx_rtmp_init_queue;
