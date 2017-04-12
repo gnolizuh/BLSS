@@ -7,6 +7,7 @@
 #include "ngx_rtmp_gop_cache_module.h"
 #include "ngx_rtmp_codec_module.h"
 #include "ngx_rtmp_live_module.h"
+#include "ngx_http_flv_module.h"
 
 
 static ngx_int_t ngx_rtmp_gop_cache_postconfiguration(ngx_conf_t *cf);
@@ -245,8 +246,6 @@ ngx_rtmp_gop_alloc_cache(ngx_rtmp_session_t *s)
     ngx_rtmp_core_srv_conf_t       *cscf;
     ngx_rtmp_gop_cache_ctx_t       *gop_cache_ctx;
     ngx_rtmp_gop_cache_t           *cache;
-    u_char                         *pos;
-    ngx_chain_t                    *meta;
 
     ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_live_module);
     if (ctx == NULL) {
@@ -296,9 +295,9 @@ ngx_rtmp_gop_alloc_cache(ngx_rtmp_session_t *s)
         cache->meta_header  = codec_ctx->meta_header;
         cache->meta_version = codec_ctx->meta_version;
         cache->meta_data = ngx_rtmp_append_shared_bufs(cscf, NULL, codec_ctx->meta_orig);
-        cache->meta_data_flv = ngx_http_flv_append_shared_bufs(cscf, &codec_ctx->meta_header, codec_ctx->meta_orig));
+        cache->meta_data_flv = ngx_http_flv_append_shared_bufs(cscf, &codec_ctx->meta_header, codec_ctx->meta_orig);
 
-        ngx_rtmp_prepare_message(s, &codec_ctx->metah, NULL, cache->meta_data);
+        ngx_rtmp_prepare_message(s, &codec_ctx->meta_header, NULL, cache->meta_data);
     }
 
     if (gop_cache_ctx->head == NULL) {
