@@ -10,6 +10,8 @@
 #include "ngx_http_flv_module.h"
 
 
+static ngx_rtmp_close_stream_pt         next_close_stream;
+
 static ngx_int_t ngx_rtmp_gop_cache_postconfiguration(ngx_conf_t *cf);
 static void * ngx_rtmp_gop_cache_create_app_conf(ngx_conf_t *cf);
 static char * ngx_rtmp_gop_cache_merge_app_conf(ngx_conf_t *cf, void *parent, void *child);
@@ -573,7 +575,7 @@ ngx_rtmp_gop_cache_frame(ngx_rtmp_session_t *s, ngx_uint_t prio, ngx_rtmp_header
         if (prio != NGX_RTMP_VIDEO_KEY_FRAME &&
             gop_cache_ctx->head == NULL) {
 
-            ngx_log_error(NGX_LOG_ERR, s->connection->log, 0,
+            ngx_log_debug1(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
                           "drop video non-keyframe timestamp='%uD'",
                           ch->timestamp);
             return;
@@ -631,7 +633,6 @@ ngx_rtmp_gop_cache_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 {
     ngx_rtmp_live_ctx_t            *ctx;
     ngx_rtmp_live_app_conf_t       *lacf;
-    ngx_rtmp_gop_cache_app_conf_t  *gacf;
     ngx_rtmp_header_t               ch;
     ngx_uint_t                      prio;
     ngx_uint_t                      csidx;
@@ -639,11 +640,6 @@ ngx_rtmp_gop_cache_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
     lacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_live_module);
     if (lacf == NULL) {
-        return NGX_ERROR;
-    }
-
-    gacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_gop_cache_module);
-    if (gacf == NULL) {
         return NGX_ERROR;
     }
 
@@ -681,6 +677,39 @@ ngx_rtmp_gop_cache_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
 
 static ngx_int_t
+ngx_rtmp_gop_cache_close_stream(ngx_rtmp_session_t *s, ngx_rtmp_close_stream_t *v)
+{
+    ngx_rtmp_live_ctx_t            *ctx;
+    ngx_rtmp_live_app_conf_t       *lacf;
+    ngx_rtmp_gop_cache_app_conf_t  *gacf;
+
+    ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_live_module);
+    if (ctx == NULL || ctx->stream == NULL) {
+        goto next;
+    }
+
+    if (ctx->publishing == 0) {
+        goto next;
+    }
+
+    lacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_live_module);
+    if (lacf == NULL || !lacf->live)) {
+        goto next;
+    }
+
+    gacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_gop_cache_module);
+    if (gacf == NULL || !gacf->gop_cache) {
+        goto next;
+    }
+
+    ngx_rtmp_gop_cleanup(s);
+
+next:
+    return next_close_stream(s, v);
+}
+
+
+static ngx_int_t
 ngx_rtmp_gop_cache_postconfiguration(ngx_conf_t *cf)
 {
     ngx_rtmp_core_main_conf_t          *cmcf;
@@ -695,6 +724,9 @@ ngx_rtmp_gop_cache_postconfiguration(ngx_conf_t *cf)
 
     h = ngx_array_push(&cmcf->events[NGX_RTMP_MSG_VIDEO]);
     *h = ngx_rtmp_gop_cache_av;
+
+    next_close_stream = ngx_rtmp_close_stream;
+    ngx_rtmp_close_stream = ngx_rtmp_gop_cache_close_stream;
 
     return NGX_OK;
 }
