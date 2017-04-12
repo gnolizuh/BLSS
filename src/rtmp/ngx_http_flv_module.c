@@ -807,12 +807,13 @@ ngx_chain_t *
 ngx_http_flv_append_shared_bufs(ngx_rtmp_core_srv_conf_t *cscf, ngx_rtmp_header_t *h, ngx_chain_t *in)
 {
     ngx_chain_t                    *tail, *head, *taghead, prepkt;
+    ngx_chain_t                    *tag = in;
     ngx_buf_t                       prebuf;
     uint32_t                        presize, presizebuf;
     u_char                         *p, *ph, *pos;
 
-    pos = in->buf->pos;
-    in->buf->pos = in->buf->start + NGX_RTMP_MAX_CHUNK_HEADER;
+    pos = tag->buf->pos;
+    tag->buf->pos = tag->buf->start + NGX_RTMP_MAX_CHUNK_HEADER;
 
     ngx_memzero(&prebuf, sizeof(prebuf));
     prebuf.start = prebuf.pos = (u_char*)&presizebuf;
@@ -820,12 +821,12 @@ ngx_http_flv_append_shared_bufs(ngx_rtmp_core_srv_conf_t *cscf, ngx_rtmp_header_
     prepkt.buf   = &prebuf;
     prepkt.next  = NULL;
 
-    head = in;
-    tail = in;
+    head = tag;
+    tail = tag;
     taghead = NULL;
 
-    for (presize = 0, tail = in; in; tail = in, in = in->next) {
-        presize += (in->buf->last - in->buf->pos);
+    for (presize = 0, tail = tag; tag; tail = tag, tag = tag->next) {
+        presize += (tag->buf->last - tag->buf->pos);
     }
 
     presize += NGX_RTMP_MAX_FLV_TAG_HEADER;
