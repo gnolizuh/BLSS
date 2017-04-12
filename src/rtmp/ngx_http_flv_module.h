@@ -18,17 +18,17 @@
 typedef struct {
     uint32_t                            epoch;
     unsigned                            initialized:1;
-} ngx_rtmp_hdl_ctx_t;
+} ngx_http_flv_rtmp_ctx_t;
 
 
 typedef struct {
     ngx_flag_t                          http_flv;
-} ngx_rtmp_hdl_app_conf_t;
+} ngx_http_flv_rtmp_app_conf_t;
 
 
 typedef struct {
     ngx_rtmp_session_t                 *s;
-} ngx_rtmp_http_hdl_ctx_t;
+} ngx_http_flv_http_ctx_t;
 
 
 ngx_chain_t *
