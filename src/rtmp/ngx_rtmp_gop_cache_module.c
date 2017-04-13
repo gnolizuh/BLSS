@@ -25,7 +25,7 @@ extern ngx_rtmp_gop_cache_handler_t ngx_http_flv_gop_cache_handler;
 ngx_rtmp_gop_cache_handler_t *ngx_rtmp_gop_cache_send_handler[] = {
     &ngx_rtmp_gop_cache_handler,
     &ngx_http_flv_gop_cache_handler
-}
+};
 
 
 static ngx_command_t  ngx_rtmp_gop_cache_commands[] = {
