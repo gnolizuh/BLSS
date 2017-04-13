@@ -23,8 +23,8 @@ extern ngx_rtmp_gop_cache_handler_t ngx_rtmp_gop_cache_handler;
 extern ngx_rtmp_gop_cache_handler_t ngx_http_flv_gop_cache_handler;
 
 ngx_rtmp_gop_cache_handler_t *ngx_rtmp_gop_cache_handler[] = {
-    ngx_rtmp_gop_cache_handler,
-    ngx_http_flv_gop_cache_handler
+    &ngx_rtmp_gop_cache_handler,
+    &ngx_http_flv_gop_cache_handler
 }
 
 
