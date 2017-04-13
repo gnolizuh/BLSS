@@ -1310,7 +1310,7 @@ ngx_rtmp_live_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
         ngx_rtmp_send_sample_access(s);
     }
 	
-	ngx_rtmp_send_gop(s);
+	// ngx_rtmp_send_gop(s);
 
     ngx_rtmp_playing++;
 
