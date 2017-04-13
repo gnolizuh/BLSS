@@ -40,8 +40,8 @@ static ngx_int_t ngx_http_flv_gop_cache_append_shared_bufs(ngx_rtmp_session_t *s
 
 
 ngx_rtmp_gop_cache_handler_t ngx_http_flv_gop_cache_handler = {
-    send_message = ngx_http_flv_gop_cache_send_message,
-    append_shared_bufs = ngx_http_flv_gop_cache_append_shared_bufs
+    ngx_http_flv_gop_cache_send_message,
+    ngx_http_flv_gop_cache_append_shared_bufs
 };
 
 
