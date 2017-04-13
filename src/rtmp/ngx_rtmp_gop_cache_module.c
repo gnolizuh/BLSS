@@ -22,6 +22,11 @@ static char * ngx_rtmp_gop_cache_merge_app_conf(ngx_conf_t *cf, void *parent, vo
 extern ngx_rtmp_gop_cache_handler_t ngx_rtmp_gop_cache_handler;
 extern ngx_rtmp_gop_cache_handler_t ngx_http_flv_gop_cache_handler;
 
+ngx_rtmp_gop_cache_handler_t *ngx_rtmp_gop_cache_handler[] = {
+    ngx_rtmp_gop_cache_handler,
+    ngx_http_flv_gop_cache_handler
+}
+
 
 static ngx_command_t  ngx_rtmp_gop_cache_commands[] = {
 
@@ -628,6 +633,7 @@ ngx_rtmp_gop_cache_send(ngx_rtmp_session_t *ss)
     ngx_rtmp_gop_cache_app_conf_t  *gacf;
     ngx_rtmp_gop_cache_t           *cache;
     ngx_rtmp_gop_frame_t           *gop_frame;
+    ngx_rtmp_gop_cache_handler_t   *handler;
     ngx_rtmp_header_t               ch, lh;
     ngx_uint_t                      meta_version;
     uint32_t                        delta;
@@ -679,6 +685,8 @@ ngx_rtmp_gop_cache_send(ngx_rtmp_session_t *ss)
         return;
     }
 
+    handler = ngx_rtmp_gop_cache_handler[ss->protocol == NGX_RTMP_PULL_TYPE_HDL ? 1 : 0];
+
     if (!gacf->gop_cache) {
         return;
     }
@@ -695,7 +703,7 @@ ngx_rtmp_gop_cache_send(ngx_rtmp_session_t *ss)
             ngx_log_debug0(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
                            "live: meta");
 
-            if (ngx_rtmp_gop_cache_handler.send_message(ss, meta, 0) == NGX_OK) {
+            if (handler->send_message(ss, meta, 0) == NGX_OK) {
                 player->meta_version = meta_version;
             }
         }
@@ -717,23 +725,23 @@ ngx_rtmp_gop_cache_send(ngx_rtmp_session_t *ss)
 
                 header = gop_frame->h.type == NGX_RTMP_MSG_VIDEO ? cache->video_seq_header_data : cache->audio_seq_header_data;
                 if (header) {
-                    apkt = ngx_rtmp_gop_cache_handler.append_shared_bufs(s, &lh, NULL, header);
+                    apkt = handler->append_shared_bufs(s, &lh, NULL, header);
                 }
 
-                if (apkt && ngx_rtmp_gop_cache_handler.send_message(ss, apkt, 0) == NGX_OK) {
+                if (apkt && handler->send_message(ss, apkt, 0) == NGX_OK) {
                     cs->timestamp = lh.timestamp;
                     cs->active = 1;
                     ss->current_time = cs->timestamp;
                 }
 
                 if (apkt) {
-                    ngx_rtmp_gop_cache_handler.free_shared_chain(ss, apkt);
+                    handler->free_shared_chain(ss, apkt);
                     apkt = NULL;
                 }
             }
 
-            pkt = ngx_rtmp_gop_cache_handler.append_shared_bufs(s, &ch, &lh, gop_frame->frame);
-            if (ngx_rtmp_gop_cache_handler.send_message(ss, pkt, gop_frame->prio) != NGX_OK) {
+            pkt = handler->append_shared_bufs(s, &ch, &lh, gop_frame->frame);
+            if (handler->send_message(ss, pkt, gop_frame->prio) != NGX_OK) {
                 ++pctx->ndropped;
 
                 cs->dropped += delta;
@@ -742,7 +750,7 @@ ngx_rtmp_gop_cache_send(ngx_rtmp_session_t *ss)
             }
 
             if (pkt) {
-                ngx_rtmp_gop_cache_handler.free_shared_chain(ss, pkt);
+                handler->free_shared_chain(ss, pkt);
                 pkt = NULL;
             }
 
