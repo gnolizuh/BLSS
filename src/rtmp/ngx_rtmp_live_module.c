@@ -30,6 +30,14 @@ static char *ngx_rtmp_live_set_msec_slot(ngx_conf_t *cf, ngx_command_t *cmd,
        void *conf);
 static void ngx_rtmp_live_start(ngx_rtmp_session_t *s);
 static void ngx_rtmp_live_stop(ngx_rtmp_session_t *s);
+static ngx_int_t ngx_rtmp_gop_cache_send_message(ngx_rtmp_session_t *s, ngx_chain_t *in);
+static ngx_int_t ngx_rtmp_gop_cache_append_shared_bufs(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_chain_t *in);
+
+
+ngx_rtmp_gop_cache_handler_t ngx_rtmp_gop_cache_handler = {
+    send_message = ngx_rtmp_gop_cache_send_message;
+    append_shared_bufs = ngx_rtmp_gop_cache_append_shared_bufs;
+};
 
 
 static ngx_command_t  ngx_rtmp_live_commands[] = {
@@ -218,6 +226,33 @@ ngx_rtmp_live_set_msec_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     }
 
     return ngx_conf_set_msec_slot(cf, cmd, conf);
+}
+
+
+static ngx_int_t
+ngx_rtmp_gop_cache_send_message(ngx_rtmp_session_t *s, ngx_chain_t *in)
+{
+    return ngx_rtmp_send_message(s, in, 0);
+}
+
+
+static ngx_int_t
+ngx_rtmp_gop_cache_append_shared_bufs(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_chain_t *in);
+{
+    ngx_rtmp_core_srv_conf_t       *cscf;
+    ngx_chain_t                    *pkt;
+
+    cscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_core_module);
+    if (cscf == NULL) {
+        return NULL;
+    }
+
+    pkt = ngx_rtmp_append_shared_bufs(cscf, NULL, in);
+    if (pkt != NULL) {
+        ngx_rtmp_prepare_message(s, h, NULL, pkt);
+    }
+
+    return pkt;
 }
 
 

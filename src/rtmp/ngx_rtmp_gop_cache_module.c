@@ -19,6 +19,10 @@ static void * ngx_rtmp_gop_cache_create_app_conf(ngx_conf_t *cf);
 static char * ngx_rtmp_gop_cache_merge_app_conf(ngx_conf_t *cf, void *parent, void *child);
 
 
+extern ngx_rtmp_gop_cache_handler_t ngx_rtmp_gop_cache_handler;
+extern ngx_rtmp_gop_cache_handler_t ngx_http_flv_gop_cache_handler;
+
+
 static ngx_command_t  ngx_rtmp_gop_cache_commands[] = {
 
     { ngx_string("gop_cache"),

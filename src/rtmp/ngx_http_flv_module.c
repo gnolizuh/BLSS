@@ -35,6 +35,14 @@ static ngx_int_t ngx_http_flv_connect_local(ngx_http_request_t *r, ngx_str_t *ap
 static ngx_rtmp_session_t * ngx_http_flv_init_session(ngx_http_request_t *r, ngx_rtmp_addr_conf_t *addr_conf);
 static ngx_int_t ngx_http_flv_init_connection(ngx_http_request_t *r, ngx_rtmp_conf_port_t *cf_port);
 static ngx_int_t ngx_http_flv_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_chain_t *in);
+static ngx_int_t ngx_http_flv_gop_cache_send_message(ngx_rtmp_session_t *s, ngx_chain_t *in);
+static ngx_int_t ngx_http_flv_gop_cache_append_shared_bufs(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_chain_t *in);
+
+
+ngx_rtmp_gop_cache_handler_t ngx_http_flv_gop_cache_handler = {
+    send_message = ngx_http_flv_gop_cache_send_message;
+    append_shared_bufs = ngx_http_flv_gop_cache_append_shared_bufs;
+};
 
 
 static ngx_command_t ngx_http_flv_httpcommands[] = {
@@ -871,6 +879,27 @@ ngx_http_flv_append_shared_bufs(ngx_rtmp_core_srv_conf_t *cscf, ngx_rtmp_header_
     in->buf->pos = pos;
 
     return taghead;
+}
+
+
+static ngx_int_t
+ngx_http_flv_gop_cache_send_message(ngx_rtmp_session_t *s, ngx_chain_t *in)
+{
+    return ngx_http_flv_send_message(s, in, 0);
+}
+
+
+static ngx_int_t
+ngx_http_flv_gop_cache_append_shared_bufs(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_chain_t *in)
+{
+    ngx_rtmp_core_srv_conf_t       *cscf;
+
+    cscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_core_module);
+    if (cscf == NULL) {
+        return NULL;
+    }
+
+    return ngx_http_flv_append_shared_bufs(cscf, h, in);
 }
 
 
