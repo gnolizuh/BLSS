@@ -28,8 +28,9 @@ typedef struct ngx_rtmp_gop_cache_s ngx_rtmp_gop_cache_t;
 
 
 typedef struct {
-    ngx_int_t                           (*send_message)(ngx_rtmp_session_t *s, ngx_chain_t *in);
-    ngx_chain_t                        *(*append_shared_bufs)(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_chain_t *in);
+    ngx_int_t                           (*send_message)(ngx_rtmp_session_t *s, ngx_chain_t *in, ngx_uint_t priority);
+    ngx_chain_t                        *(*append_shared_bufs)(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_rtmp_header_t *lh, ngx_chain_t *in);
+    void                                (*free_shared_chain)(ngx_rtmp_core_srv_conf_t *cscf, ngx_chain_t *in);
 } ngx_rtmp_gop_cache_handler_t;
 
 
