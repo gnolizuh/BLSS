@@ -7,9 +7,9 @@ RTMP_CORE_MODULES="                                         \
                 ngx_rtmp_codec_module                       \
                 ngx_rtmp_access_module                      \
                 ngx_rtmp_record_module                      \
+                ngx_rtmp_gop_cache_module                   \
                 ngx_rtmp_live_module                        \
                 ngx_http_flv_rtmpmodule                     \
-                ngx_rtmp_gop_cache_module                   \
                 ngx_rtmp_hls_module                         \
                 ngx_rtmp_play_module                        \
                 ngx_rtmp_flv_module                         \
