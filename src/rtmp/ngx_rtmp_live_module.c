@@ -272,6 +272,7 @@ ngx_rtmp_gop_cache_free_shared_chain(ngx_rtmp_session_t *s, ngx_chain_t *in)
 }
 
 
+#ifdef NGX_DEBUG
 static void
 ngx_rtmp_send_gop(ngx_rtmp_session_t *ss)
 {
@@ -416,6 +417,7 @@ ngx_rtmp_send_gop(ngx_rtmp_session_t *ss)
         }
     }
 }
+#endif
 
 
 static ngx_rtmp_live_stream_t **
@@ -1310,8 +1312,6 @@ ngx_rtmp_live_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
         ngx_rtmp_send_sample_access(s);
     }
 	
-	// ngx_rtmp_send_gop(s);
-
     ngx_rtmp_playing++;
 
 next:
