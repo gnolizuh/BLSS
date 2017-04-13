@@ -31,7 +31,7 @@ static char *ngx_rtmp_live_set_msec_slot(ngx_conf_t *cf, ngx_command_t *cmd,
 static void ngx_rtmp_live_start(ngx_rtmp_session_t *s);
 static void ngx_rtmp_live_stop(ngx_rtmp_session_t *s);
 static ngx_int_t ngx_rtmp_gop_cache_send_message(ngx_rtmp_session_t *s, ngx_chain_t *in);
-static ngx_int_t ngx_rtmp_gop_cache_append_shared_bufs(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_chain_t *in);
+static ngx_chain_t * ngx_rtmp_gop_cache_append_shared_bufs(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_chain_t *in);
 
 
 ngx_rtmp_gop_cache_handler_t ngx_rtmp_gop_cache_handler = {

@@ -36,7 +36,7 @@ static ngx_rtmp_session_t * ngx_http_flv_init_session(ngx_http_request_t *r, ngx
 static ngx_int_t ngx_http_flv_init_connection(ngx_http_request_t *r, ngx_rtmp_conf_port_t *cf_port);
 static ngx_int_t ngx_http_flv_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_chain_t *in);
 static ngx_int_t ngx_http_flv_gop_cache_send_message(ngx_rtmp_session_t *s, ngx_chain_t *in);
-static ngx_int_t ngx_http_flv_gop_cache_append_shared_bufs(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_chain_t *in);
+static ngx_chain_t * ngx_http_flv_gop_cache_append_shared_bufs(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_chain_t *in);
 
 
 ngx_rtmp_gop_cache_handler_t ngx_http_flv_gop_cache_handler = {
