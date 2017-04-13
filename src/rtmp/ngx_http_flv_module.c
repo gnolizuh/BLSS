@@ -37,7 +37,7 @@ static ngx_int_t ngx_http_flv_init_connection(ngx_http_request_t *r, ngx_rtmp_co
 static ngx_int_t ngx_http_flv_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_chain_t *in);
 
 
-static ngx_command_t  ngx_http_flv_httpcommands[] = {
+static ngx_command_t ngx_http_flv_httpcommands[] = {
 
     { ngx_string("http_flv"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
@@ -885,7 +885,7 @@ ngx_http_flv_send_gop(ngx_rtmp_session_t *ss)
     ngx_rtmp_live_app_conf_t       *lacf;
     ngx_rtmp_gop_cache_app_conf_t  *gacf;
     ngx_rtmp_gop_cache_t           *cache;
-    ngx_rtmp_gop_cache_ctx_t       *gop_cache_ctx;
+    ngx_rtmp_gop_cache_ctx_t       *gctx;
     ngx_rtmp_gop_frame_t           *gop_frame;
     ngx_rtmp_header_t               ch, lh;
     ngx_uint_t                      meta_version;
@@ -923,8 +923,6 @@ ngx_http_flv_send_gop(ngx_rtmp_session_t *ss)
         return;
     }
 
-    gop_cache_ctx = &pctx->gop_cache_ctx;
-
     pkt = NULL;
     apkt = NULL;
     mpkt = NULL;
@@ -938,6 +936,11 @@ ngx_http_flv_send_gop(ngx_rtmp_session_t *ss)
     s         = publisher->session;
     ss        = player->session;
 
+    gctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_gop_cache_module);
+    if (gctx == NULL) {
+        return;
+    }
+
     if (!gacf->gop_cache) {
         return;
     }
@@ -947,7 +950,7 @@ ngx_http_flv_send_gop(ngx_rtmp_session_t *ss)
         return;
     }
 
-    for (cache = gop_cache_ctx->head; cache; cache = cache->next) {
+    for (cache = gctx->head; cache; cache = cache->next) {
 
         if (cache->meta_data) {
             meta = cache->meta_data_flv;

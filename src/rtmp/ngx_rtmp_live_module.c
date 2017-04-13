@@ -227,7 +227,7 @@ ngx_rtmp_send_gop(ngx_rtmp_session_t *ss)
     ngx_rtmp_session_t             *s;
     ngx_chain_t                    *pkt, *apkt, *meta, *header;
     ngx_rtmp_live_ctx_t            *pctx, *publisher, *player;
-    ngx_rtmp_gop_cache_ctx_t       *gop_cache_ctx;
+    ngx_rtmp_gop_cache_ctx_t       *gctx;
     ngx_rtmp_core_srv_conf_t       *cscf;
     ngx_rtmp_live_app_conf_t       *lacf;
     ngx_rtmp_gop_cache_app_conf_t  *gacf;
@@ -269,8 +269,6 @@ ngx_rtmp_send_gop(ngx_rtmp_session_t *ss)
         return;
     }
 
-    gop_cache_ctx = &pctx->gop_cache_ctx;
-
     pkt = NULL;
     apkt = NULL;
     meta = NULL;
@@ -281,11 +279,16 @@ ngx_rtmp_send_gop(ngx_rtmp_session_t *ss)
     s         = publisher->session;
     ss        = player->session;
 
+    gctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_gop_cache_module);
+    if (gctx == NULL) {
+        return;
+    }
+
     if (!gacf->gop_cache) {
         return;
     }
 
-    for (cache = gop_cache_ctx->head; cache; cache = cache->next) {
+    for (cache = gctx->head; cache; cache = cache->next) {
 
         if (cache->meta_data) {
             meta = cache->meta_data;
