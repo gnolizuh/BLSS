@@ -720,7 +720,7 @@ ngx_rtmp_gop_cache_send(ngx_rtmp_session_t *ss)
                     apkt = ngx_rtmp_gop_cache_handler.append_shared_bufs(s, &lh, NULL, header);
                 }
 
-                if (apkt && ngx_rtmp_gop_cache_handler.send_message(ss, apkt) == NGX_OK) {
+                if (apkt && ngx_rtmp_gop_cache_handler.send_message(ss, apkt, 0) == NGX_OK) {
                     cs->timestamp = lh.timestamp;
                     cs->active = 1;
                     ss->current_time = cs->timestamp;
