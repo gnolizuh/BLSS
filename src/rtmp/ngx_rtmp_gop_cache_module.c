@@ -22,7 +22,7 @@ static char * ngx_rtmp_gop_cache_merge_app_conf(ngx_conf_t *cf, void *parent, vo
 extern ngx_rtmp_gop_cache_handler_t ngx_rtmp_gop_cache_handler;
 extern ngx_rtmp_gop_cache_handler_t ngx_http_flv_gop_cache_handler;
 
-ngx_rtmp_gop_cache_handler_t *ngx_rtmp_gop_cache_handler[] = {
+ngx_rtmp_gop_cache_handler_t *ngx_rtmp_gop_cache_send_handler[] = {
     &ngx_rtmp_gop_cache_handler,
     &ngx_http_flv_gop_cache_handler
 }
@@ -685,7 +685,7 @@ ngx_rtmp_gop_cache_send(ngx_rtmp_session_t *ss)
         return;
     }
 
-    handler = ngx_rtmp_gop_cache_handler[ss->protocol == NGX_RTMP_PULL_TYPE_HDL ? 1 : 0];
+    handler = ngx_rtmp_gop_cache_send_handler[ss->protocol == NGX_RTMP_PULL_TYPE_HDL ? 1 : 0];
 
     if (!gacf->gop_cache) {
         return;
