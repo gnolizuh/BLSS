@@ -617,7 +617,7 @@ ngx_rtmp_gop_cache_frame(ngx_rtmp_session_t *s, ngx_uint_t prio, ngx_rtmp_header
 
 
 static void
-ngx_rtmp_gop_cache_send(ngx_rtmp_session_t *s)
+ngx_rtmp_gop_cache_send(ngx_rtmp_session_t *ss)
 {
     ngx_rtmp_session_t             *s;
     ngx_chain_t                    *pkt, *apkt, *meta, *header;
