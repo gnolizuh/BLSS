@@ -375,10 +375,10 @@ ngx_http_flv_connect_local(ngx_http_request_t *r, ngx_str_t *app, ngx_str_t *nam
 
     ngx_memcpy(v.app, app->data, ngx_min(app->len, sizeof(v.app) - 1));
     ngx_memcpy(v.args, r->args.data, ngx_min(r->args.len, sizeof(v.args) - 1));
-    ngx_memcpy(v.flashver, "HDL flashver", ngx_strlen("HDL flashver"));
-    ngx_memcpy(v.swf_url, "HDL swf_url", ngx_strlen("HDL swf_url"));
-    ngx_memcpy(v.tc_url, "HDL tc_url", ngx_strlen("HDL tc_url"));
-    ngx_memcpy(v.page_url, "HDL page_url", ngx_strlen("HDL page_url"));
+    ngx_memcpy(v.flashver, "HTTP FLV flashver", ngx_strlen("HTTP FLV flashver"));
+    ngx_memcpy(v.swf_url, "HTTP FLV swf_url", ngx_strlen("HTTP FLV swf_url"));
+    ngx_memcpy(v.tc_url, "HTTP FLV tc_url", ngx_strlen("HTTP FLV tc_url"));
+    ngx_memcpy(v.page_url, "HTTP FLV page_url", ngx_strlen("HTTP FLV page_url"));
 
 #define NGX_RTMP_SET_STRPAR(name)                                             \
     s->name.len = ngx_strlen(v.name);                                        \
@@ -504,6 +504,7 @@ ngx_http_flv_init_session(ngx_http_request_t *r, ngx_rtmp_addr_conf_t *addr_conf
    s->timeout = cscf->timeout;
    s->buflen = cscf->buflen;
    ngx_rtmp_set_chunk_size(s, NGX_RTMP_DEFAULT_CHUNK_SIZE);
+
 
    if (ngx_rtmp_fire_event(s, NGX_RTMP_CONNECT, NULL, NULL) != NGX_OK) {
 
@@ -640,7 +641,7 @@ ngx_http_flv_init_connection(ngx_http_request_t *r, ngx_rtmp_conf_port_t *cf_por
 static ngx_int_t
 ngx_http_flv_http_handler(ngx_http_request_t *r)
 {
-    ngx_http_flv_httploc_conf_t        *hlcf;
+    ngx_http_flv_httploc_conf_t         *hlcf;
     ngx_rtmp_core_main_conf_t           *cmcf;
     ngx_rtmp_conf_port_t                *port;
     ngx_int_t                            protocol, rc = 0;
@@ -689,7 +690,7 @@ ngx_http_flv_http_handler(ngx_http_request_t *r)
 		r->uri.data[r->uri.len - 2] == 'l' &&
 		r->uri.data[r->uri.len - 3] == 'f' &&
 		r->uri.data[r->uri.len - 4] == '.') {
-		protocol = NGX_RTMP_PULL_TYPE_HDL;
+		protocol = NGX_RTMP_PULL_TYPE_HTTP_FLV;
 	} else {
 		return NGX_DECLINED;
 	}

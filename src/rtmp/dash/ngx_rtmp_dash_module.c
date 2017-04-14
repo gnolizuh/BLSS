@@ -856,7 +856,7 @@ ngx_rtmp_dash_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
     ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_dash_module);
 
     if (ctx == NULL) {
-        ctx = ngx_pcalloc(s->pool, sizeof(ngx_rtmp_dash_ctx_t));
+        ctx = ngx_pcalloc(s->connection->pool, sizeof(ngx_rtmp_dash_ctx_t));
         if (ctx == NULL) {
             goto next;
         }
@@ -873,7 +873,7 @@ ngx_rtmp_dash_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
     }
 
     if (ctx->frags == NULL) {
-        ctx->frags = ngx_pcalloc(s->pool,
+        ctx->frags = ngx_pcalloc(s->connection->pool,
                                  sizeof(ngx_rtmp_dash_frag_t) *
                                  (dacf->winfrags * 2 + 1));
         if (ctx->frags == NULL) {

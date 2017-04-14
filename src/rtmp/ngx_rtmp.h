@@ -130,7 +130,7 @@ typedef struct {
 #define NGX_RTMP_PULL_TYPE_RTMP         0
 #define NGX_RTMP_PULL_TYPE_HLS_TS       1
 #define NGX_RTMP_PULL_TYPE_HLS_M3U8     2
-#define NGX_RTMP_PULL_TYPE_HDL          3
+#define NGX_RTMP_PULL_TYPE_HTTP_FLV     3
 #define NGX_RTMP_PUSH_TYPE_RTMP         4
 #define NGX_RTMP_PUSH_TYPE_HDL          5
 
