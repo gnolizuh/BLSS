@@ -499,7 +499,6 @@ ngx_http_flv_send(ngx_event_t *wev)
     ngx_int_t                   n;
     ngx_rtmp_core_srv_conf_t   *cscf;
     ngx_http_flv_http_ctx_t    *httpctx;
-    ngx_rtmp_live_ctx_t 	   *ctx;
 
     c = wev->data;
     r = c->data;
@@ -529,7 +528,6 @@ ngx_http_flv_send(ngx_event_t *wev)
         s->out_bpos = s->out_chain->buf->pos;
     }
 
-    ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_live_module);
     while (s->out_chain) {
         n = c->send(c, s->out_bpos, s->out_chain->buf->last - s->out_bpos);
 
