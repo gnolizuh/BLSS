@@ -146,11 +146,6 @@ typedef struct {
 #endif
     unsigned                  so_keepalive:2;
     unsigned                  proxy_protocol:1;
-#if (NGX_HAVE_KEEPALIVE_TUNABLE)
-    int                       tcp_keepidle;
-    int                       tcp_keepintvl;
-    int                       tcp_keepcnt;
-#endif
 
     /* the default server configuration for this address:port */
     ngx_rtmp_core_srv_conf_t *default_server;
