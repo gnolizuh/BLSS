@@ -152,11 +152,6 @@ typedef struct {
     int                       tcp_keepcnt;
 #endif
 
-#if (NGX_PCRE)
-    ngx_uint_t                 nregex;
-    ngx_http_server_name_t    *regex;
-#endif
-
     /* the default server configuration for this address:port */
     ngx_rtmp_core_srv_conf_t *default_server;
     ngx_array_t               servers;         /* array of ngx_rtmp_core_srv_conf_t */
