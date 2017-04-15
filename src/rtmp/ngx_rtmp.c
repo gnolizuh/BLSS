@@ -16,7 +16,6 @@ static ngx_int_t ngx_rtmp_add_server(ngx_conf_t *cf, ngx_rtmp_core_srv_conf_t *c
     ngx_rtmp_conf_addr_t *addr);
 static char *ngx_rtmp_optimize_servers(ngx_conf_t *cf, ngx_rtmp_core_main_conf_t *cmcf,
     ngx_array_t *ports);
-    ngx_rtmp_conf_addr_t *addr);
 static ngx_int_t ngx_rtmp_add_addrs(ngx_conf_t *cf, ngx_rtmp_port_t *mport,
     ngx_rtmp_conf_addr_t *addr);
 #if (NGX_HAVE_INET6)
@@ -90,11 +89,9 @@ static char *
 ngx_rtmp_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
     char                        *rv;
-    ngx_uint_t                   i, m, mi, s;
+    ngx_uint_t                   m, mi, s;
     ngx_conf_t                   pcf;
-    ngx_array_t                  ports;
     ngx_module_t               **modules;
-    ngx_rtmp_listen_t           *listen;
     ngx_rtmp_module_t           *module;
     ngx_rtmp_conf_ctx_t         *ctx;
     ngx_rtmp_core_srv_conf_t    *cscf, **cscfp;
@@ -324,7 +321,7 @@ ngx_rtmp_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return NGX_CONF_ERROR;
     }
 
-    return ngx_rtmp_optimize_servers(cf, cmcf, &cmcf->ports);
+    return ngx_rtmp_optimize_servers(cf, cmcf, cmcf->ports);
 }
 
 
