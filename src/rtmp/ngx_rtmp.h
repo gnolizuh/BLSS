@@ -32,12 +32,24 @@ typedef struct {
 
 
 typedef struct {
+    union {
+        struct sockaddr        sockaddr;
+        struct sockaddr_in     sockaddr_in;
+#if (NGX_HAVE_INET6)
+        struct sockaddr_in6    sockaddr_in6;
+#endif
+#if (NGX_HAVE_UNIX_DOMAIN)
+        struct sockaddr_un     sockaddr_un;
+#endif
+        u_char                 sockaddr_data[NGX_SOCKADDRLEN];
+    } u;
     u_char                  sockaddr[NGX_SOCKADDRLEN];
     socklen_t               socklen;
 
     /* server ctx */
     ngx_rtmp_conf_ctx_t    *ctx;
 
+    unsigned                default_server:1;
     unsigned                bind:1;
     unsigned                wildcard:1;
 #if (NGX_HAVE_INET6 && defined IPV6_V6ONLY)
@@ -95,25 +107,29 @@ typedef struct {
 
 
 typedef struct {
-    struct sockaddr        *sockaddr;
-    socklen_t               socklen;
+    ngx_rtmp_listen_t         opt;
 
-    ngx_rtmp_conf_ctx_t    *ctx;
+    struct sockaddr          *sockaddr;
+    socklen_t                 socklen;
 
-    unsigned                bind:1;
-    unsigned                wildcard:1;
+    ngx_rtmp_conf_ctx_t      *ctx;
+
+    ngx_rtmp_core_srv_conf_t *default_server;
+    ngx_array_t               servers;         /* array of ngx_rtmp_core_srv_conf_t */
+
+    unsigned                  bind:1;
+    unsigned                  wildcard:1;
 #if (NGX_HAVE_INET6 && defined IPV6_V6ONLY)
-    unsigned                ipv6only:2;
+    unsigned                  ipv6only:2;
 #endif
-    unsigned                so_keepalive:2;
-    unsigned                proxy_protocol:1;
+    unsigned                  so_keepalive:2;
+    unsigned                  proxy_protocol:1;
 #if (NGX_HAVE_KEEPALIVE_TUNABLE)
-    int                     tcp_keepidle;
-    int                     tcp_keepintvl;
-    int                     tcp_keepcnt;
+    int                       tcp_keepidle;
+    int                       tcp_keepintvl;
+    int                       tcp_keepcnt;
 #endif
 } ngx_rtmp_conf_addr_t;
-
 
 #define NGX_RTMP_VERSION                3
 
