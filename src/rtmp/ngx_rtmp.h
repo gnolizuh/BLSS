@@ -131,7 +131,7 @@ typedef struct {
 } ngx_rtmp_conf_port_t;
 
 
-typedef struct ngx_rtmp_conf_addr_s {
+typedef struct {
     ngx_rtmp_listen_opt_t     opt;
 
     struct sockaddr          *sockaddr;
