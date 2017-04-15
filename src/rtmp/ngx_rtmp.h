@@ -139,9 +139,6 @@ typedef struct {
 
     ngx_rtmp_conf_ctx_t      *ctx;
 
-    ngx_rtmp_core_srv_conf_t *default_server;
-    ngx_array_t               servers;         /* array of ngx_rtmp_core_srv_conf_t */
-
     unsigned                  bind:1;
     unsigned                  wildcard:1;
 #if (NGX_HAVE_INET6 && defined IPV6_V6ONLY)
@@ -154,6 +151,15 @@ typedef struct {
     int                       tcp_keepintvl;
     int                       tcp_keepcnt;
 #endif
+
+#if (NGX_PCRE)
+    ngx_uint_t                 nregex;
+    ngx_http_server_name_t    *regex;
+#endif
+
+    /* the default server configuration for this address:port */
+    ngx_rtmp_core_srv_conf_t *default_server;
+    ngx_array_t               servers;         /* array of ngx_rtmp_core_srv_conf_t */
 } ngx_rtmp_conf_addr_t;
 
 #define NGX_RTMP_VERSION                3

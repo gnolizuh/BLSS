@@ -491,7 +491,7 @@ ngx_rtmp_add_addresses(ngx_conf_t *cf, ngx_rtmp_core_srv_conf_t *cscf,
 {
     u_char                *p;
     size_t                 len, off;
-    ngx_uint_t             i, default_server;
+    ngx_uint_t             i, default_server, proxy_protocol;
     struct sockaddr       *sa;
     ngx_rtmp_conf_addr_t  *addr;
 #if (NGX_HAVE_UNIX_DOMAIN)
