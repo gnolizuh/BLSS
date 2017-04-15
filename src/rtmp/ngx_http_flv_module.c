@@ -228,6 +228,7 @@ ngx_http_flv_play_local(ngx_rtmp_session_t *s)
 	return ngx_rtmp_cmd_start_play(s, &v);
 }
 
+
 static void
 ngx_http_flv_close_session_handler(ngx_rtmp_session_t *s)
 {
@@ -851,6 +852,7 @@ ngx_http_flv_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
     return NGX_OK;
 }
+
 
 static ngx_int_t
 ngx_http_flv_message(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
