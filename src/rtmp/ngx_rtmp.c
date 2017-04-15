@@ -987,7 +987,7 @@ static ngx_listening_t *
 ngx_rtmp_add_listening(ngx_conf_t *cf, ngx_rtmp_conf_addr_t *addr)
 {
     ngx_listening_t           *ls;
-    ngx_rtmp_core_loc_conf_t  *clcf;
+    // TODO: ngx_rtmp_core_loc_conf_t  *clcf;
     ngx_rtmp_core_srv_conf_t  *cscf;
 
     ls = ngx_create_listening(cf, &addr->opt.u.sockaddr, addr->opt.socklen);
