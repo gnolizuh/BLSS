@@ -21,6 +21,7 @@ ngx_http_flv_init_connection(ngx_http_request_t *r)
 {
 	ngx_uint_t             i;
 	ngx_rtmp_port_t       *port;
+	ngx_rtmp_conf_port_t  *conf_port;
     ngx_rtmp_session_t    *s;
 	ngx_rtmp_addr_conf_t  *addr_conf;
 	ngx_connection_t      *c;
@@ -36,7 +37,8 @@ ngx_http_flv_init_connection(ngx_http_request_t *r)
     ++ngx_http_flv_naccepted;
 
 	c = r->connection;
-	port = c->listening->servers;
+	conf_port = ngx_rtmp_core_main_conf->ports.elts;
+	port = conf_port->ports.elts;
 	unix_socket = 0;
 
     if (port->naddrs > 1) {
