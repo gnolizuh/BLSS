@@ -611,7 +611,7 @@ ngx_rtmp_optimize_servers(ngx_conf_t *cf, ngx_array_t *ports)
             bind_wildcard = 0;
         }
 
-        i = 0;ßßßß
+        i = 0;
 
         while (i < last) {
 
