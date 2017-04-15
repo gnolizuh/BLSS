@@ -37,7 +37,7 @@ ngx_http_flv_init_connection(ngx_http_request_t *r)
     ++ngx_http_flv_naccepted;
 
 	c = r->connection;
-	conf_port = ngx_rtmp_core_main_conf->ports.elts;
+	conf_port = (ngx_rtmp_conf_port_t *)ngx_rtmp_core_main_conf->ports.elts;
 	port = conf_port->ports.elts;
 	unix_socket = 0;
 
