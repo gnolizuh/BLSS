@@ -8,6 +8,7 @@
 #include <ngx_core.h>
 #include "ngx_rtmp.h"
 #include "ngx_rtmp_amf.h"
+#include "ngx_http_flv_module.h"
 
 
 static void ngx_rtmp_recv(ngx_event_t *rev);
@@ -15,6 +16,7 @@ static void ngx_rtmp_send(ngx_event_t *rev);
 static void ngx_rtmp_ping(ngx_event_t *rev);
 static ngx_int_t ngx_rtmp_finalize_set_chunk_size(ngx_rtmp_session_t *s);
 
+extern ngx_module_t ngx_http_flv_httpmodule;
 
 ngx_uint_t                  ngx_rtmp_naccepted;
 ngx_uint_t                  ngx_rtmp_publishing;
