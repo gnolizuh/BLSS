@@ -49,7 +49,7 @@ static ngx_command_t ngx_http_flv_httpcommands[] = {
 
     { ngx_string("http_flv"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
-      ngx_conf_set_flag_slot,
+      ngx_http_flv,
       NGX_HTTP_LOC_CONF_OFFSET,
       offsetof(ngx_http_flv_httploc_conf_t, http_flv),
       NULL },
@@ -1007,6 +1007,18 @@ ngx_http_flv_play_done(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     }
 
     return NGX_OK;
+}
+
+
+static char *
+ngx_http_flv(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
+{
+    ngx_http_core_loc_conf_t  *clcf;
+
+    clcf = ngx_http_conf_get_module_loc_conf(cf, ngx_http_core_module);
+    clcf->handler = ngx_http_flv_http_handler;
+
+    return ngx_conf_set_flag_slot(cf, cmd, conf);
 }
 
 
