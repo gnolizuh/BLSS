@@ -339,7 +339,6 @@ static ngx_int_t
 ngx_http_flv_http_handler(ngx_http_request_t *r)
 {
     ngx_http_flv_httploc_conf_t         *hlcf;
-    ngx_rtmp_conf_port_t                *port;
     ngx_http_cleanup_t                  *cln;
     ngx_int_t                            protocol, rc = 0;
     ngx_str_t                            app, name;
@@ -403,7 +402,9 @@ ngx_http_flv_http_handler(ngx_http_request_t *r)
     ngx_log_error(NGX_LOG_INFO, r->connection->log, 0,
               "http_flv handle app: '%V' name: '%V'", &app, &name);
 
-    if (ngx_http_flv_init_connection(r) != NGX_OK) {
+    ngx_http_flv_init_connection(r);
+
+    if (ngx_http_flv_connect_local(r, &app, &name, protocol) != NGX_OK) {
 
         return NGX_DECLINED;
     }
@@ -415,11 +416,6 @@ ngx_http_flv_http_handler(ngx_http_request_t *r)
 
     cln->handler = ngx_http_flv_cleanup;
     cln->data = r;
-
-    if (ngx_http_flv_connect_local(r, &app, &name, protocol) != NGX_OK) {
-
-        return NGX_DECLINED;
-    }
 
     return NGX_OK;
 }
