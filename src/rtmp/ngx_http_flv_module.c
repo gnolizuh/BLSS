@@ -32,8 +32,6 @@ static char * ngx_http_flv_rtmp_merge_app_conf(ngx_conf_t *cf, void *parent, voi
 
 static ngx_int_t ngx_http_flv_send_message(ngx_rtmp_session_t *s, ngx_chain_t *out, ngx_uint_t priority);
 static ngx_int_t ngx_http_flv_connect_local(ngx_http_request_t *r, ngx_str_t *app, ngx_str_t *name, ngx_int_t protocol);
-static ngx_rtmp_session_t * ngx_http_flv_init_session(ngx_http_request_t *r, ngx_rtmp_addr_conf_t *addr_conf);
-static ngx_int_t ngx_http_flv_init_connection(ngx_http_request_t *r, ngx_rtmp_conf_port_t *cf_port);
 static ngx_int_t ngx_http_flv_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_chain_t *in);
 static ngx_int_t ngx_http_flv_gop_cache_send_message(ngx_rtmp_session_t *s, ngx_chain_t *in, ngx_uint_t priority);
 static ngx_chain_t * ngx_http_flv_gop_cache_append_shared_bufs(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_rtmp_header_t *lh, ngx_chain_t *in);
@@ -295,7 +293,6 @@ ngx_http_flv_play_local(ngx_rtmp_session_t *s)
     static ngx_rtmp_play_t      v;
 
     ngx_http_flv_rtmp_ctx_t    *rtmpctx;
-    ngx_http_flv_http_ctx_t    *httpctx;
     ngx_rtmp_core_srv_conf_t   *cscf;
 
 	ngx_memzero(&v, sizeof(ngx_rtmp_play_t));
@@ -423,237 +420,16 @@ ngx_http_flv_cleanup(void *data)
 }
 
 
-static ngx_rtmp_session_t *
-ngx_http_flv_init_session(ngx_http_request_t *r, ngx_rtmp_addr_conf_t *addr_conf)
-{
-    ngx_rtmp_session_t             *s;
-    ngx_rtmp_core_srv_conf_t       *cscf;
-    ngx_rtmp_error_log_ctx_t       *ctx;
-    ngx_connection_t               *c;
-    ngx_http_flv_http_ctx_t        *httpctx;
-
-    c = r->connection;
-
-    s = ngx_pcalloc(r->pool, sizeof(ngx_rtmp_session_t) +
-            sizeof(ngx_chain_t *) * ((ngx_rtmp_core_srv_conf_t *)
-                addr_conf->ctx->srv_conf[ngx_rtmp_core_module
-                    .ctx_index])->out_queue);
-    if (s == NULL) {
-        ngx_http_finalize_request(r, NGX_DECLINED);
-        return NULL;
-    }
-
-    s->main_conf = addr_conf->ctx->main_conf;
-    s->srv_conf = addr_conf->ctx->srv_conf;
-
-    s->addr_text = &addr_conf->addr_text;
-
-    // c->data = s;
-    s->connection = c;
-
-    ctx = ngx_palloc(c->pool, sizeof(ngx_rtmp_error_log_ctx_t));
-    if (ctx == NULL) {
-        ngx_http_finalize_request(r, NGX_DECLINED);
-        return NULL;
-    }
-
-    ctx->client = &c->addr_text;
-    ctx->session = s;
-
-    c->log->connection = c->number;
-    c->log->handler = ngx_rtmp_log_error;
-    c->log->data = ctx;
-    c->log->action = NULL;
-
-    c->log_error = NGX_ERROR_INFO;
-
-    s->ctx = ngx_pcalloc(s->pool, sizeof(void *) * ngx_rtmp_max_module);
-    if (s->ctx == NULL) {
-        ngx_http_finalize_request(r, NGX_DECLINED);
-        return NULL;
-    }
-
-    cscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_core_module);
-
-    s->out_queue = cscf->out_queue;
-    s->out_cork = cscf->out_cork;
-    s->in_streams = ngx_pcalloc(s->pool, sizeof(ngx_rtmp_stream_t)
-            * cscf->max_streams);
-    if (s->in_streams == NULL) {
-        ngx_http_finalize_request(r, NGX_DECLINED);
-        return NULL;
-    }
-
-#if (nginx_version >= 1007005)
-    ngx_queue_init(&s->posted_dry_events);
-#endif
-
-    s->epoch = ngx_current_msec;
-    s->timeout = cscf->timeout;
-    s->buflen = cscf->buflen;
-    ngx_rtmp_set_chunk_size(s, NGX_RTMP_DEFAULT_CHUNK_SIZE);
-
-
-    if (ngx_rtmp_fire_event(s, NGX_RTMP_CONNECT, NULL, NULL) != NGX_OK) {
-        ngx_rtmp_finalize_session(s);
-        return NULL;
-    }
-
-    httpctx = ngx_pcalloc(r->pool, sizeof(ngx_http_flv_http_ctx_t));
-    if (httpctx == NULL) {
-        return NULL;
-    }
-
-    ngx_http_set_ctx(r, httpctx, ngx_http_flv_httpmodule);
-
-    // attach rtmp session to http ctx.
-    httpctx->rs = s;
-
-    // TODO: replace s->connection to s->pool.
-    s->pool = r->pool;
-
-    return s;
-}
-
-
-static ngx_int_t
-ngx_http_flv_init_connection(ngx_http_request_t *r, ngx_rtmp_conf_port_t *cf_port)
-{
-	ngx_uint_t             i;
-	ngx_rtmp_port_t       *port;
-    ngx_rtmp_session_t    *s;
-	ngx_rtmp_addr_conf_t  *addr_conf;
-	ngx_connection_t      *c;
-	struct sockaddr       *sa;
-	struct sockaddr_in    *sin;
-    ngx_rtmp_in_addr_t    *addr;
-	ngx_int_t              unix_socket;
-#if (NGX_HAVE_INET6)
-    struct sockaddr_in6   *sin6;
-    ngx_rtmp_in6_addr_t   *addr6;
-#endif
-
-	c = r->connection;
-
-	++ ngx_http_flv_naccepted;
-
-	port = cf_port->ports.elts;
-    unix_socket = 0;
-
-    if (port->naddrs > 1) {
-
-        /*
-         * There are several addresses on this port and one of them
-         * is the "*:port" wildcard so getsockname() is needed to determine
-         * the server address.
-         *
-         * AcceptEx() already gave this address.
-         */
-
-        if (ngx_connection_local_sockaddr(c, NULL, 0) != NGX_OK) {
-            ngx_http_close_connection(c);
-            return NGX_ERROR;
-        }
-
-        sa = c->local_sockaddr;
-
-        switch (sa->sa_family) {
-
-#if (NGX_HAVE_INET6)
-        case AF_INET6:
-            sin6 = (struct sockaddr_in6 *) sa;
-
-            addr6 = port->addrs;
-
-            /* the last address is "*" */
-
-            for (i = 0; i < port->naddrs - 1; i++) {
-                if (ngx_memcmp(&addr6[i].addr6, &sin6->sin6_addr, 16) == 0) {
-                    break;
-                }
-            }
-
-            addr_conf = &addr6[i].conf;
-
-            break;
-#endif
-
-        case AF_UNIX:
-            unix_socket = 1;
-
-        default: /* AF_INET */
-            sin = (struct sockaddr_in *) sa;
-
-            addr = port->addrs;
-
-            /* the last address is "*" */
-
-            for (i = 0; i < port->naddrs - 1; i++) {
-                if (addr[i].addr == sin->sin_addr.s_addr) {
-                    break;
-                }
-            }
-
-            addr_conf = &addr[i].conf;
-
-            break;
-        }
-
-    } else {
-        switch (c->local_sockaddr->sa_family) {
-
-#if (NGX_HAVE_INET6)
-        case AF_INET6:
-            addr6 = port->addrs;
-            addr_conf = &addr6[0].conf;
-            break;
-#endif
-
-        case AF_UNIX:
-            unix_socket = 1;
-
-        default: /* AF_INET */
-            addr = port->addrs;
-            addr_conf = &addr[0].conf;
-            break;
-        }
-    }
-
-	ngx_log_error(NGX_LOG_INFO, c->log, 0, "http_flv client connected '%V'", &c->addr_text);
-
-    s = ngx_http_flv_init_session(r, addr_conf);
-    if (s == NULL) {
-        return NGX_ERROR;
-    }
-
-    r->read_event_handler = ngx_http_test_reading;
-    r->blocked = 1;
-
-    c->write->handler = ngx_http_flv_send;
-	// c->read->handler = ngx_rtmp_http_flv_recv;  TODO: We do not need to be careful of http read handler.
-
-	s->auto_pushed = unix_socket;
-
-	return NGX_OK;
-}
-
-
 static ngx_int_t
 ngx_http_flv_http_handler(ngx_http_request_t *r)
 {
     ngx_http_flv_httploc_conf_t         *hlcf;
-    ngx_rtmp_core_main_conf_t           *cmcf;
     ngx_rtmp_conf_port_t                *port;
     ngx_http_cleanup_t                  *cln;
     ngx_int_t                            protocol, rc = 0;
     ngx_str_t                            app, name;
     ngx_int_t                            nslash;
     size_t                               i;
-
-    cmcf = ngx_rtmp_core_main_conf;
-    if (cmcf == NULL || cmcf->ports.nelts == 0) {
-        return NGX_ERROR;
-    }
 
     hlcf = ngx_http_get_module_loc_conf(r, ngx_http_flv_httpmodule);
     if (hlcf == NULL || !hlcf->http_flv) {
@@ -712,9 +488,7 @@ ngx_http_flv_http_handler(ngx_http_request_t *r)
     ngx_log_error(NGX_LOG_INFO, r->connection->log, 0,
               "http_flv handle app: '%V' name: '%V'", &app, &name);
 
-    port = cmcf->ports.elts;
-
-    if (ngx_http_flv_init_connection(r, &port[0]) != NGX_OK) {
+    if (ngx_http_flv_init_connection(r) != NGX_OK) {
 
         return NGX_DECLINED;
     }

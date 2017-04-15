@@ -438,6 +438,11 @@ char* ngx_rtmp_user_message_type(uint16_t evt);
 void ngx_rtmp_init_connection(ngx_connection_t *c);
 ngx_rtmp_session_t * ngx_rtmp_init_session(ngx_connection_t *c,
      ngx_rtmp_addr_conf_t *addr_conf);
+
+void ngx_http_flv_init_connection(ngx_http_request_t *r);
+ngx_rtmp_session_t * ngx_http_flv_init_session(ngx_http_request_t *r,
+     ngx_rtmp_addr_conf_t *addr_conf);
+
 void ngx_rtmp_finalize_session(ngx_rtmp_session_t *s);
 void ngx_rtmp_handshake(ngx_rtmp_session_t *s);
 void ngx_rtmp_client_handshake(ngx_rtmp_session_t *s, unsigned async);
