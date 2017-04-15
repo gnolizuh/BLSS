@@ -640,7 +640,7 @@ ngx_http_flv_init_connection(ngx_http_request_t *r, ngx_rtmp_conf_port_t *cf_por
 static ngx_int_t
 ngx_http_flv_http_handler(ngx_http_request_t *r)
 {
-    ngx_http_flv_httploc_conf_t        *hlcf;
+    ngx_http_flv_httploc_conf_t         *hlcf;
     ngx_rtmp_core_main_conf_t           *cmcf;
     ngx_rtmp_conf_port_t                *port;
     ngx_int_t                            protocol, rc = 0;

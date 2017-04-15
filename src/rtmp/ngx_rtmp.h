@@ -336,7 +336,7 @@ typedef struct {
     ngx_hash_t              amf_hash;
     ngx_array_t             amf_arrays;
     ngx_array_t             amf;
-	ngx_array_t 			ports;
+	ngx_array_t            *ports;
 } ngx_rtmp_core_main_conf_t;
 
 
