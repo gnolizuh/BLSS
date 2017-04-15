@@ -629,18 +629,6 @@ ngx_rtmp_add_address(ngx_conf_t *cf, ngx_rtmp_core_srv_conf_t *cscf,
 
     addr->ctx = lsopt->ctx;
     addr->opt = *lsopt;
-    addr->hls_play_hash.buckets = NULL;
-    addr->hls_play_hash.size = 0;
-    addr->hls_play_wc_head = NULL;
-    addr->hls_play_wc_tail = NULL;
-    addr->rtmp_play_hash.buckets = NULL;
-    addr->rtmp_play_hash.size = 0;
-    addr->rtmp_play_wc_head = NULL;
-    addr->rtmp_play_wc_tail = NULL;
-    addr->rtmp_publish_hash.buckets = NULL;
-    addr->rtmp_publish_hash.size = 0;
-    addr->rtmp_publish_wc_head = NULL;
-    addr->rtmp_publish_wc_tail = NULL;
 
     addr->default_server = cscf;
     addr->servers.elts = NULL;
