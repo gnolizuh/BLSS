@@ -20,6 +20,8 @@ typedef struct {
 } ngx_http_flv_httploc_conf_t;
 
 
+static char *ngx_http_flv(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
+
 /* http handler registered */
 static ngx_int_t ngx_http_flv_http_init(ngx_conf_t *cf);
 static void * ngx_http_flv_http_create_conf(ngx_conf_t *cf);
