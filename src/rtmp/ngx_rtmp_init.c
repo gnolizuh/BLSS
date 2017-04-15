@@ -52,7 +52,7 @@ ngx_http_flv_init_connection(ngx_http_request_t *r)
 
         if (ngx_connection_local_sockaddr(c, NULL, 0) != NGX_OK) {
             ngx_http_close_connection(c);
-            return NGX_ERROR;
+            return;
         }
 
         sa = c->local_sockaddr;
