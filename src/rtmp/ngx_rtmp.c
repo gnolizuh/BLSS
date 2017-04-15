@@ -1001,7 +1001,6 @@ ngx_rtmp_add_listening(ngx_conf_t *cf, ngx_rtmp_conf_addr_t *addr)
 
     cscf = addr->default_server;
     ls->pool_size = 4096; // TODO: cscf->connection_pool_size;
-    ls->post_accept_timeout = cscf->client_header_timeout;
 
     // TODO: clcf = cscf->ctx->loc_conf[ngx_rtmp_core_module.ctx_index];
 
