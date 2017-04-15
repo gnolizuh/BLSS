@@ -20,7 +20,6 @@ void
 ngx_http_flv_init_connection(ngx_http_request_t *r)
 {
 	ngx_uint_t             i;
-	ngx_rtmp_conf_port_t  *conf_port;
 	ngx_rtmp_port_t       *port;
     ngx_rtmp_session_t    *s;
 	ngx_rtmp_addr_conf_t  *addr_conf;
