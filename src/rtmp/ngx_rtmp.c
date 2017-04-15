@@ -318,7 +318,9 @@ ngx_rtmp_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return NGX_CONF_ERROR;
     }
 
-    if (ngx_array_init(&ports, cf->temp_pool, 4, sizeof(ngx_rtmp_conf_port_t))
+    return ngx_rtmp_optimize_servers(cf, &cmcf->ports);
+
+    /*if (ngx_array_init(&ports, cf->temp_pool, 4, sizeof(ngx_rtmp_conf_port_t))
         != NGX_OK)
     {
         return NGX_CONF_ERROR;
@@ -332,8 +334,7 @@ ngx_rtmp_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         }
     }
 
-    // return ngx_rtmp_optimize_servers(cf, &ports);
-    return ngx_rtmp_optimize_servers(cf, &cmcf->ports);
+    return ngx_rtmp_optimize_servers(cf, &ports);*/
 }
 
 
