@@ -333,7 +333,7 @@ ngx_rtmp_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     }
 
     // return ngx_rtmp_optimize_servers(cf, &ports);
-    return ngx_rtmp_optimize_servers(cf, &cmcf->ports;
+    return ngx_rtmp_optimize_servers(cf, &cmcf->ports);
 }
 
 
