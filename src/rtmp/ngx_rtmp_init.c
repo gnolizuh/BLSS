@@ -14,6 +14,7 @@
 static void ngx_rtmp_close_connection(ngx_connection_t *c);
 static u_char * ngx_rtmp_log_error(ngx_log_t *log, u_char *buf, size_t len);
 
+extern ngx_module_t ngx_http_flv_httpmodule;
 
 void
 ngx_http_flv_init_connection(ngx_http_request_t *r)
