@@ -478,6 +478,8 @@ ngx_rtmp_init_event_handlers(ngx_conf_t *cf, ngx_rtmp_core_main_conf_t *cmcf)
 }
 
 
+#ifdef NGX_DEBUG
+
 static ngx_int_t
 ngx_rtmp_add_ports(ngx_conf_t *cf, ngx_array_t *ports,
     ngx_rtmp_listen_t *listen)
@@ -562,6 +564,7 @@ found:
 
     return NGX_OK;
 }
+#endif
 
 
 static char *
