@@ -19,9 +19,10 @@ extern ngx_module_t ngx_http_flv_httpmodule;
 void
 ngx_http_flv_init_connection(ngx_http_request_t *r)
 {
+    ngx_rtmp_core_main_conf_t *cmcf = ngx_rtmp_core_main_conf;
 	ngx_uint_t             i;
-	ngx_rtmp_conf_port_t  *conf_port;
 	ngx_rtmp_port_t       *port;
+	ngx_rtmp_conf_port_t  *cf_port;
     ngx_rtmp_session_t    *s;
 	ngx_rtmp_addr_conf_t  *addr_conf;
 	ngx_connection_t      *c;
@@ -36,11 +37,18 @@ ngx_http_flv_init_connection(ngx_http_request_t *r)
 
     ++ngx_http_flv_naccepted;
 
-    conf_port = ngx_rtmp_core_main_conf->ports.elts;
-    port = conf_port->ports.elts;
-    unix_socket = 0;
-
 	c = r->connection;
+	if (cmcf->ports.nelts == 0) {
+	    return;
+	}
+
+	cf_port = cmcf->ports.elts;
+	if (cf_port->ports.nelts == 0) {
+	    return;
+	}
+
+	port = cf_port->ports.elts;
+	unix_socket = 0;
 
     if (port->naddrs > 1) {
 
