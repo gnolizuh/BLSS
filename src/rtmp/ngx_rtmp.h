@@ -43,31 +43,56 @@ typedef struct {
 #endif
         u_char                 sockaddr_data[NGX_SOCKADDRLEN];
     } u;
-    u_char                  sockaddr[NGX_SOCKADDRLEN];
-    socklen_t               socklen;
+    u_char                     sockaddr[NGX_SOCKADDRLEN];
+    socklen_t                  socklen;
 
     /* server ctx */
-    ngx_rtmp_conf_ctx_t    *ctx;
+    ngx_rtmp_conf_ctx_t       *ctx;
 
-    unsigned                default_server:1;
-    unsigned                bind:1;
-    unsigned                wildcard:1;
+    unsigned                   set:1;
+    unsigned                   default_server:1;
+    unsigned                   bind:1;
+    unsigned                   wildcard:1;
+#if (NGX_HTTP_SSL)
+    unsigned                   ssl:1;
+#endif
+#if (NGX_HTTP_V2)
+    unsigned                   http2:1;
+#endif
 #if (NGX_HAVE_INET6 && defined IPV6_V6ONLY)
-    unsigned                ipv6only:2;
+    unsigned                   ipv6only:2;
 #endif
 
 #if (NGX_HAVE_REUSEPORT)
-    unsigned                reuseport:1;
+    unsigned                   reuseport:1;
+#endif
+    unsigned                   so_keepalive:2;
+    unsigned                   proxy_protocol:1;
+
+    int                        backlog;
+    int                        rcvbuf;
+    int                        sndbuf;
+#if (NGX_HAVE_SETFIB)
+    int                        setfib;
+#endif
+#if (NGX_HAVE_TCP_FASTOPEN)
+    int                        fastopen;
+#endif
+#if (NGX_HAVE_KEEPALIVE_TUNABLE)
+    int                        tcp_keepidle;
+    int                        tcp_keepintvl;
+    int                        tcp_keepcnt;
 #endif
 
-    unsigned                so_keepalive:2;
-    unsigned                proxy_protocol:1;
-#if (NGX_HAVE_KEEPALIVE_TUNABLE)
-    int                     tcp_keepidle;
-    int                     tcp_keepintvl;
-    int                     tcp_keepcnt;
+#if (NGX_HAVE_DEFERRED_ACCEPT && defined SO_ACCEPTFILTER)
+    char                      *accept_filter;
 #endif
-} ngx_rtmp_listen_t;
+#if (NGX_HAVE_DEFERRED_ACCEPT && defined TCP_DEFER_ACCEPT)
+    ngx_uint_t                 deferred_accept;
+#endif
+
+    u_char                     addr[NGX_SOCKADDR_STRLEN + 1];
+} ngx_rtmp_listen_opt_t;
 
 
 typedef struct {
@@ -107,7 +132,7 @@ typedef struct {
 
 
 typedef struct {
-    ngx_rtmp_listen_t         opt;
+    ngx_rtmp_listen_opt_t     opt;
 
     struct sockaddr          *sockaddr;
     socklen_t                 socklen;
@@ -345,7 +370,7 @@ typedef struct {
 
 typedef struct {
     ngx_array_t             servers;    /* ngx_rtmp_core_srv_conf_t */
-    ngx_array_t             listen;     /* ngx_rtmp_listen_t */
+    ngx_array_t             listen;     /* ngx_rtmp_listen_opt_t */
 
     ngx_array_t             events[NGX_RTMP_MAX_EVENT];
 

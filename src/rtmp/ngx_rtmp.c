@@ -31,9 +31,9 @@ static char * ngx_rtmp_merge_applications(ngx_conf_t *cf,
         ngx_array_t *applications, void **app_conf, ngx_rtmp_module_t *module,
         ngx_uint_t ctx_index);
 static ngx_int_t ngx_rtmp_add_addresses(ngx_conf_t *cf, ngx_rtmp_core_srv_conf_t *cscf,
-    ngx_rtmp_conf_port_t *port, ngx_rtmp_listen_t *lsopt);
+    ngx_rtmp_conf_port_t *port, ngx_rtmp_listen_opt_t *lsopt);
 static ngx_int_t ngx_rtmp_add_address(ngx_conf_t *cf, ngx_rtmp_core_srv_conf_t *cscf,
-    ngx_rtmp_conf_port_t *port, ngx_rtmp_listen_t *lsopt);
+    ngx_rtmp_conf_port_t *port, ngx_rtmp_listen_opt_t *lsopt);
 static ngx_int_t ngx_rtmp_init_listening(ngx_conf_t *cf, ngx_rtmp_conf_port_t *port);
 static ngx_listening_t * ngx_rtmp_add_listening(ngx_conf_t *cf, ngx_rtmp_conf_addr_t *addr);
 static ngx_int_t ngx_rtmp_init_process(ngx_cycle_t *cycle);
@@ -487,7 +487,7 @@ ngx_rtmp_init_event_handlers(ngx_conf_t *cf, ngx_rtmp_core_main_conf_t *cmcf)
 
 static ngx_int_t
 ngx_rtmp_add_addresses(ngx_conf_t *cf, ngx_rtmp_core_srv_conf_t *cscf,
-    ngx_rtmp_conf_port_t *port, ngx_rtmp_listen_t *lsopt)
+    ngx_rtmp_conf_port_t *port, ngx_rtmp_listen_opt_t *lsopt)
 {
     u_char                *p;
     size_t                 len, off;
@@ -611,7 +611,7 @@ ngx_rtmp_add_addresses(ngx_conf_t *cf, ngx_rtmp_core_srv_conf_t *cscf,
 
 static ngx_int_t
 ngx_rtmp_add_address(ngx_conf_t *cf, ngx_rtmp_core_srv_conf_t *cscf,
-    ngx_rtmp_conf_port_t *port, ngx_rtmp_listen_t *lsopt)
+    ngx_rtmp_conf_port_t *port, ngx_rtmp_listen_opt_t *lsopt)
 {
     ngx_rtmp_conf_addr_t  *addr;
 
@@ -1059,7 +1059,7 @@ ngx_rtmp_add_listening(ngx_conf_t *cf, ngx_rtmp_conf_addr_t *addr)
 
 ngx_int_t
 ngx_rtmp_add_listen(ngx_conf_t *cf, ngx_rtmp_core_srv_conf_t *cscf,
-    ngx_rtmp_listen_t *lsopt)
+    ngx_rtmp_listen_opt_t *lsopt)
 {
     in_port_t                   p;
     ngx_uint_t                  i;
