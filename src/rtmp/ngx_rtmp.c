@@ -12,10 +12,8 @@
 
 
 static char *ngx_rtmp_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
-#ifdef NGX_DEBUG
 static ngx_int_t ngx_rtmp_add_ports(ngx_conf_t *cf, ngx_array_t *ports,
     ngx_rtmp_listen_t *listen);
-#endif
 static char *ngx_rtmp_optimize_servers(ngx_conf_t *cf, ngx_array_t *ports);
 static ngx_int_t ngx_rtmp_add_addrs(ngx_conf_t *cf, ngx_rtmp_port_t *mport,
     ngx_rtmp_conf_addr_t *addr);
@@ -86,9 +84,11 @@ static char *
 ngx_rtmp_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
     char                        *rv;
-    ngx_uint_t                   m, mi, s;
+    ngx_uint_t                   i, m, mi, s;
     ngx_conf_t                   pcf;
+    ngx_array_t                  ports;
     ngx_module_t               **modules;
+    ngx_rtmp_listen_t           *listen;
     ngx_rtmp_module_t           *module;
     ngx_rtmp_conf_ctx_t         *ctx;
     ngx_rtmp_core_srv_conf_t    *cscf, **cscfp;
@@ -318,7 +318,21 @@ ngx_rtmp_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return NGX_CONF_ERROR;
     }
 
-    return ngx_rtmp_optimize_servers(cf, &cmcf->ports);
+    if (ngx_array_init(&ports, cf->temp_pool, 4, sizeof(ngx_rtmp_conf_port_t))
+        != NGX_OK)
+    {
+        return NGX_CONF_ERROR;
+    }
+
+    listen = cmcf->listen.elts;
+
+    for (i = 0; i < cmcf->listen.nelts; i++) {
+        if (ngx_rtmp_add_ports(cf, &ports, &listen[i]) != NGX_OK) {
+            return NGX_CONF_ERROR;
+        }
+    }
+
+    return ngx_rtmp_optimize_servers(cf, &ports);
 }
 
 
@@ -480,8 +494,6 @@ ngx_rtmp_init_event_handlers(ngx_conf_t *cf, ngx_rtmp_core_main_conf_t *cmcf)
 }
 
 
-#ifdef NGX_DEBUG
-
 static ngx_int_t
 ngx_rtmp_add_ports(ngx_conf_t *cf, ngx_array_t *ports,
     ngx_rtmp_listen_t *listen)
@@ -566,7 +578,6 @@ found:
 
     return NGX_OK;
 }
-#endif
 
 
 static char *
@@ -587,12 +598,6 @@ ngx_rtmp_optimize_servers(ngx_conf_t *cf, ngx_array_t *ports)
         addr = port[p].addrs.elts;
         last = port[p].addrs.nelts;
 
-        if (ngx_array_init(&port->ports, cf->pool, port->addrs.nelts,
-                    sizeof(ngx_rtmp_port_t)) != NGX_OK) {
-
-            return NGX_CONF_ERROR;
-        }
-
         /*
          * if there is the binding to the "*:port" then we need to bind()
          * to the "*:port" only and ignore the other bindings
@@ -606,7 +611,7 @@ ngx_rtmp_optimize_servers(ngx_conf_t *cf, ngx_array_t *ports)
             bind_wildcard = 0;
         }
 
-        i = 0;
+        i = 0;ßßßß
 
         while (i < last) {
 
