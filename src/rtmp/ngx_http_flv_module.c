@@ -426,10 +426,11 @@ ngx_http_flv_cleanup(void *data)
 static ngx_rtmp_session_t *
 ngx_http_flv_init_session(ngx_http_request_t *r, ngx_rtmp_addr_conf_t *addr_conf)
 {
-    ngx_rtmp_core_srv_conf_t       *cscf;
-    ngx_http_flv_http_ctx_t        *httpctx;
     ngx_rtmp_session_t             *s;
+    ngx_rtmp_core_srv_conf_t       *cscf;
+    ngx_rtmp_error_log_ctx_t       *ctx;
     ngx_connection_t               *c;
+    ngx_http_flv_http_ctx_t        *httpctx;
 
     c = r->connection;
 
