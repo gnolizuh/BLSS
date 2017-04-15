@@ -47,7 +47,7 @@ ngx_http_flv_init_connection(ngx_http_request_t *r)
 	    return;
 	}
 
-	port = conf_port->ports.elts;
+	port = cf_port->ports.elts;
 	unix_socket = 0;
 
     if (port->naddrs > 1) {
