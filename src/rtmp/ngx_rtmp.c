@@ -84,11 +84,11 @@ static char *
 ngx_rtmp_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
     char                        *rv;
-    ngx_uint_t                   i, m, mi, s;
+    ngx_uint_t                   /*i, */m, mi, s;
     ngx_conf_t                   pcf;
-    ngx_array_t                  ports;
+//    ngx_array_t                  ports;
     ngx_module_t               **modules;
-    ngx_rtmp_listen_t           *listen;
+//    ngx_rtmp_listen_t           *listen;
     ngx_rtmp_module_t           *module;
     ngx_rtmp_conf_ctx_t         *ctx;
     ngx_rtmp_core_srv_conf_t    *cscf, **cscfp;
