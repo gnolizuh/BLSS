@@ -34,6 +34,8 @@ static ngx_int_t ngx_rtmp_add_addresses(ngx_conf_t *cf, ngx_rtmp_core_srv_conf_t
     ngx_rtmp_conf_port_t *port, ngx_rtmp_listen_t *lsopt);
 static ngx_int_t ngx_rtmp_add_address(ngx_conf_t *cf, ngx_rtmp_core_srv_conf_t *cscf,
     ngx_rtmp_conf_port_t *port, ngx_rtmp_listen_t *lsopt);
+static ngx_int_t ngx_rtmp_init_listening(ngx_conf_t *cf, ngx_rtmp_conf_port_t *port);
+static ngx_listening_t * ngx_rtmp_add_listening(ngx_conf_t *cf, ngx_rtmp_conf_addr_t *addr);
 static ngx_int_t ngx_rtmp_init_process(ngx_cycle_t *cycle);
 
 
@@ -1102,8 +1104,8 @@ ngx_rtmp_add_listen(ngx_conf_t *cf, ngx_rtmp_core_srv_conf_t *cscf,
         break;
     }
 
-    port = cmcf->ports.elts;
-    for (i = 0; i < cmcf->ports.nelts; i++) {
+    port = cmcf->ports->elts;
+    for (i = 0; i < cmcf->ports->nelts; i++) {
 
         if (p != port[i].port || sa->sa_family != port[i].family) {
             continue;
@@ -1116,7 +1118,7 @@ ngx_rtmp_add_listen(ngx_conf_t *cf, ngx_rtmp_core_srv_conf_t *cscf,
 
     /* add a port to the port list */
 
-    port = ngx_array_push(&cmcf->ports);
+    port = ngx_array_push(cmcf->ports);
     if (port == NULL) {
         return NGX_ERROR;
     }
@@ -1129,6 +1131,7 @@ ngx_rtmp_add_listen(ngx_conf_t *cf, ngx_rtmp_core_srv_conf_t *cscf,
 }
 
 
+static ngx_int_t
 ngx_rtmp_init_process(ngx_cycle_t *cycle)
 {
 #if (nginx_version >= 1007005)
