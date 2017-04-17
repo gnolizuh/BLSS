@@ -23,6 +23,7 @@ typedef __int8              int8_t;
 typedef unsigned __int8     uint8_t;
 #endif
 
+typedef struct ngx_rtmp_core_srv_conf_s ngx_rtmp_core_srv_conf_t;
 
 typedef struct {
     void                  **main_conf;
@@ -381,7 +382,7 @@ typedef struct {
 extern ngx_rtmp_core_main_conf_t   *ngx_rtmp_core_main_conf;
 
 
-typedef struct ngx_rtmp_core_srv_conf_s {
+typedef struct {
     ngx_array_t             applications; /* ngx_rtmp_core_app_conf_t */
 
     ngx_msec_t              timeout;
