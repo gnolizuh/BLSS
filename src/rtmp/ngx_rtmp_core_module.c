@@ -208,7 +208,7 @@ ngx_rtmp_core_create_main_conf(ngx_conf_t *cf)
         return NULL;
     }
 
-    if (ngx_array_init(&cmcf->listen, cf->pool, 4, sizeof(ngx_rtmp_listen_t))
+    if (ngx_array_init(&cmcf->listen, cf->pool, 4, sizeof(ngx_rtmp_listen_opt_t))
         != NGX_OK)
     {
         return NULL;
@@ -504,7 +504,7 @@ ngx_rtmp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_uint_t                  i, m;
     ngx_module_t              **modules;
     struct sockaddr            *sa;
-    ngx_rtmp_listen_t          *ls;
+    ngx_rtmp_listen_opt_t      *ls;
     struct sockaddr_in         *sin;
     ngx_rtmp_core_main_conf_t  *cmcf;
 #if (NGX_HAVE_INET6)
@@ -579,7 +579,7 @@ ngx_rtmp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return NGX_CONF_ERROR;
     }
 
-    ngx_memzero(ls, sizeof(ngx_rtmp_listen_t));
+    ngx_memzero(ls, sizeof(ngx_rtmp_listen_opt_t));
 
     ngx_memcpy(ls->sockaddr, (u_char *) &u.sockaddr, u.socklen);
 

@@ -24,6 +24,7 @@ typedef __int8              int8_t;
 typedef unsigned __int8     uint8_t;
 #endif
 
+typedef struct ngx_rtmp_core_srv_conf_s ngx_rtmp_core_srv_conf_t;
 
 typedef struct {
     void                  **main_conf;
@@ -33,30 +34,67 @@ typedef struct {
 
 
 typedef struct {
-    u_char                  sockaddr[NGX_SOCKADDRLEN];
-    socklen_t               socklen;
+    union {
+        struct sockaddr        sockaddr;
+        struct sockaddr_in     sockaddr_in;
+#if (NGX_HAVE_INET6)
+        struct sockaddr_in6    sockaddr_in6;
+#endif
+#if (NGX_HAVE_UNIX_DOMAIN)
+        struct sockaddr_un     sockaddr_un;
+#endif
+        u_char                 sockaddr_data[NGX_SOCKADDRLEN];
+    } u;
+    u_char                     sockaddr[NGX_SOCKADDRLEN];
+    socklen_t                  socklen;
 
     /* server ctx */
-    ngx_rtmp_conf_ctx_t    *ctx;
+    ngx_rtmp_conf_ctx_t       *ctx;
 
-    unsigned                bind:1;
-    unsigned                wildcard:1;
+    unsigned                   set:1;
+    unsigned                   default_server:1;
+    unsigned                   bind:1;
+    unsigned                   wildcard:1;
+#if (NGX_HTTP_SSL)
+    unsigned                   ssl:1;
+#endif
+#if (NGX_HTTP_V2)
+    unsigned                   http2:1;
+#endif
 #if (NGX_HAVE_INET6 && defined IPV6_V6ONLY)
-    unsigned                ipv6only:2;
+    unsigned                   ipv6only:2;
 #endif
 
 #if (NGX_HAVE_REUSEPORT)
-    unsigned                reuseport:1;
+    unsigned                   reuseport:1;
+#endif
+    unsigned                   so_keepalive:2;
+    unsigned                   proxy_protocol:1;
+
+    int                        backlog;
+    int                        rcvbuf;
+    int                        sndbuf;
+#if (NGX_HAVE_SETFIB)
+    int                        setfib;
+#endif
+#if (NGX_HAVE_TCP_FASTOPEN)
+    int                        fastopen;
+#endif
+#if (NGX_HAVE_KEEPALIVE_TUNABLE)
+    int                        tcp_keepidle;
+    int                        tcp_keepintvl;
+    int                        tcp_keepcnt;
 #endif
 
-    unsigned                so_keepalive:2;
-    unsigned                proxy_protocol:1;
-#if (NGX_HAVE_KEEPALIVE_TUNABLE)
-    int                     tcp_keepidle;
-    int                     tcp_keepintvl;
-    int                     tcp_keepcnt;
+#if (NGX_HAVE_DEFERRED_ACCEPT && defined SO_ACCEPTFILTER)
+    char                      *accept_filter;
 #endif
-} ngx_rtmp_listen_t;
+#if (NGX_HAVE_DEFERRED_ACCEPT && defined TCP_DEFER_ACCEPT)
+    ngx_uint_t                 deferred_accept;
+#endif
+
+    u_char                     addr[NGX_SOCKADDR_STRLEN + 1];
+} ngx_rtmp_listen_opt_t;
 
 
 typedef struct {
@@ -96,25 +134,25 @@ typedef struct {
 
 
 typedef struct {
-    struct sockaddr        *sockaddr;
-    socklen_t               socklen;
+    ngx_rtmp_listen_opt_t     opt;
 
-    ngx_rtmp_conf_ctx_t    *ctx;
+    struct sockaddr          *sockaddr;
+    socklen_t                 socklen;
 
-    unsigned                bind:1;
-    unsigned                wildcard:1;
+    ngx_rtmp_conf_ctx_t      *ctx;
+
+    unsigned                  bind:1;
+    unsigned                  wildcard:1;
 #if (NGX_HAVE_INET6 && defined IPV6_V6ONLY)
-    unsigned                ipv6only:2;
+    unsigned                  ipv6only:2;
 #endif
-    unsigned                so_keepalive:2;
-    unsigned                proxy_protocol:1;
-#if (NGX_HAVE_KEEPALIVE_TUNABLE)
-    int                     tcp_keepidle;
-    int                     tcp_keepintvl;
-    int                     tcp_keepcnt;
-#endif
-} ngx_rtmp_conf_addr_t;
+    unsigned                  so_keepalive:2;
+    unsigned                  proxy_protocol:1;
 
+    /* the default server configuration for this address:port */
+    ngx_rtmp_core_srv_conf_t *default_server;
+    ngx_array_t               servers;         /* array of ngx_rtmp_core_srv_conf_t */
+} ngx_rtmp_conf_addr_t;
 
 #define NGX_RTMP_VERSION                3
 
@@ -328,14 +366,14 @@ typedef struct {
 
 typedef struct {
     ngx_array_t             servers;    /* ngx_rtmp_core_srv_conf_t */
-    ngx_array_t             listen;     /* ngx_rtmp_listen_t */
+    ngx_array_t             listen;     /* ngx_rtmp_listen_opt_t */
 
     ngx_array_t             events[NGX_RTMP_MAX_EVENT];
 
     ngx_hash_t              amf_hash;
     ngx_array_t             amf_arrays;
     ngx_array_t             amf;
-	ngx_array_t 			ports;
+	ngx_array_t            *ports;
 } ngx_rtmp_core_main_conf_t;
 
 
@@ -343,7 +381,7 @@ typedef struct {
 extern ngx_rtmp_core_main_conf_t   *ngx_rtmp_core_main_conf;
 
 
-typedef struct ngx_rtmp_core_srv_conf_s {
+struct ngx_rtmp_core_srv_conf_s {
     ngx_array_t             applications; /* ngx_rtmp_core_app_conf_t */
 
     ngx_msec_t              timeout;
@@ -367,7 +405,7 @@ typedef struct ngx_rtmp_core_srv_conf_s {
     ngx_msec_t              buflen;
 
     ngx_rtmp_conf_ctx_t    *ctx;
-} ngx_rtmp_core_srv_conf_t;
+};
 
 
 typedef struct {
