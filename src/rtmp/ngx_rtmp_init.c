@@ -38,11 +38,11 @@ ngx_http_flv_init_connection(ngx_http_request_t *r)
     ++ngx_http_flv_naccepted;
 
 	c = r->connection;
-	if (cmcf->ports.nelts == 0) {
+	if (cmcf->ports->nelts == 0) {
 	    return;
 	}
 
-	cf_port = cmcf->ports.elts;
+	cf_port = cmcf->ports->elts;
 	if (cf_port->ports.nelts == 0) {
 	    return;
 	}
