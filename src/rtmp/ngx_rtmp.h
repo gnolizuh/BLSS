@@ -12,6 +12,7 @@
 #include <ngx_core.h>
 #include <ngx_event.h>
 #include <ngx_event_connect.h>
+#include <ngx_http.h>
 #include <nginx.h>
 
 #include "ngx_rtmp_amf.h"
@@ -168,7 +169,7 @@ typedef struct {
 #define NGX_RTMP_PULL_TYPE_RTMP         0
 #define NGX_RTMP_PULL_TYPE_HLS_TS       1
 #define NGX_RTMP_PULL_TYPE_HLS_M3U8     2
-#define NGX_RTMP_PULL_TYPE_HDL          3
+#define NGX_RTMP_PULL_TYPE_HTTP_FLV     3
 #define NGX_RTMP_PUSH_TYPE_RTMP         4
 #define NGX_RTMP_PUSH_TYPE_HDL          5
 
@@ -265,7 +266,6 @@ typedef struct {
     void                  **main_conf;
     void                  **srv_conf;
     void                  **app_conf;
-    ngx_rtmp_addr_conf_t   *addr_conf;
 
     ngx_str_t              *addr_text;
     int                     connected;
@@ -315,7 +315,6 @@ typedef struct {
 
     ngx_uint_t              protocol;
     ngx_pool_t             *pool;
-    void                   *r;
 
     /* input stream 0 (reserved by RTMP spec)
      * is used as free chain link */
@@ -478,6 +477,12 @@ char* ngx_rtmp_user_message_type(uint16_t evt);
 void ngx_rtmp_init_connection(ngx_connection_t *c);
 ngx_rtmp_session_t * ngx_rtmp_init_session(ngx_connection_t *c,
      ngx_rtmp_addr_conf_t *addr_conf);
+
+void ngx_http_flv_init_connection(ngx_http_request_t *r);
+ngx_rtmp_session_t * ngx_http_flv_init_session(ngx_http_request_t *r,
+     ngx_rtmp_addr_conf_t *addr_conf);
+void ngx_http_flv_send(ngx_event_t *wev);
+
 void ngx_rtmp_finalize_session(ngx_rtmp_session_t *s);
 void ngx_rtmp_handshake(ngx_rtmp_session_t *s);
 void ngx_rtmp_client_handshake(ngx_rtmp_session_t *s, unsigned async);
