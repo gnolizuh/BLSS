@@ -649,7 +649,7 @@ ngx_http_flv_http_handler(ngx_http_request_t *r)
     size_t                               i;
 
     cmcf = ngx_rtmp_core_main_conf;
-    if (cmcf == NULL || cmcf->ports.nelts == 0) {
+    if (cmcf == NULL || cmcf->ports->nelts == 0) {
         return NGX_ERROR;
     }
 
@@ -710,7 +710,7 @@ ngx_http_flv_http_handler(ngx_http_request_t *r)
     ngx_log_error(NGX_LOG_INFO, r->connection->log, 0,
               "http_flv handle app: '%V' name: '%V'", &app, &name);
 
-    port = cmcf->ports.elts;
+    port = cmcf->ports->elts;
 
     if (ngx_http_flv_init_connection(r, &port[0]) != NGX_OK) {
 
