@@ -337,6 +337,8 @@ ngx_rtmp_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_rtmp_conf_ctx_t        *ctx, *rtmp_ctx;
     ngx_rtmp_core_srv_conf_t   *cscf, **cscfp;
     ngx_rtmp_core_main_conf_t  *cmcf;
+    ngx_rtmp_listen_opt_t       lsopt;
+    struct sockaddr_in         *sin;
 
     ctx = ngx_pcalloc(cf->pool, sizeof(ngx_rtmp_conf_ctx_t));
     if (ctx == NULL) {
@@ -352,6 +354,8 @@ ngx_rtmp_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     if (ctx->srv_conf == NULL) {
         return NGX_CONF_ERROR;
     }
+
+    /* the server{}'s loc_conf */
 
     ctx->app_conf = ngx_pcalloc(cf->pool, sizeof(void *) * ngx_rtmp_max_module);
     if (ctx->app_conf == NULL) {
@@ -415,6 +419,26 @@ ngx_rtmp_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     *cf = pcf;
 
+    if (rv == NGX_CONF_OK && !cscf->listen) {
+        ngx_memzero(&lsopt, sizeof(ngx_rtmp_listen_opt_t));
+
+        sin = &lsopt.u.sockaddr_in;
+
+        sin->sin_family = AF_INET;
+        sin->sin_port = htons(1935);
+        sin->sin_addr.s_addr = INADDR_ANY;
+
+        lsopt.socklen = sizeof(struct sockaddr_in);
+
+        lsopt.wildcard = 1;
+
+        (void) ngx_sock_ntop(&lsopt.u.sockaddr, lsopt.socklen, lsopt.sockaddr,
+                NGX_SOCKADDR_STRLEN, 1);
+
+        if (ngx_rtmp_add_listen(cf, cscf, &lsopt) != NGX_OK) {
+            return NGX_CONF_ERROR;
+        }
+    }
     return rv;
 }
 
@@ -497,6 +521,8 @@ ngx_rtmp_core_application(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 static char *
 ngx_rtmp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
+    ngx_rtmp_core_srv_conf_t   *cscf = conf;
+
     size_t                      len, off;
     in_port_t                   port;
     ngx_str_t                  *value;
@@ -511,12 +537,15 @@ ngx_rtmp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     struct sockaddr_in6        *sin6;
 #endif
 
+    cscf->listen = 1;
+
     value = cf->args->elts;
 
     ngx_memzero(&u, sizeof(ngx_url_t));
 
     u.url = value[1];
     u.listen = 1;
+    u.default_port = 1935;
 
     if (ngx_parse_url(cf->pool, &u) != NGX_OK) {
         if (u.err) {
@@ -761,6 +790,10 @@ ngx_rtmp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                            "the invalid \"%V\" parameter", &value[i]);
         return NGX_CONF_ERROR;
+    }
+
+    if (ngx_rtmp_add_listen(cf, cscf, ls) == NGX_OK) {
+        return NGX_CONF_OK;
     }
 
     return NGX_CONF_OK;

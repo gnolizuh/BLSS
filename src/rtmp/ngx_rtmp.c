@@ -808,7 +808,7 @@ ngx_rtmp_add_addrs6(ngx_conf_t *cf, ngx_rtmp_port_t *mport,
         addrs6[i].addr6 = sin6->sin6_addr;
 
         addrs6[i].conf.ctx = addr[i].ctx;
-
+        addrs6[i].conf.default_server = addr[i].default_server;
         len = ngx_sock_ntop(addr[i].sockaddr,
 #if (nginx_version >= 1005003)
                             addr[i].socklen,
