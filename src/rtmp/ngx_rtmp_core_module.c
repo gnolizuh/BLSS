@@ -530,7 +530,7 @@ ngx_rtmp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_uint_t                  i, m;
     ngx_module_t              **modules;
     struct sockaddr            *sa;
-    ngx_rtmp_listen_opt_t      *ls;
+    ngx_rtmp_listen_opt_t      *lsopt;
     struct sockaddr_in         *sin;
     ngx_rtmp_core_main_conf_t  *cmcf;
 #if (NGX_HAVE_INET6)
@@ -550,8 +550,8 @@ ngx_rtmp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     if (ngx_parse_url(cf->pool, &u) != NGX_OK) {
         if (u.err) {
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                               "%s in \"%V\" of the \"listen\" directive",
-                               u.err, &u.url);
+                    "%s in \"%V\" of the \"listen\" directive",
+                    u.err, &u.url);
         }
 
         return NGX_CONF_ERROR;
@@ -559,11 +559,11 @@ ngx_rtmp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     cmcf = ngx_rtmp_conf_get_module_main_conf(cf, ngx_rtmp_core_module);
 
-    ls = cmcf->listen.elts;
+    lsopt = cmcf->listen.elts;
 
     for (i = 0; i < cmcf->listen.nelts; i++) {
 
-        sa = (struct sockaddr *) ls[i].sockaddr;
+        sa = (struct sockaddr *) lsopt[i].sockaddr;
 
         if (sa->sa_family != u.family) {
             continue;
@@ -572,23 +572,23 @@ ngx_rtmp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         switch (sa->sa_family) {
 
 #if (NGX_HAVE_INET6)
-        case AF_INET6:
-            off = offsetof(struct sockaddr_in6, sin6_addr);
-            len = 16;
-            sin6 = (struct sockaddr_in6 *) sa;
-            port = sin6->sin6_port;
-            break;
+            case AF_INET6:
+                off = offsetof(struct sockaddr_in6, sin6_addr);
+                len = 16;
+                sin6 = (struct sockaddr_in6 *) sa;
+                port = sin6->sin6_port;
+                break;
 #endif
 
-        default: /* AF_INET */
-            off = offsetof(struct sockaddr_in, sin_addr);
-            len = 4;
-            sin = (struct sockaddr_in *) sa;
-            port = sin->sin_port;
-            break;
+            default: /* AF_INET */
+                off = offsetof(struct sockaddr_in, sin_addr);
+                len = 4;
+                sin = (struct sockaddr_in *) sa;
+                port = sin->sin_port;
+                break;
         }
 
-        if (ngx_memcmp(ls[i].sockaddr + off, (u_char *) &u.sockaddr + off, len)
+        if (ngx_memcmp(lsopt[i].sockaddr + off, (u_char *) &u.sockaddr + off, len)
             != 0)
         {
             continue;
@@ -599,28 +599,31 @@ ngx_rtmp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         }
 
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                           "duplicate \"%V\" address and port pair", &u.url);
+                "duplicate \"%V\" address and port pair", &u.url);
         return NGX_CONF_ERROR;
     }
 
-    ls = ngx_array_push(&cmcf->listen);
-    if (ls == NULL) {
+    lsopt = ngx_array_push(&cmcf->listen);
+    if (lsopt == NULL) {
         return NGX_CONF_ERROR;
     }
 
-    ngx_memzero(ls, sizeof(ngx_rtmp_listen_opt_t));
+    ngx_memzero(lsopt, sizeof(ngx_rtmp_listen_t));
 
-    ngx_memcpy(ls->sockaddr, (u_char *) &u.sockaddr, u.socklen);
+    ngx_memcpy(&lsopt->u.sockaddr, u.sockaddr, u.socklen);
 
-    ls->socklen = u.socklen;
-    ls->wildcard = u.wildcard;
-    ls->ctx = cf->ctx;
+    lsopt->socklen = u.socklen;
+    lsopt->wildcard = u.wildcard;
+    lsopt->ctx = cf->ctx;
 
 #if (nginx_version >= 1009011)
     modules = cf->cycle->modules;
 #else
     modules = ngx_modules;
 #endif
+
+    (void) ngx_sock_ntop(&lsopt->u.sockaddr, lsopt->socklen, lsopt->sockaddr,
+            NGX_SOCKADDR_STRLEN, 1);
 
     for (m = 0; modules[m]; m++) {
         if (modules[m]->type != NGX_RTMP_MODULE) {
@@ -630,8 +633,15 @@ ngx_rtmp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     for (i = 2; i < cf->args->nelts; i++) {
 
+        if (ngx_strcmp(value[i].data, "default_server") == 0
+                || ngx_strcmp(value[i].data, "default") == 0)
+        {
+            lsopt->default_server = 1;
+            continue;
+        }
+
         if (ngx_strcmp(value[i].data, "bind") == 0) {
-            ls->bind = 1;
+            lsopt->bind = 1;
             continue;
         }
 
@@ -640,54 +650,54 @@ ngx_rtmp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
             struct sockaddr  *sa;
             u_char            buf[NGX_SOCKADDR_STRLEN];
 
-            sa = (struct sockaddr *) ls->sockaddr;
+            sa = (struct sockaddr *) lsopt->sockaddr;
 
             if (sa->sa_family == AF_INET6) {
 
                 if (ngx_strcmp(&value[i].data[10], "n") == 0) {
-                    ls->ipv6only = 1;
+                    lsopt->ipv6only = 1;
 
                 } else if (ngx_strcmp(&value[i].data[10], "ff") == 0) {
-                    ls->ipv6only = 0;
+                    lsopt->ipv6only = 0;
 
                 } else {
                     ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                                       "invalid ipv6only flags \"%s\"",
-                                       &value[i].data[9]);
+                            "invalid ipv6only flags \"%s\"",
+                            &value[i].data[9]);
                     return NGX_CONF_ERROR;
                 }
 
-                ls->bind = 1;
+                lsopt->bind = 1;
 
             } else {
                 len = ngx_sock_ntop(sa,
 #if (nginx_version >= 1005003)
-                                    ls->socklen,
+                        lsopt->socklen,
 #endif
-                                    buf, NGX_SOCKADDR_STRLEN, 1);
+                        buf, NGX_SOCKADDR_STRLEN, 1);
 
                 ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                                   "ipv6only is not supported "
-                                   "on addr \"%*s\", ignored", len, buf);
+                        "ipv6only is not supported "
+                        "on addr \"%*s\", ignored", len, buf);
             }
 
             continue;
 #else
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                               "bind ipv6only is not supported "
-                               "on this platform");
+                    "bind ipv6only is not supported "
+                    "on this platform");
             return NGX_CONF_ERROR;
 #endif
         }
         
         if (ngx_strcmp(value[i].data, "reuseport") == 0) {
 #if (NGX_HAVE_REUSEPORT)
-            ls->reuseport = 1;
-            ls->bind = 1;
+            lsopt->reuseport = 1;
+            lsopt->bind = 1;
 #else
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                               "reuseport is not supported "
-                               "on this platform, ignored");
+                           "reuseport is not supported "
+                           "on this platform, ignored");
 #endif
             continue;
         }
@@ -695,10 +705,10 @@ ngx_rtmp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         if (ngx_strncmp(value[i].data, "so_keepalive=", 13) == 0) {
 
             if (ngx_strcmp(&value[i].data[13], "on") == 0) {
-                ls->so_keepalive = 1;
+                lsopt->so_keepalive = 1;
 
             } else if (ngx_strcmp(&value[i].data[13], "off") == 0) {
-                ls->so_keepalive = 2;
+                lsopt->so_keepalive = 2;
 
             } else {
 
@@ -717,8 +727,8 @@ ngx_rtmp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
                 if (p > s.data) {
                     s.len = p - s.data;
 
-                    ls->tcp_keepidle = ngx_parse_time(&s, 1);
-                    if (ls->tcp_keepidle == (time_t) NGX_ERROR) {
+                    lsopt->tcp_keepidle = ngx_parse_time(&s, 1);
+                    if (lsopt->tcp_keepidle == (time_t) NGX_ERROR) {
                         goto invalid_so_keepalive;
                     }
                 }
@@ -733,8 +743,8 @@ ngx_rtmp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
                 if (p > s.data) {
                     s.len = p - s.data;
 
-                    ls->tcp_keepintvl = ngx_parse_time(&s, 1);
-                    if (ls->tcp_keepintvl == (time_t) NGX_ERROR) {
+                    lsopt->tcp_keepintvl = ngx_parse_time(&s, 1);
+                    if (lsopt->tcp_keepintvl == (time_t) NGX_ERROR) {
                         goto invalid_so_keepalive;
                     }
                 }
@@ -744,55 +754,55 @@ ngx_rtmp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
                 if (s.data < end) {
                     s.len = end - s.data;
 
-                    ls->tcp_keepcnt = ngx_atoi(s.data, s.len);
-                    if (ls->tcp_keepcnt == NGX_ERROR) {
+                    lsopt->tcp_keepcnt = ngx_atoi(s.data, s.len);
+                    if (lsopt->tcp_keepcnt == NGX_ERROR) {
                         goto invalid_so_keepalive;
                     }
                 }
 
-                if (ls->tcp_keepidle == 0 && ls->tcp_keepintvl == 0
-                    && ls->tcp_keepcnt == 0)
+                if (lsopt->tcp_keepidle == 0 && lsopt->tcp_keepintvl == 0
+                        && lsopt->tcp_keepcnt == 0)
                 {
                     goto invalid_so_keepalive;
                 }
 
-                ls->so_keepalive = 1;
+                lsopt->so_keepalive = 1;
 
 #else
 
                 ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                                   "the \"so_keepalive\" parameter accepts "
-                                   "only \"on\" or \"off\" on this platform");
+                        "the \"so_keepalive\" parameter accepts "
+                        "only \"on\" or \"off\" on this platform");
                 return NGX_CONF_ERROR;
 
 #endif
             }
 
-            ls->bind = 1;
+            lsopt->bind = 1;
 
             continue;
 
 #if (NGX_HAVE_KEEPALIVE_TUNABLE)
-        invalid_so_keepalive:
+invalid_so_keepalive:
 
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                               "invalid so_keepalive value: \"%s\"",
-                               &value[i].data[13]);
+                    "invalid so_keepalive value: \"%s\"",
+                    &value[i].data[13]);
             return NGX_CONF_ERROR;
 #endif
         }
 
         if (ngx_strcmp(value[i].data, "proxy_protocol") == 0) {
-            ls->proxy_protocol = 1;
+            lsopt->proxy_protocol = 1;
             continue;
         }
 
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                           "the invalid \"%V\" parameter", &value[i]);
+                "the invalid \"%V\" parameter", &value[i]);
         return NGX_CONF_ERROR;
     }
 
-    if (ngx_rtmp_add_listen(cf, cscf, ls) == NGX_OK) {
+    if (ngx_rtmp_add_listen(cf, cscf, lsopt) == NGX_OK) {
         return NGX_CONF_OK;
     }
 
