@@ -982,8 +982,6 @@ static ngx_listening_t *
 ngx_rtmp_add_listening(ngx_conf_t *cf, ngx_rtmp_conf_addr_t *addr)
 {
     ngx_listening_t           *ls;
-    // TODO: ngx_rtmp_core_loc_conf_t  *clcf;
-    ngx_rtmp_core_srv_conf_t  *cscf;
 
     ls = ngx_create_listening(cf, &addr->opt.u.sockaddr, addr->opt.socklen);
     if (ls == NULL) {
@@ -991,34 +989,12 @@ ngx_rtmp_add_listening(ngx_conf_t *cf, ngx_rtmp_conf_addr_t *addr)
     }
 
     ls->addr_ntop = 1;
-
     ls->handler = ngx_rtmp_init_connection;
-
-    cscf = addr->default_server;
-    ls->pool_size = 4096; // TODO: cscf->connection_pool_size;
-
-    // TODO: clcf = cscf->ctx->loc_conf[ngx_rtmp_core_module.ctx_index];
+    ls->pool_size = 4096;
 
     ls->logp = &cf->cycle->new_log; // TODO: error_log directive
     ls->log.data = &ls->addr_text;
     ls->log.handler = ngx_accept_log_error;
-
-#if (NGX_WIN32)
-    {
-    ngx_iocp_conf_t  *iocpcf = NULL;
-
-    if (ngx_get_conf(cf->cycle->conf_ctx, ngx_events_module)) {
-        iocpcf = ngx_event_get_conf(cf->cycle->conf_ctx, ngx_iocp_module);
-    }
-    if (iocpcf && iocpcf->acceptex_read) {
-        ls->post_accept_buffer_size = cscf->client_header_buffer_size;
-    }
-    }
-#endif
-
-    ls->backlog = addr->opt.backlog;
-    ls->rcvbuf = addr->opt.rcvbuf;
-    ls->sndbuf = addr->opt.sndbuf;
 
     ls->keepalive = addr->opt.so_keepalive;
 #if (NGX_HAVE_KEEPALIVE_TUNABLE)
@@ -1027,24 +1003,8 @@ ngx_rtmp_add_listening(ngx_conf_t *cf, ngx_rtmp_conf_addr_t *addr)
     ls->keepcnt = addr->opt.tcp_keepcnt;
 #endif
 
-#if (NGX_HAVE_DEFERRED_ACCEPT && defined SO_ACCEPTFILTER)
-    ls->accept_filter = addr->opt.accept_filter;
-#endif
-
-#if (NGX_HAVE_DEFERRED_ACCEPT && defined TCP_DEFER_ACCEPT)
-    ls->deferred_accept = addr->opt.deferred_accept;
-#endif
-
 #if (NGX_HAVE_INET6 && defined IPV6_V6ONLY)
     ls->ipv6only = addr.ipv6only;
-#endif
-
-#if (NGX_HAVE_SETFIB)
-    ls->setfib = addr->opt.setfib;
-#endif
-
-#if (NGX_HAVE_TCP_FASTOPEN)
-    ls->fastopen = addr->opt.fastopen;
 #endif
 
 #if (NGX_HAVE_REUSEPORT)
