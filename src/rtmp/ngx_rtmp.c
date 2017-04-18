@@ -754,14 +754,15 @@ ngx_rtmp_add_addrs(ngx_conf_t *cf, ngx_rtmp_port_t *mport,
 
     for (i = 0; i < mport->naddrs; i++) {
 
-        sin = (struct sockaddr_in *) addr[i].sockaddr;
+        sin = &addr[i].opt.u.sockaddr_in;
         addrs[i].addr = sin->sin_addr.s_addr;
 
         addrs[i].conf.ctx = addr[i].ctx;
-
-        len = ngx_sock_ntop(addr[i].sockaddr,
+        addrs[i].conf.default_server = addr[i].default_server;
+        
+        len = ngx_sock_ntop(&addr[i].opt.u.sockaddr,
 #if (nginx_version >= 1005003)
-                            addr[i].socklen,
+                            addr[i].opt.socklen,
 #endif
                             buf, NGX_SOCKADDR_STRLEN, 1);
 
@@ -774,7 +775,7 @@ ngx_rtmp_add_addrs(ngx_conf_t *cf, ngx_rtmp_port_t *mport,
 
         addrs[i].conf.addr_text.len = len;
         addrs[i].conf.addr_text.data = p;
-        addrs[i].conf.proxy_protocol = addr->proxy_protocol;
+        addrs[i].conf.proxy_protocol = addr->opt.proxy_protocol;
     }
 
     return NGX_OK;
