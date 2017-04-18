@@ -608,7 +608,7 @@ ngx_rtmp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return NGX_CONF_ERROR;
     }
 
-    ngx_memzero(lsopt, sizeof(ngx_rtmp_listen_t));
+    ngx_memzero(lsopt, sizeof(ngx_rtmp_listen_opt_t));
 
     ngx_memcpy(&lsopt->u.sockaddr, u.sockaddr, u.socklen);
 
