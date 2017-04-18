@@ -558,13 +558,6 @@ ngx_rtmp_add_addresses(ngx_conf_t *cf, ngx_rtmp_core_srv_conf_t *cscf,
 
         proxy_protocol = lsopt->proxy_protocol || addr[i].opt.proxy_protocol;
 
-#if (NGX_HTTP_SSL)
-        ssl = lsopt->ssl || addr[i].opt.ssl;
-#endif
-#if (NGX_HTTP_V2)
-        http2 = lsopt->http2 || addr[i].opt.http2;
-#endif
-
         if (lsopt->set) {
 
             if (addr[i].opt.set) {
@@ -948,7 +941,13 @@ ngx_rtmp_init_listening(ngx_conf_t *cf, ngx_rtmp_conf_port_t *port)
 
         ls->servers = rport;
 
-        rport->naddrs = i + 1;
+        if (i == last - 1) {
+            rport->naddrs = last;
+
+        } else {
+            rport->naddrs = 1;
+            i = 0;
+        }
 
         switch (ls->sockaddr->sa_family) {
 #if (NGX_HAVE_INET6)
