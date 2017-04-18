@@ -477,7 +477,7 @@ char* ngx_rtmp_user_message_type(uint16_t evt);
 #endif
 
 ngx_int_t ngx_rtmp_add_listen(ngx_conf_t *cf, ngx_rtmp_core_srv_conf_t *cscf,
-     ngx_rtmp_listen_t *lsopt);
+     ngx_rtmp_listen_opt_t *lsopt);
 
 void ngx_rtmp_init_connection(ngx_connection_t *c);
 ngx_rtmp_session_t * ngx_rtmp_init_session(ngx_connection_t *c,
