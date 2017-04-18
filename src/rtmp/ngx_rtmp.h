@@ -405,6 +405,8 @@ struct ngx_rtmp_core_srv_conf_s {
     ngx_msec_t              buflen;
 
     ngx_rtmp_conf_ctx_t    *ctx;
+
+    unsigned                listen:1;
 };
 
 
