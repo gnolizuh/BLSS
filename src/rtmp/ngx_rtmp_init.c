@@ -200,7 +200,7 @@ ngx_http_flv_init_session(ngx_http_request_t *r, ngx_rtmp_addr_conf_t *addr_conf
 
     s->out_queue = cscf->out_queue;
     s->out_cork = cscf->out_cork;
-    s->in_streams = ngx_pcalloc(s->pool, sizeof(ngx_rtmp_stream_t)
+    s->in_streams = ngx_pcalloc(r->pool, sizeof(ngx_rtmp_stream_t)
             * cscf->max_streams);
     if (s->in_streams == NULL) {
         ngx_http_finalize_request(r, NGX_DECLINED);
