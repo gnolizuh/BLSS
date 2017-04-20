@@ -190,7 +190,7 @@ ngx_http_flv_init_session(ngx_http_request_t *r, ngx_rtmp_addr_conf_t *addr_conf
 
     c->log_error = NGX_ERROR_INFO;
 
-    s->ctx = ngx_pcalloc(s->pool, sizeof(void *) * ngx_rtmp_max_module);
+    s->ctx = ngx_pcalloc(r->pool, sizeof(void *) * ngx_rtmp_max_module);
     if (s->ctx == NULL) {
         ngx_http_finalize_request(r, NGX_DECLINED);
         return NULL;
