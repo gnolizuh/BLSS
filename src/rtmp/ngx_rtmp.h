@@ -98,9 +98,10 @@ typedef struct {
 
 
 typedef struct {
-    ngx_rtmp_conf_ctx_t    *ctx;
-    ngx_str_t               addr_text;
-    unsigned                proxy_protocol:1;
+    ngx_rtmp_core_srv_conf_t  *default_server;
+    ngx_rtmp_conf_ctx_t       *ctx;
+    ngx_str_t                  addr_text;
+    unsigned                   proxy_protocol:1;
 } ngx_rtmp_addr_conf_t;
 
 typedef struct {
@@ -405,6 +406,8 @@ struct ngx_rtmp_core_srv_conf_s {
     ngx_msec_t              buflen;
 
     ngx_rtmp_conf_ctx_t    *ctx;
+
+    unsigned                listen:1;
 };
 
 
@@ -473,6 +476,9 @@ typedef struct {
 char* ngx_rtmp_message_type(uint8_t type);
 char* ngx_rtmp_user_message_type(uint16_t evt);
 #endif
+
+ngx_int_t ngx_rtmp_add_listen(ngx_conf_t *cf, ngx_rtmp_core_srv_conf_t *cscf,
+     ngx_rtmp_listen_opt_t *lsopt);
 
 void ngx_rtmp_init_connection(ngx_connection_t *c);
 ngx_rtmp_session_t * ngx_rtmp_init_session(ngx_connection_t *c,

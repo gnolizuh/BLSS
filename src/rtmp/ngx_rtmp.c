@@ -558,13 +558,6 @@ ngx_rtmp_add_addresses(ngx_conf_t *cf, ngx_rtmp_core_srv_conf_t *cscf,
 
         proxy_protocol = lsopt->proxy_protocol || addr[i].opt.proxy_protocol;
 
-#if (NGX_HTTP_SSL)
-        ssl = lsopt->ssl || addr[i].opt.ssl;
-#endif
-#if (NGX_HTTP_V2)
-        http2 = lsopt->http2 || addr[i].opt.http2;
-#endif
-
         if (lsopt->set) {
 
             if (addr[i].opt.set) {
@@ -754,14 +747,15 @@ ngx_rtmp_add_addrs(ngx_conf_t *cf, ngx_rtmp_port_t *mport,
 
     for (i = 0; i < mport->naddrs; i++) {
 
-        sin = (struct sockaddr_in *) addr[i].sockaddr;
+        sin = &addr[i].opt.u.sockaddr_in;
         addrs[i].addr = sin->sin_addr.s_addr;
 
         addrs[i].conf.ctx = addr[i].ctx;
-
-        len = ngx_sock_ntop(addr[i].sockaddr,
+        addrs[i].conf.default_server = addr[i].default_server;
+        
+        len = ngx_sock_ntop(&addr[i].opt.u.sockaddr,
 #if (nginx_version >= 1005003)
-                            addr[i].socklen,
+                            addr[i].opt.socklen,
 #endif
                             buf, NGX_SOCKADDR_STRLEN, 1);
 
@@ -774,7 +768,7 @@ ngx_rtmp_add_addrs(ngx_conf_t *cf, ngx_rtmp_port_t *mport,
 
         addrs[i].conf.addr_text.len = len;
         addrs[i].conf.addr_text.data = p;
-        addrs[i].conf.proxy_protocol = addr->proxy_protocol;
+        addrs[i].conf.proxy_protocol = addr->opt.proxy_protocol;
     }
 
     return NGX_OK;
@@ -808,7 +802,7 @@ ngx_rtmp_add_addrs6(ngx_conf_t *cf, ngx_rtmp_port_t *mport,
         addrs6[i].addr6 = sin6->sin6_addr;
 
         addrs6[i].conf.ctx = addr[i].ctx;
-
+        addrs6[i].conf.default_server = addr[i].default_server;
         len = ngx_sock_ntop(addr[i].sockaddr,
 #if (nginx_version >= 1005003)
                             addr[i].socklen,
@@ -911,6 +905,12 @@ ngx_rtmp_init_listening(ngx_conf_t *cf, ngx_rtmp_conf_port_t *port)
     addr = port->addrs.elts;
     last = port->addrs.nelts;
 
+    if (ngx_array_init(&port->ports, cf->pool, port->addrs.nelts,
+                sizeof(ngx_rtmp_port_t)) != NGX_OK) {
+
+        return NGX_ERROR;
+    }
+    
     /*
      * If there is a binding to an "*:port" then we need to bind() to
      * the "*:port" only and ignore other implicit bindings.  The bindings
@@ -940,14 +940,20 @@ ngx_rtmp_init_listening(ngx_conf_t *cf, ngx_rtmp_conf_port_t *port)
             return NGX_ERROR;
         }
 
-        rport = ngx_palloc(cf->pool, sizeof(ngx_rtmp_port_t));
+        rport = ngx_array_push(&port->ports);
         if (rport == NULL) {
             return NGX_ERROR;
         }
 
         ls->servers = rport;
 
-        rport->naddrs = i + 1;
+        if (i == last - 1) {
+            rport->naddrs = last;
+
+        } else {
+            rport->naddrs = 1;
+            i = 0;
+        }
 
         switch (ls->sockaddr->sa_family) {
 #if (NGX_HAVE_INET6)
@@ -982,8 +988,6 @@ static ngx_listening_t *
 ngx_rtmp_add_listening(ngx_conf_t *cf, ngx_rtmp_conf_addr_t *addr)
 {
     ngx_listening_t           *ls;
-    // TODO: ngx_rtmp_core_loc_conf_t  *clcf;
-    ngx_rtmp_core_srv_conf_t  *cscf;
 
     ls = ngx_create_listening(cf, &addr->opt.u.sockaddr, addr->opt.socklen);
     if (ls == NULL) {
@@ -991,34 +995,12 @@ ngx_rtmp_add_listening(ngx_conf_t *cf, ngx_rtmp_conf_addr_t *addr)
     }
 
     ls->addr_ntop = 1;
-
     ls->handler = ngx_rtmp_init_connection;
-
-    cscf = addr->default_server;
-    ls->pool_size = 4096; // TODO: cscf->connection_pool_size;
-
-    // TODO: clcf = cscf->ctx->loc_conf[ngx_rtmp_core_module.ctx_index];
+    ls->pool_size = 4096;
 
     ls->logp = &cf->cycle->new_log; // TODO: error_log directive
     ls->log.data = &ls->addr_text;
     ls->log.handler = ngx_accept_log_error;
-
-#if (NGX_WIN32)
-    {
-    ngx_iocp_conf_t  *iocpcf = NULL;
-
-    if (ngx_get_conf(cf->cycle->conf_ctx, ngx_events_module)) {
-        iocpcf = ngx_event_get_conf(cf->cycle->conf_ctx, ngx_iocp_module);
-    }
-    if (iocpcf && iocpcf->acceptex_read) {
-        ls->post_accept_buffer_size = cscf->client_header_buffer_size;
-    }
-    }
-#endif
-
-    ls->backlog = addr->opt.backlog;
-    ls->rcvbuf = addr->opt.rcvbuf;
-    ls->sndbuf = addr->opt.sndbuf;
 
     ls->keepalive = addr->opt.so_keepalive;
 #if (NGX_HAVE_KEEPALIVE_TUNABLE)
@@ -1027,24 +1009,8 @@ ngx_rtmp_add_listening(ngx_conf_t *cf, ngx_rtmp_conf_addr_t *addr)
     ls->keepcnt = addr->opt.tcp_keepcnt;
 #endif
 
-#if (NGX_HAVE_DEFERRED_ACCEPT && defined SO_ACCEPTFILTER)
-    ls->accept_filter = addr->opt.accept_filter;
-#endif
-
-#if (NGX_HAVE_DEFERRED_ACCEPT && defined TCP_DEFER_ACCEPT)
-    ls->deferred_accept = addr->opt.deferred_accept;
-#endif
-
 #if (NGX_HAVE_INET6 && defined IPV6_V6ONLY)
     ls->ipv6only = addr.ipv6only;
-#endif
-
-#if (NGX_HAVE_SETFIB)
-    ls->setfib = addr->opt.setfib;
-#endif
-
-#if (NGX_HAVE_TCP_FASTOPEN)
-    ls->fastopen = addr->opt.fastopen;
 #endif
 
 #if (NGX_HAVE_REUSEPORT)
