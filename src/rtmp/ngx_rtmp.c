@@ -934,7 +934,7 @@ ngx_rtmp_init_listening(ngx_conf_t *cf, ngx_rtmp_conf_port_t *port)
             return NGX_ERROR;
         }
 
-        rport = ngx_palloc(cf->pool, sizeof(ngx_rtmp_port_t));
+        rport = ngx_array_push(&port->ports);
         if (rport == NULL) {
             return NGX_ERROR;
         }
