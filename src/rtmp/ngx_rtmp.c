@@ -905,6 +905,12 @@ ngx_rtmp_init_listening(ngx_conf_t *cf, ngx_rtmp_conf_port_t *port)
     addr = port->addrs.elts;
     last = port->addrs.nelts;
 
+    if (ngx_array_init(&port->ports, cf->pool, port->addrs.nelts,
+                sizeof(ngx_rtmp_port_t)) != NGX_OK) {
+
+        return NGX_ERROR;
+    }
+    
     /*
      * If there is a binding to an "*:port" then we need to bind() to
      * the "*:port" only and ignore other implicit bindings.  The bindings
