@@ -31,7 +31,7 @@ static void * ngx_http_flv_rtmp_create_app_conf(ngx_conf_t *cf);
 static char * ngx_http_flv_rtmp_merge_app_conf(ngx_conf_t *cf, void *parent, void *child);
 
 static ngx_int_t ngx_http_flv_send_message(ngx_rtmp_session_t *s, ngx_chain_t *out, ngx_uint_t priority);
-static ngx_int_t ngx_http_flv_connect_local(ngx_http_request_t *r, ngx_str_t *app, ngx_str_t *name, ngx_int_t protocol);
+static ngx_int_t ngx_http_flv_connect_local(ngx_http_request_t *r, ngx_str_t *app, ngx_str_t *name);
 static ngx_int_t ngx_http_flv_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_chain_t *in);
 static ngx_int_t ngx_http_flv_gop_cache_send_message(ngx_rtmp_session_t *s, ngx_chain_t *in, ngx_uint_t priority);
 static ngx_chain_t * ngx_http_flv_gop_cache_append_shared_bufs(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_rtmp_header_t *lh, ngx_chain_t *in);
@@ -265,7 +265,7 @@ ngx_http_flv_close_session_handler(ngx_rtmp_session_t *s)
 
 
 static ngx_int_t
-ngx_http_flv_connect_local(ngx_http_request_t *r, ngx_str_t *app, ngx_str_t *name, ngx_int_t protocol)
+ngx_http_flv_connect_local(ngx_http_request_t *r, ngx_str_t *app, ngx_str_t *name)
 {
     static ngx_rtmp_connect_t   v;
 
@@ -304,8 +304,6 @@ ngx_http_flv_connect_local(ngx_http_request_t *r, ngx_str_t *app, ngx_str_t *nam
 
     s->name.len = name->len;
     s->name.data = ngx_pstrdup(s->pool, name);
-
-    s->protocol = protocol;
 
     rtmpctx = ngx_rtmp_get_module_ctx(s, ngx_http_flv_rtmpmodule);
     if (rtmpctx == NULL) {
@@ -403,9 +401,9 @@ ngx_http_flv_http_handler(ngx_http_request_t *r)
     ngx_log_error(NGX_LOG_INFO, r->connection->log, 0,
               "http_flv handle app: '%V' name: '%V'", &app, &name);
 
-    ngx_http_flv_init_connection(r);
+    ngx_http_flv_init_connection(r, protocol);
 
-    if (ngx_http_flv_connect_local(r, &app, &name, protocol) != NGX_OK) {
+    if (ngx_http_flv_connect_local(r, &app, &name) != NGX_OK) {
 
         return NGX_DECLINED;
     }

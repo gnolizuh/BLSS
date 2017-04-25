@@ -167,12 +167,11 @@ typedef struct {
 #define NGX_LOCAL_RELAY                 3
 #define	NGX_ERROR_RELAY					4
 
-#define NGX_RTMP_PULL_TYPE_RTMP         0
-#define NGX_RTMP_PULL_TYPE_HLS_TS       1
-#define NGX_RTMP_PULL_TYPE_HLS_M3U8     2
-#define NGX_RTMP_PULL_TYPE_HTTP_FLV     3
-#define NGX_RTMP_PUSH_TYPE_RTMP         4
-#define NGX_RTMP_PUSH_TYPE_HDL          5
+#define NGX_RTMP_PULL_TYPE              0
+#define NGX_TS_PULL_TYPE                1
+#define NGX_M3U8_PULL_TYPE              2
+#define NGX_HTTP_FLV_PULL_TYPE          3
+#define NGX_RTMP_PUSH_TYPE              4
 
 /* RTMP message types */
 #define NGX_RTMP_MSG_CHUNK_SIZE         1
@@ -198,9 +197,8 @@ typedef struct {
 #define NGX_RTMP_HANDSHAKE_DONE         NGX_RTMP_MSG_MAX + 3
 #define NGX_RTMP_CONNECT_DONE           NGX_RTMP_MSG_MAX + 4
 #define NGX_RTMP_PLAY_DONE              NGX_RTMP_MSG_MAX + 5
-#define NGX_RTMP_NOTIFY_LATENCY         NGX_RTMP_MSG_MAX + 6
-#define NGX_RTMP_ON_MESSAGE             NGX_RTMP_MSG_MAX + 7
-#define NGX_RTMP_MAX_EVENT              NGX_RTMP_MSG_MAX + 8
+#define NGX_RTMP_ON_MESSAGE             NGX_RTMP_MSG_MAX + 6
+#define NGX_RTMP_MAX_EVENT              NGX_RTMP_MSG_MAX + 7
 
 
 /* RMTP control message types */
@@ -484,7 +482,7 @@ void ngx_rtmp_init_connection(ngx_connection_t *c);
 ngx_rtmp_session_t * ngx_rtmp_init_session(ngx_connection_t *c,
      ngx_rtmp_addr_conf_t *addr_conf);
 
-void ngx_http_flv_init_connection(ngx_http_request_t *r);
+void ngx_http_flv_init_connection(ngx_http_request_t *r, ngx_uint_t protocol);
 ngx_rtmp_session_t * ngx_http_flv_init_session(ngx_http_request_t *r,
      ngx_rtmp_addr_conf_t *addr_conf);
 void ngx_http_flv_send(ngx_event_t *wev);
