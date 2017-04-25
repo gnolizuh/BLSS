@@ -17,7 +17,7 @@ static u_char * ngx_rtmp_log_error(ngx_log_t *log, u_char *buf, size_t len);
 extern ngx_module_t ngx_http_flv_httpmodule;
 
 void
-ngx_http_flv_init_connection(ngx_http_request_t *r)
+ngx_http_flv_init_connection(ngx_http_request_t *r, ngx_uint_t protocol)
 {
     ngx_rtmp_core_main_conf_t *cmcf = ngx_rtmp_core_main_conf;
 	ngx_uint_t             i;
@@ -143,6 +143,8 @@ ngx_http_flv_init_connection(ngx_http_request_t *r)
 	// c->read->handler = ngx_http_flv_recv;  TODO: We do not need to be careful of http read handler.
 
 	s->auto_pushed = unix_socket;
+
+	s->protocol = protocol;
 }
 
 
@@ -355,6 +357,8 @@ ngx_rtmp_init_connection(ngx_connection_t *c)
      * done through unix socket */
 
     s->auto_pushed = unix_socket;
+
+    s->protocol = protocol;
 
     if (addr_conf->proxy_protocol) {
         ngx_rtmp_proxy_protocol(s);
