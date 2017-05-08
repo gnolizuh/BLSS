@@ -512,9 +512,6 @@ ngx_http_flv_append_shared_bufs(ngx_rtmp_core_srv_conf_t *cscf, ngx_rtmp_header_
     uint32_t                        presize, presizebuf;
     u_char                         *p, *ph, *pos;
 
-    pos = tag->buf->pos;
-    tag->buf->pos = tag->buf->start + NGX_RTMP_MAX_CHUNK_HEADER;
-
     ngx_memzero(&prebuf, sizeof(prebuf));
     prebuf.start = prebuf.pos = (u_char*)&presizebuf;
     prebuf.end   = prebuf.last = (u_char*)(((u_char*)&presizebuf) + sizeof(presizebuf));
@@ -567,8 +564,6 @@ ngx_http_flv_append_shared_bufs(ngx_rtmp_core_srv_conf_t *cscf, ngx_rtmp_header_
     *ph++ = 0;
     *ph++ = 0;
     *ph++ = 0;
-
-    in->buf->pos = pos;
 
     return taghead;
 }
