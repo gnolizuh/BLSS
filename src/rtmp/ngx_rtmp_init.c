@@ -358,8 +358,6 @@ ngx_rtmp_init_connection(ngx_connection_t *c)
 
     s->auto_pushed = unix_socket;
 
-    s->protocol = protocol;
-
     if (addr_conf->proxy_protocol) {
         ngx_rtmp_proxy_protocol(s);
 

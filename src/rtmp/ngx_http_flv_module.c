@@ -380,7 +380,7 @@ ngx_http_flv_http_handler(ngx_http_request_t *r)
 		r->uri.data[r->uri.len - 2] == 'l' &&
 		r->uri.data[r->uri.len - 3] == 'f' &&
 		r->uri.data[r->uri.len - 4] == '.') {
-		protocol = NGX_RTMP_PULL_TYPE_HTTP_FLV;
+		protocol = NGX_PROTO_TYPE_HTTP_FLV_PULL;
 	} else {
 		return NGX_DECLINED;
 	}

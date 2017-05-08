@@ -685,7 +685,7 @@ ngx_rtmp_gop_cache_send(ngx_rtmp_session_t *ss)
         return;
     }
 
-    handler = ngx_rtmp_gop_cache_send_handler[ss->protocol == NGX_RTMP_PULL_TYPE_HTTP_FLV ? 1 : 0];
+    handler = ngx_rtmp_gop_cache_send_handler[ss->protocol == NGX_PROTO_TYPE_HTTP_FLV_PULL ? 1 : 0];
 
     if (!gacf->gop_cache) {
         return;
