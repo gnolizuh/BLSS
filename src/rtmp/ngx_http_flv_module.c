@@ -270,14 +270,12 @@ ngx_http_flv_connect_local(ngx_http_request_t *r, ngx_str_t *app, ngx_str_t *nam
     static ngx_rtmp_connect_t   v;
 
     ngx_rtmp_session_t         *s;
-    ngx_connection_t           *c;
     ngx_http_flv_rtmp_ctx_t    *rtmpctx;
     ngx_http_flv_http_ctx_t    *httpctx;
 
     httpctx = ngx_http_get_module_ctx(r, ngx_http_flv_httpmodule);
 
     s = httpctx->rs;
-    c = r->connection;
 
     ngx_memzero(&v, sizeof(ngx_rtmp_connect_t));
 
@@ -510,10 +508,7 @@ ngx_http_flv_append_shared_bufs(ngx_rtmp_core_srv_conf_t *cscf, ngx_rtmp_header_
     ngx_chain_t                    *tag = in;
     ngx_buf_t                       prebuf;
     uint32_t                        presize, presizebuf;
-    u_char                         *p, *ph, *pos;
-
-    pos = tag->buf->pos;
-    tag->buf->pos = tag->buf->start + NGX_RTMP_MAX_CHUNK_HEADER;
+    u_char                         *p, *ph;
 
     ngx_memzero(&prebuf, sizeof(prebuf));
     prebuf.start = prebuf.pos = (u_char*)&presizebuf;
@@ -567,8 +562,6 @@ ngx_http_flv_append_shared_bufs(ngx_rtmp_core_srv_conf_t *cscf, ngx_rtmp_header_
     *ph++ = 0;
     *ph++ = 0;
     *ph++ = 0;
-
-    in->buf->pos = pos;
 
     return taghead;
 }
