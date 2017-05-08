@@ -270,14 +270,12 @@ ngx_http_flv_connect_local(ngx_http_request_t *r, ngx_str_t *app, ngx_str_t *nam
     static ngx_rtmp_connect_t   v;
 
     ngx_rtmp_session_t         *s;
-    ngx_connection_t           *c;
     ngx_http_flv_rtmp_ctx_t    *rtmpctx;
     ngx_http_flv_http_ctx_t    *httpctx;
 
     httpctx = ngx_http_get_module_ctx(r, ngx_http_flv_httpmodule);
 
     s = httpctx->rs;
-    c = r->connection;
 
     ngx_memzero(&v, sizeof(ngx_rtmp_connect_t));
 
