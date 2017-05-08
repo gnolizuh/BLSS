@@ -510,7 +510,7 @@ ngx_http_flv_append_shared_bufs(ngx_rtmp_core_srv_conf_t *cscf, ngx_rtmp_header_
     ngx_chain_t                    *tag = in;
     ngx_buf_t                       prebuf;
     uint32_t                        presize, presizebuf;
-    u_char                         *p, *ph, *pos;
+    u_char                         *p, *ph;
 
     ngx_memzero(&prebuf, sizeof(prebuf));
     prebuf.start = prebuf.pos = (u_char*)&presizebuf;
