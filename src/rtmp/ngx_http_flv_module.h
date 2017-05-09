@@ -39,6 +39,7 @@ struct ngx_http_flv_rtmp_ctx_s {
     ngx_rtmp_session_t                 *session;
     ngx_http_flv_stream_t              *stream;
     ngx_http_flv_rtmp_ctx_t            *next;
+    ngx_rtmp_live_chunk_stream_t        cs[2];
     uint32_t                            epoch;
     unsigned                            initialized:1;
     unsigned                            publishing:1;

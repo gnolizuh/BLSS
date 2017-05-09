@@ -11,6 +11,11 @@
 #include "ngx_rtmp_codec_module.h"
 
 
+static ngx_rtmp_publish_pt              next_publish;
+static ngx_rtmp_play_pt                 next_play;
+static ngx_rtmp_close_stream_pt         next_close_stream;
+
+
 extern ngx_uint_t ngx_rtmp_playing;
 ngx_uint_t ngx_http_flv_naccepted;
 
