@@ -23,7 +23,7 @@ typedef struct ngx_http_flv_stream_s ngx_http_flv_stream_t;
 struct ngx_http_flv_stream_s {
     u_char                              name[NGX_RTMP_MAX_NAME];
     ngx_http_flv_stream_t              *next;
-    ngx_http_flv_ctx_t                 *ctx;
+    ngx_http_flv_rtmp_ctx_t            *ctx;
     ngx_rtmp_bandwidth_t                bw_in;
     ngx_rtmp_bandwidth_t                bw_in_audio;
     ngx_rtmp_bandwidth_t                bw_in_video;
