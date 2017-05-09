@@ -481,6 +481,8 @@ ngx_http_flv_rtmp_create_app_conf(ngx_conf_t *cf)
 
     hacf->http_flv = NGX_CONF_UNSET;
     hacf->nbuckets = NGX_CONF_UNSET;
+    hacf->idle_timeout = NGX_CONF_UNSET_MSEC;
+    hacf->buflen = NGX_CONF_UNSET_MSEC;
 
     return hacf;
 }
@@ -494,6 +496,8 @@ ngx_http_flv_rtmp_merge_app_conf(ngx_conf_t *cf, void *parent, void *child)
 
     ngx_conf_merge_value(conf->http_flv, prev->http_flv, 0);
     ngx_conf_merge_value(conf->nbuckets, prev->nbuckets, 1024);
+    ngx_conf_merge_msec_value(conf->buflen, prev->buflen, 0);
+    ngx_conf_merge_msec_value(conf->idle_timeout, prev->idle_timeout, 0);
 
     conf->pool = ngx_create_pool(4096, &cf->cycle->new_log);
     if (conf->pool == NULL) {
@@ -1091,10 +1095,10 @@ ngx_http_flv_join(ngx_rtmp_session_t *s, u_char *name, unsigned publisher)
     ngx_log_debug1(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
                    "http flv: join '%s'", name);
 
-    stream = ngx_http_flv_get_stream(s, name, publisher /* || hacf->idle_streams TODO: idle timeout*/);
+    stream = ngx_http_flv_get_stream(s, name, publisher || hacf->idle_streams);
 
     if (stream == NULL ||
-        !(publisher || (*stream)->publishing /* || hacf->idle_streams TODO: idle timeout*/))
+        !(publisher || (*stream)->publishing || hacf->idle_streams))
     {
         ngx_log_error(NGX_LOG_ERR, s->connection->log, 0,
                       "http flv: stream not found");
@@ -1121,11 +1125,9 @@ ngx_http_flv_join(ngx_rtmp_session_t *s, u_char *name, unsigned publisher)
 
     (*stream)->ctx = ctx;
 
-/*
     if (hacf->buflen) {
-        s->out_buffer = 1;  TODO
+        s->out_buffer = 1;
     }
-*/
 
     ctx->cs[0].csid = NGX_RTMP_CSID_VIDEO;
     ctx->cs[1].csid = NGX_RTMP_CSID_AUDIO;
