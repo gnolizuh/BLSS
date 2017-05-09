@@ -37,7 +37,7 @@ struct ngx_http_flv_stream_s {
 
 struct ngx_http_flv_rtmp_ctx_s {
     ngx_rtmp_session_t                 *session;
-    ngx_rtmp_live_stream_t             *stream;
+    ngx_http_flv_stream_t              *stream;
     ngx_http_flv_rtmp_ctx_t            *next;
     uint32_t                            epoch;
     unsigned                            initialized:1;
@@ -48,9 +48,9 @@ struct ngx_http_flv_rtmp_ctx_s {
 typedef struct {
     ngx_int_t                           nbuckets;
     ngx_flag_t                          http_flv;
-    ngx_rtmp_live_stream_t            **streams;
+    ngx_http_flv_stream_t             **streams;
     ngx_pool_t                         *pool;
-    ngx_rtmp_live_stream_t             *free_streams;
+    ngx_http_flv_stream_t              *free_streams;
 } ngx_http_flv_rtmp_app_conf_t;
 
 
