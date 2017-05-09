@@ -631,10 +631,6 @@ ngx_http_flv_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     type_s = (h->type == NGX_RTMP_MSG_VIDEO ? "video" : "audio"); 
 #endif
 
-    if (s->protocol != NGX_PROTO_TYPE_HTTP_FLV_PULL) {
-        return NGX_OK;
-    }
-
     lacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_live_module);
     if (lacf == NULL) {
         return NGX_ERROR;
@@ -860,7 +856,7 @@ ngx_http_flv_message(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     ngx_rtmp_live_app_conf_t       *lacf;
     ngx_http_flv_rtmp_app_conf_t   *hacf;
     ngx_rtmp_core_srv_conf_t       *cscf;
-    ngx_rtmp_live_ctx_t            *ctx, *pctx;
+    ngx_http_flv_rtmp_ctx_t        *ctx, *pctx;
     ngx_chain_t                    *mpkt;
     ngx_rtmp_session_t             *ss;
     ngx_rtmp_codec_ctx_t           *codec_ctx;
@@ -894,7 +890,7 @@ ngx_http_flv_message(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
         return NGX_ERROR;
     }
 
-    ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_live_module);
+    ctx = ngx_rtmp_get_module_ctx(s, ngx_http_flv_rtmpmodule);
     if (ctx == NULL || ctx->stream == NULL) {
         return NGX_OK;
     }
@@ -1139,10 +1135,6 @@ ngx_http_flv_close_stream(ngx_rtmp_session_t *s, ngx_rtmp_close_stream_t *v)
     ngx_http_flv_stream_t              **stream;
     ngx_http_flv_rtmp_app_conf_t        *hacf;
 
-    if (s->protocol != NGX_PROTO_TYPE_HTTP_FLV_PULL) {
-        goto next;
-    }
-
     hacf = ngx_rtmp_get_module_app_conf(s, ngx_http_flv_rtmpmodule);
     if (hacf == NULL) {
         goto next;
@@ -1201,10 +1193,6 @@ static ngx_int_t
 ngx_http_flv_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
 {
     ngx_http_flv_rtmp_app_conf_t        *hacf;
-
-    if (s->protocol != NGX_PROTO_TYPE_HTTP_FLV_PULL) {
-        goto next;
-    }
 
     hacf = ngx_rtmp_get_module_app_conf(s, ngx_http_flv_rtmpmodule);
     if (hacf == NULL || !hacf->http_flv) {
