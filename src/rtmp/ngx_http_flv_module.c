@@ -1020,15 +1020,9 @@ ngx_http_flv_play_done(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 static ngx_http_flv_stream_t **
 ngx_http_flv_get_stream(ngx_rtmp_session_t *s, u_char *name, int create)
 {
-    ngx_rtmp_live_app_conf_t        *lacf;
     ngx_http_flv_rtmp_app_conf_t    *hacf;
     ngx_http_flv_stream_t         **stream;
     size_t                           len;
-
-    lacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_live_module);
-    if (lacf == NULL) {
-        return NULL;
-    }
 
     hacf = ngx_rtmp_get_module_app_conf(s, ngx_http_flv_rtmpmodule);
     if (hacf == NULL) {
@@ -1036,7 +1030,7 @@ ngx_http_flv_get_stream(ngx_rtmp_session_t *s, u_char *name, int create)
     }
 
     len = ngx_strlen(name);
-    stream = &hacf->streams[ngx_hash_key(name, len) % lacf->nbuckets];
+    stream = &hacf->streams[ngx_hash_key(name, len) % hacf->nbuckets];
 
     for (; *stream; stream = &(*stream)->next) {
         if (ngx_strcmp(name, (*stream)->name) == 0) {
