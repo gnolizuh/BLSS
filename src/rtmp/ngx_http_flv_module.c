@@ -1111,7 +1111,7 @@ ngx_http_flv_join(ngx_rtmp_session_t *s, u_char *name, unsigned publisher)
     if (publisher) {
         if ((*stream)->publishing) {
             ngx_log_error(NGX_LOG_ERR, s->connection->log, 0,
-                          "live: already publishing");
+                          "http flv: already publishing");
 
             return;
         }
