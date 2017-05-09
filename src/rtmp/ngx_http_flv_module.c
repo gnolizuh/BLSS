@@ -627,6 +627,10 @@ ngx_http_flv_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     type_s = (h->type == NGX_RTMP_MSG_VIDEO ? "video" : "audio"); 
 #endif
 
+    if (s->protocol != NGX_PROTO_TYPE_HTTP_FLV_PULL) {
+        goto next;
+    }
+
     lacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_live_module);
     if (lacf == NULL) {
         return NGX_ERROR;
@@ -1003,6 +1007,250 @@ ngx_http_flv_play_done(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 }
 
 
+static ngx_rtmp_live_stream_t **
+ngx_http_flv_get_stream(ngx_rtmp_session_t *s, u_char *name, int create)
+{
+    ngx_http_flv_app_conf_t    *hacf;
+    ngx_rtmp_live_stream_t    **stream;
+    size_t                      len;
+
+    hacf = ngx_rtmp_get_module_app_conf(s, ngx_http_flv_rtmpmodule);
+    if (hacf == NULL) {
+        return NULL;
+    }
+
+    len = ngx_strlen(name);
+    stream = &hacf->streams[ngx_hash_key(name, len) % hacf->nbuckets];
+
+    for (; *stream; stream = &(*stream)->next) {
+        if (ngx_strcmp(name, (*stream)->name) == 0) {
+            return stream;
+        }
+    }
+
+    if (!create) {
+        return NULL;
+    }
+
+    ngx_log_debug1(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
+            "http flv: create stream '%s'", name);
+
+    if (hacf->free_streams) {
+        *stream = hacf->free_streams;
+        hacf->free_streams = hacf->free_streams->next;
+    } else {
+        *stream = ngx_palloc(hacf->pool, sizeof(ngx_rtmp_live_stream_t));
+    }
+    ngx_memzero(*stream, sizeof(ngx_rtmp_live_stream_t));
+    ngx_memcpy((*stream)->name, name,
+            ngx_min(sizeof((*stream)->name) - 1, len));
+    (*stream)->epoch = ngx_current_msec;
+
+    return stream;
+}
+
+
+static void
+ngx_http_flv_join(ngx_rtmp_session_t *s, u_char *name, unsigned publisher)
+{
+    ngx_http_flv_ctx_t             *ctx;
+    ngx_rtmp_live_stream_t        **stream;
+    ngx_http_flv_app_conf_t        *hacf;
+
+    hacf = ngx_rtmp_get_module_app_conf(s, ngx_http_flv_rtmpmodule);
+    if (hacf == NULL) {
+        return;
+    }
+
+    ctx = ngx_rtmp_get_module_ctx(s, ngx_http_flv_rtmpmodule);
+    if (ctx && ctx->stream) {
+        ngx_log_debug0(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
+                       "http flv: already joined");
+        return;
+    }
+
+    if (ctx == NULL) {
+        ctx = ngx_palloc(s->connection->pool, sizeof(ngx_http_flv_ctx_t));
+        ngx_rtmp_set_ctx(s, ctx, ngx_http_flv_rtmpmodule);
+    }
+
+    ngx_memzero(ctx, sizeof(*ctx));
+
+    ctx->session = s;
+
+    ngx_log_debug1(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
+                   "http flv: join '%s'", name);
+
+    stream = ngx_http_flv_get_stream(s, name, publisher /* || hacf->idle_streams TODO: idle timeout*/);
+
+    if (stream == NULL ||
+        !(publisher || (*stream)->publishing /* || hacf->idle_streams TODO: idle timeout*/))
+    {
+        ngx_log_error(NGX_LOG_ERR, s->connection->log, 0,
+                      "http flv: stream not found");
+
+        ngx_rtmp_finalize_session(s);
+
+        return;
+    }
+
+    if (publisher) {
+        if ((*stream)->publishing) {
+            ngx_log_error(NGX_LOG_ERR, s->connection->log, 0,
+                          "live: already publishing");
+
+            return;
+        }
+
+        (*stream)->publishing = 1;
+    }
+
+    ctx->stream = *stream;
+    ctx->publishing = publisher;
+    ctx->next = (*stream)->ctx;
+
+    (*stream)->ctx = ctx;
+
+/*
+    if (hacf->buflen) {
+        s->out_buffer = 1;  TODO
+    }
+*/
+
+    ctx->cs[0].csid = NGX_RTMP_CSID_VIDEO;
+    ctx->cs[1].csid = NGX_RTMP_CSID_AUDIO;
+
+/*
+    if (!ctx->publishing && ctx->stream->active) {
+        ngx_rtmp_live_start(s);  TODO
+    }
+*/
+}
+
+
+static ngx_int_t
+ngx_http_flv_close_stream(ngx_rtmp_session_t *s, ngx_rtmp_close_stream_t *v)
+{
+    ngx_rtmp_session_t             *ss;
+    ngx_http_flv_ctx_t             *ctx, **cctx, *pctx;
+    ngx_rtmp_live_stream_t        **stream;
+    ngx_http_flv_app_conf_t        *hacf;
+
+    if (s->protocol != NGX_PROTO_TYPE_HTTP_FLV_PULL) {
+        goto next;
+    }
+
+    hacf = ngx_rtmp_get_module_app_conf(s, ngx_http_flv_rtmpmodule);
+    if (hacf == NULL) {
+        goto next;
+    }
+
+    ctx = ngx_rtmp_get_module_ctx(s, ngx_http_flv_rtmpmodule);
+    if (ctx == NULL) {
+        goto next;
+    }
+
+    if (ctx->stream == NULL) {
+        ngx_log_debug0(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
+                       "http flv: not joined");
+        goto next;
+    }
+
+    ngx_log_debug1(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
+                   "http flv: leave '%s'", ctx->stream->name);
+
+    if (ctx->stream->publishing && ctx->publishing) {
+        ctx->stream->publishing = 0;
+    }
+
+    for (cctx = &ctx->stream->ctx; *cctx; cctx = &(*cctx)->next) {
+        if (*cctx == ctx) {
+            *cctx = ctx->next;
+            break;
+        }
+    }
+
+    if (ctx->stream->ctx) {
+        ctx->stream = NULL;
+        goto next;
+    }
+
+    ngx_log_debug1(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
+                   "http flv: delete empty stream '%s'",
+                   ctx->stream->name);
+
+    stream = ngx_http_flv_get_stream(s, ctx->stream->name, 0);
+    if (stream == NULL) {
+        goto next;
+    }
+    *stream = (*stream)->next;
+
+    ctx->stream->next = hacf->free_streams;
+    hacf->free_streams = ctx->stream;
+    ctx->stream = NULL;
+
+next:
+    return next_close_stream(s, v);
+}
+
+
+static ngx_int_t
+ngx_http_flv_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
+{
+    ngx_http_flv_app_conf_t        *hacf;
+
+    if (s->protocol != NGX_PROTO_TYPE_HTTP_FLV_PULL) {
+        goto next;
+    }
+
+    hacf = ngx_rtmp_get_module_app_conf(s, ngx_http_flv_rtmpmodule);
+    if (hacf == NULL || !hacf->http_flv) {
+        goto next;
+    }
+
+    ngx_log_debug2(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
+                   "http flv: publish: name='%s' type='%s'",
+                   v->name, v->type);
+
+    /* join stream as publisher */
+
+    ngx_rtmp_live_join(s, v->name, 1);
+
+next:
+    return next_publish(s, v);
+}
+
+
+static ngx_int_t
+ngx_http_flv_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
+{
+    ngx_http_flv_app_conf_t        *hacf;
+
+    if (s->protocol != NGX_PROTO_TYPE_HTTP_FLV_PULL) {
+        goto next;
+    }
+
+    hacf = ngx_rtmp_get_module_app_conf(s, ngx_http_flv_rtmpmodule);
+    if (hacf == NULL || !hacf->http_flv) {
+        goto next;
+    }
+
+    ngx_log_debug4(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
+                   "http flv: play: name='%s' start=%uD duration=%uD reset=%d",
+                   v->name, (uint32_t) v->start,
+                   (uint32_t) v->duration, (uint32_t) v->reset);
+
+    /* join stream as subscriber */
+
+    ngx_http_flv_join(s, v->name, 0);
+
+    ngx_rtmp_playing++;
+
+next:
+    return next_play(s, v);
+}
+
+
 static ngx_int_t
 ngx_http_flv_rtmp_init(ngx_conf_t *cf)
 {
@@ -1027,6 +1275,17 @@ ngx_http_flv_rtmp_init(ngx_conf_t *cf)
 
     h = ngx_array_push(&cmcf->events[NGX_RTMP_ON_MESSAGE]);
     *h = ngx_http_flv_message;
+
+    /* chain handlers */
+
+    next_publish = ngx_rtmp_publish;
+    ngx_rtmp_publish = ngx_http_flv_publish;
+
+    next_play = ngx_rtmp_play;
+    ngx_rtmp_play = ngx_http_flv_play;
+
+    next_close_stream = ngx_rtmp_close_stream;
+    ngx_rtmp_close_stream = ngx_http_flv_close_stream;
 
     return NGX_OK;
 }

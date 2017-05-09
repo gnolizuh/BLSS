@@ -16,13 +16,20 @@
 
 
 typedef struct {
+    ngx_rtmp_session_t                 *session;
+    ngx_rtmp_live_stream_t             *stream;
+    ngx_rtmp_live_ctx_t                *next;
     uint32_t                            epoch;
     unsigned                            initialized:1;
+    unsigned                            publishing:1;
 } ngx_http_flv_rtmp_ctx_t;
 
 
 typedef struct {
+    ngx_int_t                           nbuckets;
     ngx_flag_t                          http_flv;
+    ngx_rtmp_live_stream_t            **streams;
+    ngx_rtmp_live_stream_t             *free_streams;
 } ngx_http_flv_rtmp_app_conf_t;
 
 
