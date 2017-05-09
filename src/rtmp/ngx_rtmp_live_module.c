@@ -1099,6 +1099,10 @@ ngx_rtmp_live_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
     ngx_rtmp_live_app_conf_t       *lacf;
     ngx_rtmp_live_ctx_t            *ctx;
 
+    if (s->protocol != NGX_PROTO_TYPE_HTTP_FLV_PULL) {
+        goto next;
+    }
+
     lacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_live_module);
 
     if (lacf == NULL || !lacf->live) {
