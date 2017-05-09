@@ -55,6 +55,7 @@ typedef struct {
     ngx_flag_t                          http_flv;
     ngx_http_flv_stream_t             **streams;
     ngx_msec_t                          idle_timeout;
+    ngx_msec_t                          buflen;
     ngx_pool_t                         *pool;
     ngx_http_flv_stream_t              *free_streams;
 } ngx_http_flv_rtmp_app_conf_t;
