@@ -1135,8 +1135,7 @@ ngx_http_flv_join(ngx_rtmp_session_t *s, u_char *name, unsigned publisher)
 static ngx_int_t
 ngx_http_flv_close_stream(ngx_rtmp_session_t *s, ngx_rtmp_close_stream_t *v)
 {
-    ngx_rtmp_session_t                  *ss;
-    ngx_http_flv_rtmp_ctx_t             *ctx, **cctx, *pctx;
+    ngx_http_flv_rtmp_ctx_t             *ctx, **cctx;
     ngx_http_flv_stream_t              **stream;
     ngx_http_flv_rtmp_app_conf_t        *hacf;
 
@@ -1218,7 +1217,7 @@ ngx_http_flv_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
 
     /* join stream as publisher */
 
-    ngx_rtmp_live_join(s, v->name, 1);
+    ngx_http_flv_join(s, v->name, 1);
 
 next:
     return next_publish(s, v);
