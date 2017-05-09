@@ -32,6 +32,7 @@ struct ngx_http_flv_stream_s {
     ngx_msec_t                          epoch;
     unsigned                            active:1;
     unsigned                            publishing:1;
+    unsigned                            paused:1;
 };
 
 
