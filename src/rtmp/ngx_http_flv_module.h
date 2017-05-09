@@ -32,7 +32,6 @@ struct ngx_http_flv_stream_s {
     ngx_msec_t                          epoch;
     unsigned                            active:1;
     unsigned                            publishing:1;
-    unsigned                            paused:1;
 };
 
 
@@ -44,6 +43,7 @@ struct ngx_http_flv_rtmp_ctx_s {
     uint32_t                            epoch;
     unsigned                            initialized:1;
     unsigned                            publishing:1;
+    unsigned                            paused:1;
 };
 
 
