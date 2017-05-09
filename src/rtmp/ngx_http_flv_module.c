@@ -627,7 +627,7 @@ ngx_http_flv_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 #endif
 
     if (s->protocol != NGX_PROTO_TYPE_HTTP_FLV_PULL) {
-        goto next;
+        return NGX_OK;
     }
 
     lacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_live_module);
@@ -1009,9 +1009,9 @@ ngx_http_flv_play_done(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 static ngx_rtmp_live_stream_t **
 ngx_http_flv_get_stream(ngx_rtmp_session_t *s, u_char *name, int create)
 {
-    ngx_http_flv_app_conf_t    *hacf;
-    ngx_rtmp_live_stream_t    **stream;
-    size_t                      len;
+    ngx_http_flv_rtmp_app_conf_t    *hacf;
+    ngx_rtmp_live_stream_t         **stream;
+    size_t                           len;
 
     hacf = ngx_rtmp_get_module_app_conf(s, ngx_http_flv_rtmpmodule);
     if (hacf == NULL) {
@@ -1052,9 +1052,9 @@ ngx_http_flv_get_stream(ngx_rtmp_session_t *s, u_char *name, int create)
 static void
 ngx_http_flv_join(ngx_rtmp_session_t *s, u_char *name, unsigned publisher)
 {
-    ngx_http_flv_ctx_t             *ctx;
-    ngx_rtmp_live_stream_t        **stream;
-    ngx_http_flv_app_conf_t        *hacf;
+    ngx_http_flv_ctx_t                 *ctx;
+    ngx_rtmp_live_stream_t            **stream;
+    ngx_http_flv_rtmp_app_conf_t        *hacf;
 
     hacf = ngx_rtmp_get_module_app_conf(s, ngx_http_flv_rtmpmodule);
     if (hacf == NULL) {
@@ -1130,10 +1130,10 @@ ngx_http_flv_join(ngx_rtmp_session_t *s, u_char *name, unsigned publisher)
 static ngx_int_t
 ngx_http_flv_close_stream(ngx_rtmp_session_t *s, ngx_rtmp_close_stream_t *v)
 {
-    ngx_rtmp_session_t             *ss;
-    ngx_http_flv_ctx_t             *ctx, **cctx, *pctx;
-    ngx_rtmp_live_stream_t        **stream;
-    ngx_http_flv_app_conf_t        *hacf;
+    ngx_rtmp_session_t                  *ss;
+    ngx_http_flv_ctx_t                  *ctx, **cctx, *pctx;
+    ngx_rtmp_live_stream_t             **stream;
+    ngx_http_flv_rtmp_app_conf_t        *hacf;
 
     if (s->protocol != NGX_PROTO_TYPE_HTTP_FLV_PULL) {
         goto next;
@@ -1196,7 +1196,7 @@ next:
 static ngx_int_t
 ngx_http_flv_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
 {
-    ngx_http_flv_app_conf_t        *hacf;
+    ngx_http_flv_rtmp_app_conf_t        *hacf;
 
     if (s->protocol != NGX_PROTO_TYPE_HTTP_FLV_PULL) {
         goto next;
@@ -1223,7 +1223,7 @@ next:
 static ngx_int_t
 ngx_http_flv_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
 {
-    ngx_http_flv_app_conf_t        *hacf;
+    ngx_http_flv_rtmp_app_conf_t        *hacf;
 
     if (s->protocol != NGX_PROTO_TYPE_HTTP_FLV_PULL) {
         goto next;
