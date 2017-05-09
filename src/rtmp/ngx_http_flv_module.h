@@ -17,6 +17,22 @@
 
 
 typedef struct ngx_http_flv_rtmp_ctx_s ngx_http_flv_rtmp_ctx_t;
+typedef struct ngx_http_flv_stream_s ngx_http_flv_stream_t;
+
+
+struct ngx_http_flv_stream_s {
+    u_char                              name[NGX_RTMP_MAX_NAME];
+    ngx_http_flv_stream_t              *next;
+    ngx_http_flv_ctx_t                 *ctx;
+    ngx_rtmp_bandwidth_t                bw_in;
+    ngx_rtmp_bandwidth_t                bw_in_audio;
+    ngx_rtmp_bandwidth_t                bw_in_video;
+    ngx_rtmp_bandwidth_t                bw_out;
+	ngx_rtmp_live_frame_rate_t          video_frame_rate;
+    ngx_msec_t                          epoch;
+    unsigned                            active:1;
+    unsigned                            publishing:1;
+};
 
 
 struct ngx_http_flv_rtmp_ctx_s {

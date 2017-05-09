@@ -19,7 +19,6 @@
 
 typedef struct ngx_rtmp_live_ctx_s ngx_rtmp_live_ctx_t;
 typedef struct ngx_rtmp_live_stream_s ngx_rtmp_live_stream_t;
-typedef void ngx_rtmp_ctx_t;
 
 
 typedef struct {
@@ -56,7 +55,7 @@ struct ngx_rtmp_live_ctx_s {
 struct ngx_rtmp_live_stream_s {
     u_char                              name[NGX_RTMP_MAX_NAME];
     ngx_rtmp_live_stream_t             *next;
-    ngx_rtmp_ctx_t                     *ctx;
+    ngx_rtmp_live_ctx_t                *ctx;
     ngx_rtmp_bandwidth_t                bw_in;
     ngx_rtmp_bandwidth_t                bw_in_audio;
     ngx_rtmp_bandwidth_t                bw_in_video;
