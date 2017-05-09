@@ -19,7 +19,7 @@
 typedef struct ngx_http_flv_rtmp_ctx_s ngx_http_flv_rtmp_ctx_t;
 
 
-typedef struct ngx_http_flv_rtmp_ctx_s {
+struct ngx_http_flv_rtmp_ctx_s {
     ngx_rtmp_session_t                 *session;
     ngx_rtmp_live_stream_t             *stream;
     ngx_http_flv_rtmp_ctx_t            *next;
