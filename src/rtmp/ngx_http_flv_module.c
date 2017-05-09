@@ -8,7 +8,6 @@
 #include <ngx_core.h>
 #include <ngx_rtmp.h>
 #include "ngx_http_flv_module.h"
-#include "ngx_rtmp_live_module.h"
 #include "ngx_rtmp_codec_module.h"
 
 
