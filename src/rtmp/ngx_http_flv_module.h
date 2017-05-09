@@ -33,6 +33,7 @@ typedef struct {
     ngx_int_t                           nbuckets;
     ngx_flag_t                          http_flv;
     ngx_rtmp_live_stream_t            **streams;
+    ngx_pool_t                         *pool;
     ngx_rtmp_live_stream_t             *free_streams;
 } ngx_http_flv_rtmp_app_conf_t;
 

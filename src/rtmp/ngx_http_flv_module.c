@@ -1052,7 +1052,7 @@ ngx_http_flv_get_stream(ngx_rtmp_session_t *s, u_char *name, int create)
 static void
 ngx_http_flv_join(ngx_rtmp_session_t *s, u_char *name, unsigned publisher)
 {
-    ngx_http_flv_ctx_t                 *ctx;
+    ngx_http_flv_rtmp_ctx_t            *ctx;
     ngx_rtmp_live_stream_t            **stream;
     ngx_http_flv_rtmp_app_conf_t        *hacf;
 
@@ -1069,7 +1069,7 @@ ngx_http_flv_join(ngx_rtmp_session_t *s, u_char *name, unsigned publisher)
     }
 
     if (ctx == NULL) {
-        ctx = ngx_palloc(s->connection->pool, sizeof(ngx_http_flv_ctx_t));
+        ctx = ngx_palloc(s->connection->pool, sizeof(ngx_http_flv_rtmp_ctx_t));
         ngx_rtmp_set_ctx(s, ctx, ngx_http_flv_rtmpmodule);
     }
 
@@ -1131,7 +1131,7 @@ static ngx_int_t
 ngx_http_flv_close_stream(ngx_rtmp_session_t *s, ngx_rtmp_close_stream_t *v)
 {
     ngx_rtmp_session_t                  *ss;
-    ngx_http_flv_ctx_t                  *ctx, **cctx, *pctx;
+    ngx_http_flv_rtmp_ctx_t             *ctx, **cctx, *pctx;
     ngx_rtmp_live_stream_t             **stream;
     ngx_http_flv_rtmp_app_conf_t        *hacf;
 
