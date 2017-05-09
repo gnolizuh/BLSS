@@ -472,16 +472,17 @@ ngx_http_flv_http_merge_conf(ngx_conf_t *cf, void *parent, void *child)
 static void *
 ngx_http_flv_rtmp_create_app_conf(ngx_conf_t *cf)
 {
-    ngx_http_flv_rtmp_app_conf_t *conf;
+    ngx_http_flv_rtmp_app_conf_t      *hacf;
 
-    conf = ngx_pcalloc(cf->pool, sizeof(ngx_http_flv_rtmp_app_conf_t));
-    if (conf == NULL) {
+    hacf = ngx_pcalloc(cf->pool, sizeof(ngx_http_flv_rtmp_app_conf_t));
+    if (hacf == NULL) {
         return NULL;
     }
 
-    conf->http_flv = NGX_CONF_UNSET;
+    hacf->http_flv = NGX_CONF_UNSET;
+    hacf->nbuckets = NGX_CONF_UNSET;
 
-    return conf;
+    return hacf;
 }
 
 
@@ -492,6 +493,15 @@ ngx_http_flv_rtmp_merge_app_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_http_flv_rtmp_app_conf_t    *conf = child;
 
     ngx_conf_merge_value(conf->http_flv, prev->http_flv, 0);
+    ngx_conf_merge_value(conf->nbuckets, prev->nbuckets, 1024);
+
+    conf->pool = ngx_create_pool(4096, &cf->cycle->new_log);
+    if (conf->pool == NULL) {
+        return NGX_CONF_ERROR;
+    }
+
+    conf->streams = ngx_pcalloc(cf->pool,
+            sizeof(ngx_http_flv_stream_t *) * conf->nbuckets);
 
     return NGX_CONF_OK;
 }
@@ -1010,9 +1020,15 @@ ngx_http_flv_play_done(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 static ngx_http_flv_stream_t **
 ngx_http_flv_get_stream(ngx_rtmp_session_t *s, u_char *name, int create)
 {
+    ngx_rtmp_live_app_conf_t        *lacf;
     ngx_http_flv_rtmp_app_conf_t    *hacf;
     ngx_http_flv_stream_t         **stream;
     size_t                           len;
+
+    lacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_live_module);
+    if (lacf == NULL) {
+        return NULL;
+    }
 
     hacf = ngx_rtmp_get_module_app_conf(s, ngx_http_flv_rtmpmodule);
     if (hacf == NULL) {
@@ -1020,7 +1036,7 @@ ngx_http_flv_get_stream(ngx_rtmp_session_t *s, u_char *name, int create)
     }
 
     len = ngx_strlen(name);
-    stream = &hacf->streams[ngx_hash_key(name, len) % hacf->nbuckets];
+    stream = &hacf->streams[ngx_hash_key(name, len) % lacf->nbuckets];
 
     for (; *stream; stream = &(*stream)->next) {
         if (ngx_strcmp(name, (*stream)->name) == 0) {
