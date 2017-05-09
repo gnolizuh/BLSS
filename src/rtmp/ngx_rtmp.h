@@ -167,11 +167,14 @@ typedef struct {
 #define NGX_LOCAL_RELAY                 3
 #define	NGX_ERROR_RELAY					4
 
-#define NGX_PROTO_TYPE_RTMP_PULL        0
-#define NGX_PROTO_TYPE_MPEG_TS_PULL     1
-#define NGX_PROTO_TYPE_M3U8_PULL        2
-#define NGX_PROTO_TYPE_HTTP_FLV_PULL    3
-#define NGX_PROTO_TYPE_RTMP_PUSH        4
+#define NGX_PROTO_TYPE_UNKNOWN          0
+#define NGX_PROTO_TYPE_RTMP             1
+#define NGX_PROTO_TYPE_RTMP_PULL        2
+#define NGX_PROTO_TYPE_RTMP_PUSH        3
+#define NGX_PROTO_TYPE_HLS_TS_PULL      4
+#define NGX_PROTO_TYPE_HLS_M3U8_PULL    5
+#define NGX_PROTO_TYPE_HTTP_FLV_PULL    4
+
 
 /* RTMP message types */
 #define NGX_RTMP_MSG_CHUNK_SIZE         1
