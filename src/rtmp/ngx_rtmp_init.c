@@ -173,7 +173,7 @@ ngx_http_flv_init_session(ngx_http_request_t *r, ngx_rtmp_addr_conf_t *addr_conf
 
     s->addr_text = &addr_conf->addr_text;
 
-    c->data = s;
+    // c->data = s;
     s->connection = c;
 
     ctx = ngx_palloc(c->pool, sizeof(ngx_rtmp_error_log_ctx_t));
