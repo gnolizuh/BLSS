@@ -837,6 +837,8 @@ ngx_rtmp_gop_cache_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
         ngx_rtmp_set_ctx(s, ctx, ngx_rtmp_gop_cache_module);
     }
 
+    ngx_memzero(ctx, sizeof(*ctx));
+
 next:
     return next_publish(s, v);
 }
