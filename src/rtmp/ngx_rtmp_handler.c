@@ -203,7 +203,7 @@ ngx_http_flv_recv(ngx_event_t *rev)
     ngx_http_flv_http_ctx_t    *httpctx;
     u_char                      b;
 
-    c = wev->data;
+    c = rev->data;
     r = c->data;
 
     httpctx = ngx_http_get_module_ctx(r, ngx_http_flv_httpmodule);
