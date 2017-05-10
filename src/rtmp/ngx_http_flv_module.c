@@ -411,7 +411,7 @@ ngx_http_flv_http_handler(ngx_http_request_t *r)
     cln->handler = ngx_http_flv_cleanup;
     cln->data = r;
 
-    return NGX_OK;
+    return NGX_CUSTOME;
 }
 
 
