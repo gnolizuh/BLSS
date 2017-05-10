@@ -828,8 +828,8 @@ ngx_rtmp_send_message(ngx_rtmp_session_t *s, ngx_chain_t *out,
     }
 
     if (!s->connection->write->active) {
+
         ngx_rtmp_send(s->connection->write);
-        /*return ngx_add_event(s->connection->write, NGX_WRITE_EVENT, NGX_CLEAR_EVENT);*/
     }
 
     return NGX_OK;
