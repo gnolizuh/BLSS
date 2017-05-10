@@ -7,6 +7,7 @@
 #include <ngx_config.h>
 #include <ngx_core.h>
 #include <ngx_rtmp.h>
+#include "ngx_rtmp_live_module.h"
 #include "ngx_http_flv_module.h"
 #include "ngx_rtmp_codec_module.h"
 
@@ -1066,8 +1067,7 @@ ngx_http_flv_join(ngx_rtmp_session_t *s, u_char *name, unsigned publisher)
 static ngx_int_t
 ngx_http_flv_close_stream(ngx_rtmp_session_t *s, ngx_rtmp_close_stream_t *v)
 {
-    ngx_rtmp_session_t             *ss;
-    ngx_rtmp_live_ctx_t            *ctx, **cctx, *pctx;
+    ngx_rtmp_live_ctx_t            *ctx, **cctx;
     ngx_rtmp_live_stream_t        **stream;
     ngx_rtmp_live_app_conf_t       *lacf;
 
