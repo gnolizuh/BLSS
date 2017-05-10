@@ -53,6 +53,11 @@ ngx_rtmp_send_shared_packet(ngx_rtmp_session_t *s, ngx_chain_t *cl)
     ngx_rtmp_core_srv_conf_t       *cscf;
     ngx_int_t                       rc;
 
+    if (s->protocol != NGX_PROTO_TYPE_RTMP_PUSH &&
+        s->protocol != NGX_PROTO_TYPE_RTMP_PULL) {
+        return NGX_OK;
+    }
+
     if (cl == NULL) {
         return NGX_ERROR;
     }
