@@ -1001,6 +1001,40 @@ ngx_http_flv_play_done(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
 
 static void
+ngx_http_flv_start(ngx_rtmp_session_t *s)
+{
+    ngx_rtmp_live_ctx_t        *ctx;
+
+    ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_live_module);
+
+    ctx->active = 1;
+
+    ctx->cs[0].active = 0;
+    ctx->cs[0].dropped = 0;
+
+    ctx->cs[1].active = 0;
+    ctx->cs[1].dropped = 0;
+}
+
+
+static void
+ngx_http_flv_stop(ngx_rtmp_session_t *s)
+{
+    ngx_rtmp_live_ctx_t        *ctx;
+
+    ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_live_module);
+
+    ctx->active = 0;
+
+    ctx->cs[0].active = 0;
+    ctx->cs[0].dropped = 0;
+
+    ctx->cs[1].active = 0;
+    ctx->cs[1].dropped = 0;
+}
+
+
+static void
 ngx_http_flv_join(ngx_rtmp_session_t *s, u_char *name, unsigned publisher)
 {
     ngx_rtmp_live_ctx_t            *ctx;
@@ -1056,11 +1090,9 @@ ngx_http_flv_join(ngx_rtmp_session_t *s, u_char *name, unsigned publisher)
     ctx->cs[0].csid = NGX_RTMP_CSID_VIDEO;
     ctx->cs[1].csid = NGX_RTMP_CSID_AUDIO;
 
-    /*
     if (!ctx->publishing && ctx->stream->active) {
-        ngx_rtmp_live_start(s);
+        ngx_http_flv_start(s);
     }
-    */
 }
 
 
@@ -1102,7 +1134,7 @@ ngx_http_flv_close_stream(ngx_rtmp_session_t *s, ngx_rtmp_close_stream_t *v)
     }
 
     if (ctx->publishing || ctx->stream->active) {
-        ngx_rtmp_live_stop(s);
+        ngx_http_flv_stop(s);
     }
 
     if (ctx->stream->hctx) {

@@ -272,7 +272,7 @@ ngx_rtmp_gop_cache_free_shared_chain(ngx_rtmp_session_t *s, ngx_chain_t *in)
 }
 
 
-static ngx_rtmp_live_stream_t **
+ngx_rtmp_live_stream_t **
 ngx_rtmp_live_get_stream(ngx_rtmp_session_t *s, u_char *name, int create)
 {
     ngx_rtmp_live_app_conf_t   *lacf;
