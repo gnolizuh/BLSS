@@ -321,6 +321,17 @@ ngx_rtmp_cmd_connect(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
            ngx_rtmp_send_amf(s, &h, out_elts,
                              sizeof(out_elts) / sizeof(out_elts[0]))
            != NGX_OK ? NGX_ERROR : NGX_OK;
+
+    if (ngx_rtmp_send_ack_size(s, cscf->ack_window) != NGX_OK ||
+        ngx_rtmp_send_bandwidth(s, cscf->ack_window, NGX_RTMP_LIMIT_DYNAMIC) != NGX_OK ||
+        ngx_rtmp_send_chunk_size(s, cscf->chunk_size) != NGX_OK ||
+        ngx_rtmp_send_amf(s, &h, out_elts, sizeof(out_elts) / sizeof(out_elts[0])) != NGX_OK ) {
+
+        return NGX_ERROR;
+    } else {
+
+        return ngx_rtmp_fire_event(s, NGX_RTMP_CONNECT_END, NULL, NULL);
+    }
 }
 
 
@@ -593,7 +604,7 @@ ngx_rtmp_cmd_play_init(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 static ngx_int_t
 ngx_rtmp_cmd_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
 {
-    return NGX_OK;
+    return ngx_rtmp_fire_event(s, NGX_RTMP_PLAY_DONE, NULL, NULL);
 }
 
 

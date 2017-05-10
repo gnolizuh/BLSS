@@ -1207,10 +1207,10 @@ ngx_http_flv_rtmp_init(ngx_conf_t *cf)
     h = ngx_array_push(&cmcf->events[NGX_RTMP_MSG_VIDEO]);
     *h = ngx_http_flv_av;
 
-    h = ngx_array_push(&cmcf->events[NGX_RTMP_CONNECT_DONE]);
+    h = ngx_array_push(&cmcf->events[NGX_RTMP_CONNECT_END]);
     *h = ngx_http_flv_connect_done;
 
-    h = ngx_array_push(&cmcf->events[NGX_RTMP_PLAY_DONE]);
+    h = ngx_array_push(&cmcf->events[NGX_RTMP_PLAY_END]);
     *h = ngx_http_flv_play_done;
 
     h = ngx_array_push(&cmcf->events[NGX_RTMP_ON_MESSAGE]);

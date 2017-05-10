@@ -198,8 +198,8 @@ typedef struct {
 #define NGX_RTMP_CONNECT                NGX_RTMP_MSG_MAX + 1
 #define NGX_RTMP_DISCONNECT             NGX_RTMP_MSG_MAX + 2
 #define NGX_RTMP_HANDSHAKE_DONE         NGX_RTMP_MSG_MAX + 3
-#define NGX_RTMP_CONNECT_DONE           NGX_RTMP_MSG_MAX + 4
-#define NGX_RTMP_PLAY_DONE              NGX_RTMP_MSG_MAX + 5
+#define NGX_RTMP_CONNECT_END            NGX_RTMP_MSG_MAX + 4
+#define NGX_RTMP_PLAY_END               NGX_RTMP_MSG_MAX + 5
 #define NGX_RTMP_ON_MESSAGE             NGX_RTMP_MSG_MAX + 6
 #define NGX_RTMP_MAX_EVENT              NGX_RTMP_MSG_MAX + 7
 
