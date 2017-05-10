@@ -726,7 +726,7 @@ ngx_http_flv_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     /* broadcast to all subscribers */
     fpkt = ngx_http_flv_append_shared_bufs(cscf, &ch, in);
 
-    for (pctx = ctx->stream->ctx; pctx; pctx = pctx->next) {
+    for (pctx = ctx->stream->hctx; pctx; pctx = pctx->next) {
         if (pctx == ctx || pctx->paused) {
             continue;
         }
@@ -901,7 +901,7 @@ ngx_http_flv_message(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     }
 
     /* broadcast to all subscribers */
-    for (pctx = ctx->stream->ctx; pctx; pctx = pctx->next) {
+    for (pctx = ctx->stream->hctx; pctx; pctx = pctx->next) {
         if (pctx == ctx || pctx->paused) {
             continue;
         }
