@@ -491,7 +491,7 @@ ngx_http_flv_rtmp_merge_app_conf(ngx_conf_t *cf, void *parent, void *child)
 
 
 static ngx_int_t
-ngx_http_flv_connect_done(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
+ngx_http_flv_connect_end(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     ngx_chain_t *in)
 {
     return ngx_http_flv_play_local(s);
@@ -920,7 +920,7 @@ ngx_http_flv_message(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
 
 static ngx_int_t
-ngx_http_flv_play_done(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
+ngx_http_flv_play_end(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     ngx_chain_t *in)
 {
     static u_char httpheader[] = {
@@ -1208,10 +1208,10 @@ ngx_http_flv_rtmp_init(ngx_conf_t *cf)
     *h = ngx_http_flv_av;
 
     h = ngx_array_push(&cmcf->events[NGX_RTMP_CONNECT_END]);
-    *h = ngx_http_flv_connect_done;
+    *h = ngx_http_flv_connect_end;
 
     h = ngx_array_push(&cmcf->events[NGX_RTMP_PLAY_END]);
-    *h = ngx_http_flv_play_done;
+    *h = ngx_http_flv_play_end;
 
     h = ngx_array_push(&cmcf->events[NGX_RTMP_ON_MESSAGE]);
     *h = ngx_http_flv_message;
