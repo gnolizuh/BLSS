@@ -506,6 +506,8 @@ ngx_rtmp_cmd_publish_init(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
                   "publish: name='%s' args='%s' type=%s silent=%d",
                   v.name, v.args, v.type, v.silent);
 
+    s->protocol = NGX_PROTO_TYPE_RTMP_PUSH;
+
     return ngx_rtmp_publish(s, &v);
 }
 
@@ -581,6 +583,8 @@ ngx_rtmp_cmd_play_init(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
                   v.name, v.args, (ngx_int_t) v.start,
                   (ngx_int_t) v.duration, (ngx_int_t) v.reset,
                   (ngx_int_t) v.silent);
+
+    s->protocol = NGX_PROTO_TYPE_RTMP_PULL;
 
     return ngx_rtmp_play(s, &v);
 }
