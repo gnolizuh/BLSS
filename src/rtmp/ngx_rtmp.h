@@ -489,6 +489,7 @@ void ngx_http_flv_init_connection(ngx_http_request_t *r, ngx_uint_t protocol);
 ngx_rtmp_session_t * ngx_http_flv_init_session(ngx_http_request_t *r,
      ngx_rtmp_addr_conf_t *addr_conf);
 void ngx_http_flv_send(ngx_event_t *wev);
+void ngx_http_flv_recv(ngx_event_t *rev);
 
 void ngx_rtmp_finalize_session(ngx_rtmp_session_t *s);
 void ngx_rtmp_handshake(ngx_rtmp_session_t *s);
