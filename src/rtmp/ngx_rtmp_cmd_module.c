@@ -604,7 +604,7 @@ ngx_rtmp_cmd_play_init(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 static ngx_int_t
 ngx_rtmp_cmd_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
 {
-    return ngx_rtmp_fire_event(s, NGX_RTMP_PLAY_DONE, NULL, NULL);
+    return ngx_rtmp_fire_event(s, NGX_RTMP_PLAY_END, NULL, NULL);
 }
 
 
