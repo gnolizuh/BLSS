@@ -314,14 +314,6 @@ ngx_rtmp_cmd_connect(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
 
     object_encoding = v->object_encoding;
 
-    return ngx_rtmp_send_ack_size(s, cscf->ack_window) != NGX_OK ||
-           ngx_rtmp_send_bandwidth(s, cscf->ack_window,
-                                   NGX_RTMP_LIMIT_DYNAMIC) != NGX_OK ||
-           ngx_rtmp_send_chunk_size(s, cscf->chunk_size) != NGX_OK ||
-           ngx_rtmp_send_amf(s, &h, out_elts,
-                             sizeof(out_elts) / sizeof(out_elts[0]))
-           != NGX_OK ? NGX_ERROR : NGX_OK;
-
     if (ngx_rtmp_send_ack_size(s, cscf->ack_window) != NGX_OK ||
         ngx_rtmp_send_bandwidth(s, cscf->ack_window, NGX_RTMP_LIMIT_DYNAMIC) != NGX_OK ||
         ngx_rtmp_send_chunk_size(s, cscf->chunk_size) != NGX_OK ||
