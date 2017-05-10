@@ -472,8 +472,6 @@ ngx_http_flv_rtmp_create_app_conf(ngx_conf_t *cf)
     }
 
     hacf->http_flv = NGX_CONF_UNSET;
-    hacf->buflen = NGX_CONF_UNSET_MSEC;
-    hacf->idle_streams = NGX_CONF_UNSET;
 
     return hacf;
 }
@@ -486,13 +484,6 @@ ngx_http_flv_rtmp_merge_app_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_http_flv_rtmp_app_conf_t    *conf = child;
 
     ngx_conf_merge_value(conf->http_flv, prev->http_flv, 0);
-    ngx_conf_merge_msec_value(conf->buflen, prev->buflen, 0);
-    ngx_conf_merge_value(conf->idle_streams, prev->idle_streams, 1);
-
-    conf->pool = ngx_create_pool(4096, &cf->cycle->new_log);
-    if (conf->pool == NULL) {
-        return NGX_CONF_ERROR;
-    }
 
     return NGX_CONF_OK;
 }
