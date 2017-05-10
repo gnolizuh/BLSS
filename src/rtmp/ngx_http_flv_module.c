@@ -606,7 +606,7 @@ ngx_http_flv_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     ngx_rtmp_live_app_conf_t       *lacf;
     ngx_http_flv_rtmp_app_conf_t   *hacf;
     ngx_rtmp_core_srv_conf_t       *cscf;
-    ngx_http_flv_rtmp_ctx_t        *ctx, *pctx;
+    ngx_rtmp_live_ctx_t            *ctx, *pctx;
     ngx_rtmp_codec_ctx_t           *codec_ctx = NULL;
     ngx_rtmp_header_t               ch, lh, mh;
     ngx_rtmp_session_t             *ss;
