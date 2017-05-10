@@ -57,6 +57,8 @@ ngx_rtmp_send_shared_packet(ngx_rtmp_session_t *s, ngx_chain_t *cl)
         return NGX_ERROR;
     }
 
+    cscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_core_module);
+
     if (s->protocol != NGX_PROTO_TYPE_RTMP_PUSH &&
         s->protocol != NGX_PROTO_TYPE_RTMP_PULL) {
 
@@ -64,8 +66,6 @@ ngx_rtmp_send_shared_packet(ngx_rtmp_session_t *s, ngx_chain_t *cl)
 
         return NGX_OK;
     }
-
-    cscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_core_module);
 
     rc = ngx_rtmp_send_message(s, cl, 0);
 
