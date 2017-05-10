@@ -333,6 +333,7 @@ static ngx_int_t
 ngx_http_flv_http_handler(ngx_http_request_t *r)
 {
     ngx_http_flv_httploc_conf_t         *hlcf;
+    ngx_http_flv_http_ctx_t             *httpctx;
     ngx_http_cleanup_t                  *cln;
     ngx_int_t                            protocol, rc = 0;
     ngx_str_t                            app, name;
@@ -342,6 +343,11 @@ ngx_http_flv_http_handler(ngx_http_request_t *r)
     hlcf = ngx_http_get_module_loc_conf(r, ngx_http_flv_httpmodule);
     if (hlcf == NULL || !hlcf->http_flv) {
     	return NGX_DECLINED;
+    }
+
+    httpctx = ngx_http_get_module_ctx(r, ngx_http_flv_httpmodule);
+    if (httpctx != NULL) {
+        return NGX_CUSTOME;
     }
 
     if (!(r->method & (NGX_HTTP_GET|NGX_HTTP_HEAD))
