@@ -999,49 +999,6 @@ ngx_http_flv_play_done(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 }
 
 
-static ngx_http_flv_stream_t **
-ngx_http_flv_get_stream(ngx_rtmp_session_t *s, u_char *name, int create)
-{
-    ngx_http_flv_rtmp_app_conf_t    *hacf;
-    ngx_http_flv_stream_t         **stream;
-    size_t                           len;
-
-    hacf = ngx_rtmp_get_module_app_conf(s, ngx_http_flv_rtmpmodule);
-    if (hacf == NULL) {
-        return NULL;
-    }
-
-    len = ngx_strlen(name);
-    stream = &hacf->streams[ngx_hash_key(name, len) % hacf->nbuckets];
-
-    for (; *stream; stream = &(*stream)->next) {
-        if (ngx_strcmp(name, (*stream)->name) == 0) {
-            return stream;
-        }
-    }
-
-    if (!create) {
-        return NULL;
-    }
-
-    ngx_log_debug1(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
-            "http flv: create stream '%s'", name);
-
-    if (hacf->free_streams) {
-        *stream = hacf->free_streams;
-        hacf->free_streams = hacf->free_streams->next;
-    } else {
-        *stream = ngx_palloc(hacf->pool, sizeof(ngx_http_flv_stream_t));
-    }
-    ngx_memzero(*stream, sizeof(ngx_http_flv_stream_t));
-    ngx_memcpy((*stream)->name, name,
-            ngx_min(sizeof((*stream)->name) - 1, len));
-    (*stream)->epoch = ngx_current_msec;
-
-    return stream;
-}
-
-
 static void
 ngx_http_flv_join(ngx_rtmp_session_t *s, u_char *name, unsigned publisher)
 {
