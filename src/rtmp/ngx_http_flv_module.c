@@ -211,8 +211,6 @@ ngx_http_flv_play_local(ngx_rtmp_session_t *s)
 {
     static ngx_rtmp_play_t      v;
 
-    ngx_rtmp_core_srv_conf_t   *cscf;
-
 	ngx_memzero(&v, sizeof(ngx_rtmp_play_t));
 
     ngx_memcpy(v.name, s->name.data, ngx_min(s->name.len, sizeof(v.name) - 1));
