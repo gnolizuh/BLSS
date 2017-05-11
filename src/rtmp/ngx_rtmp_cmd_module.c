@@ -531,23 +531,7 @@ ngx_rtmp_cmd_connect_local(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
 
     cscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_core_module);
 
-    /* find application & set app_conf */
-    cacfp = cscf->applications.elts;
-    for(n = 0; n < cscf->applications.nelts; ++n, ++cacfp) {
-        if ((*cacfp)->name.len == s->app.len &&
-            ngx_strncmp((*cacfp)->name.data, s->app.data, s->app.len) == 0)
-        {
-            /* found app! */
-            s->app_conf = (*cacfp)->app_conf;
-            break;
-        }
-    }
-
-    if (s->app_conf == NULL) {
-        ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
-                      "connect: application not found: '%V'", &s->app);
-        return NGX_ERROR;
-    }
+    s->app_conf = cscf->ctx->app_conf;
 
     ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
             "local connect: app='%s' args='%s' flashver='%s' swf_url='%s' "
