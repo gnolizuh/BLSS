@@ -218,10 +218,6 @@ ngx_http_flv_play_local(ngx_rtmp_session_t *s)
     ngx_memcpy(v.name, s->name.data, ngx_min(s->name.len, sizeof(v.name) - 1));
     ngx_memcpy(v.args, s->args.data, ngx_min(s->args.len, sizeof(v.args) - 1));
 
-    cscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_core_module);
-
-    s->app_conf = cscf->ctx->app_conf;
-
 	return ngx_rtmp_cmd_play_local(s, &v);
 }
 
