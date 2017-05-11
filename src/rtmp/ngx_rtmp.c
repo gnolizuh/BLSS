@@ -1038,7 +1038,7 @@ ngx_rtmp_add_listen(ngx_conf_t *cf, ngx_rtmp_core_srv_conf_t *cscf,
     cmcf = ngx_rtmp_conf_get_module_main_conf(cf, ngx_rtmp_core_module);
 
     if (cmcf->ports == NULL) {
-        cmcf->ports = ngx_array_create(cf->temp_pool, 2,
+        cmcf->ports = ngx_array_create(cf->pool, 2,
                                        sizeof(ngx_rtmp_conf_port_t));
         if (cmcf->ports == NULL) {
             return NGX_ERROR;
