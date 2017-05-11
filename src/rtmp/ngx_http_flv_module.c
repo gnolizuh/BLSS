@@ -333,7 +333,6 @@ static ngx_int_t
 ngx_http_flv_http_handler(ngx_http_request_t *r)
 {
     ngx_http_flv_httploc_conf_t         *hlcf;
-    ngx_http_flv_http_ctx_t             *httpctx;
     ngx_http_cleanup_t                  *cln;
     ngx_int_t                            protocol, rc = 0;
     ngx_str_t                            app, name;
