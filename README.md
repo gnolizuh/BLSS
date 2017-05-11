@@ -1,6 +1,14 @@
 
-
 # BLSS: Bravo Live Streaming Service 
+
+[![Powered][1]][2] [![Build Status][3]][4] [![Downloads][5]][6]
+
+[1]: https://img.shields.io/badge/nginx--rtmp--module-Powered-blue.svg
+[2]: https://github.com/arut/nginx-rtmp-module
+[3]: https://travis-ci.org/gnolizuh/BLSS.svg?branch=master
+[4]: https://travis-ci.org/gnolizuh/BLSS
+[5]: https://img.shields.io/github/downloads/atom/atom/total.svg
+[6]: https://github.com/gnolizuh/BLSS/releases
 
 A bravo live streaming service powered by [nginx-rtmp-module](https://github.com/arut/nginx-rtmp-module).
 
