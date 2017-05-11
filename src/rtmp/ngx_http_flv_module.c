@@ -494,6 +494,10 @@ static ngx_int_t
 ngx_http_flv_connect_end(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     ngx_chain_t *in)
 {
+    if (s->protocol != NGX_PROTO_TYPE_HTTP_FLV_PULL) {
+        goto next;
+    }
+
     return ngx_http_flv_play_local(s);
 }
 
