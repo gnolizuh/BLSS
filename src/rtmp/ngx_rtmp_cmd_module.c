@@ -314,13 +314,16 @@ ngx_rtmp_cmd_connect(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
 
     object_encoding = v->object_encoding;
 
-    return ngx_rtmp_send_ack_size(s, cscf->ack_window) != NGX_OK ||
-           ngx_rtmp_send_bandwidth(s, cscf->ack_window,
-                                   NGX_RTMP_LIMIT_DYNAMIC) != NGX_OK ||
-           ngx_rtmp_send_chunk_size(s, cscf->chunk_size) != NGX_OK ||
-           ngx_rtmp_send_amf(s, &h, out_elts,
-                             sizeof(out_elts) / sizeof(out_elts[0]))
-           != NGX_OK ? NGX_ERROR : NGX_OK;
+    if (ngx_rtmp_send_ack_size(s, cscf->ack_window) != NGX_OK ||
+        ngx_rtmp_send_bandwidth(s, cscf->ack_window, NGX_RTMP_LIMIT_DYNAMIC) != NGX_OK ||
+        ngx_rtmp_send_chunk_size(s, cscf->chunk_size) != NGX_OK ||
+        ngx_rtmp_send_amf(s, &h, out_elts, sizeof(out_elts) / sizeof(out_elts[0])) != NGX_OK ) {
+
+        return NGX_ERROR;
+    } else {
+
+        return ngx_rtmp_fire_event(s, NGX_RTMP_CONNECT_END, NULL, NULL);
+    }
 }
 
 
@@ -522,6 +525,14 @@ ngx_rtmp_cmd_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
 ngx_int_t
 ngx_rtmp_cmd_start_connect(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
 {
+    ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+                  "connect: app='%s' args='%s' flashver='%s' swf_url='%s' "
+                  "tc_url='%s' page_url='%s' acodecs=%uD vcodecs=%uD "
+                  "object_encoding=%ui",
+                  v->app, v->args, v->flashver, v->swf_url, v->tc_url, v->page_url,
+                  (uint32_t)v->acodecs, (uint32_t)v->vcodecs,
+                  (ngx_int_t)v->object_encoding);
+
     return ngx_rtmp_connect(s, v);
 }
 
@@ -529,6 +540,13 @@ ngx_rtmp_cmd_start_connect(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
 ngx_int_t
 ngx_rtmp_cmd_start_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
 {
+    ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+                   "play: name='%s' args='%s' start=%i duration=%i "
+                   "reset=%i silent=%i",
+                   v->name, v->args, (ngx_int_t) v->start,
+                   (ngx_int_t) v->duration, (ngx_int_t) v->reset,
+                   (ngx_int_t) v->silent);
+
     return ngx_rtmp_play(s, v);
 }
 
@@ -593,7 +611,7 @@ ngx_rtmp_cmd_play_init(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 static ngx_int_t
 ngx_rtmp_cmd_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
 {
-    return NGX_OK;
+    return ngx_rtmp_fire_event(s, NGX_RTMP_PLAY_END, NULL, NULL);
 }
 
 

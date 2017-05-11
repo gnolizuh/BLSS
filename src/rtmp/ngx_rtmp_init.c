@@ -137,10 +137,10 @@ ngx_http_flv_init_connection(ngx_http_request_t *r, ngx_uint_t protocol)
     }
 
     r->read_event_handler = ngx_http_test_reading;
-    r->blocked = 1;
+    // r->blocked = 1;
 
     c->write->handler = ngx_http_flv_send;
-	// c->read->handler = ngx_http_flv_recv;  TODO: We do not need to be careful of http read handler.
+	c->read->handler = ngx_http_flv_recv;
 
 	s->auto_pushed = unix_socket;
 

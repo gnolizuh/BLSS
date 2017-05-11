@@ -193,6 +193,36 @@ ngx_rtmp_ping(ngx_event_t *pev)
 }
 
 
+void
+ngx_http_flv_recv(ngx_event_t *rev)
+{
+    ngx_connection_t           *c;
+    ngx_http_request_t         *r;
+    ngx_rtmp_session_t         *s;
+    ngx_int_t                   n;
+    ngx_http_flv_http_ctx_t    *httpctx;
+    u_char                      b;
+
+    c = rev->data;
+    r = c->data;
+
+    httpctx = ngx_http_get_module_ctx(r, ngx_http_flv_httpmodule);
+
+    s = httpctx->rs;
+
+    if (c->destroyed) {
+        return;
+    }
+
+    n = c->recv(c, &b, sizeof(b));
+
+    if (n == NGX_ERROR || n == 0) {
+        ngx_rtmp_finalize_session(s);
+        return;
+    }
+}
+
+
 static void
 ngx_rtmp_recv(ngx_event_t *rev)
 {
@@ -828,8 +858,8 @@ ngx_rtmp_send_message(ngx_rtmp_session_t *s, ngx_chain_t *out,
     }
 
     if (!s->connection->write->active) {
+
         ngx_rtmp_send(s->connection->write);
-        /*return ngx_add_event(s->connection->write, NGX_WRITE_EVENT, NGX_CLEAR_EVENT);*/
     }
 
     return NGX_OK;

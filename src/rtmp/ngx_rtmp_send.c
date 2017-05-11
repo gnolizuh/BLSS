@@ -59,6 +59,15 @@ ngx_rtmp_send_shared_packet(ngx_rtmp_session_t *s, ngx_chain_t *cl)
 
     cscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_core_module);
 
+    if (s->protocol != NGX_PROTO_TYPE_RTMP &&
+        s->protocol != NGX_PROTO_TYPE_RTMP_PUSH &&
+        s->protocol != NGX_PROTO_TYPE_RTMP_PULL) {
+
+        ngx_rtmp_free_shared_chain(cscf, cl);
+
+        return NGX_OK;
+    }
+
     rc = ngx_rtmp_send_message(s, cl, 0);
 
     ngx_rtmp_free_shared_chain(cscf, cl);

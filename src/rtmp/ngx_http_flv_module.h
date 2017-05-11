@@ -12,52 +12,16 @@
 #include <ngx_core.h>
 #include <ngx_http.h>
 #include "ngx_rtmp_cmd_module.h"
-#include "ngx_rtmp_live_module.h"
 #include "ngx_rtmp.h"
 
 
-typedef struct ngx_http_flv_rtmp_ctx_s ngx_http_flv_rtmp_ctx_t;
-typedef struct ngx_http_flv_stream_s ngx_http_flv_stream_t;
-
-
-struct ngx_http_flv_stream_s {
-    u_char                              name[NGX_RTMP_MAX_NAME];
-    ngx_http_flv_stream_t              *next;
-    ngx_http_flv_rtmp_ctx_t            *ctx;
-    ngx_rtmp_bandwidth_t                bw_in;
-    ngx_rtmp_bandwidth_t                bw_in_audio;
-    ngx_rtmp_bandwidth_t                bw_in_video;
-    ngx_rtmp_bandwidth_t                bw_out;
-	ngx_rtmp_live_frame_rate_t          video_frame_rate;
-    ngx_msec_t                          epoch;
-    unsigned                            active:1;
-    unsigned                            publishing:1;
-};
-
-
-struct ngx_http_flv_rtmp_ctx_s {
-    ngx_rtmp_session_t                 *session;
-    ngx_http_flv_stream_t              *stream;
-    ngx_http_flv_rtmp_ctx_t            *next;
-    ngx_rtmp_bandwidth_t                bw_out;
-    ngx_uint_t                          ndropped;
-    ngx_rtmp_live_chunk_stream_t        cs[2];
-    ngx_uint_t                          meta_version;
-    uint32_t                            epoch;
+typedef struct {
     unsigned                            initialized:1;
-    unsigned                            publishing:1;
-    unsigned                            paused:1;
-};
+} ngx_http_flv_rtmp_ctx_t;
 
 
 typedef struct {
-    ngx_int_t                           nbuckets;
     ngx_flag_t                          http_flv;
-    ngx_http_flv_stream_t             **streams;
-    ngx_flag_t                          idle_streams;
-    ngx_msec_t                          buflen;
-    ngx_pool_t                         *pool;
-    ngx_http_flv_stream_t              *free_streams;
 } ngx_http_flv_rtmp_app_conf_t;
 
 
