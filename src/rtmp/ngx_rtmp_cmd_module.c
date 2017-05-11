@@ -526,8 +526,6 @@ ngx_int_t
 ngx_rtmp_cmd_connect_local(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
 {
     ngx_rtmp_core_srv_conf_t   *cscf;
-    ngx_rtmp_core_app_conf_t  **cacfp;
-    ngx_uint_t                  n;
 
     cscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_core_module);
 
