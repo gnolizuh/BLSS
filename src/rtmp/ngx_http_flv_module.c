@@ -222,7 +222,7 @@ ngx_http_flv_play_local(ngx_rtmp_session_t *s)
 
     s->app_conf = cscf->ctx->app_conf;
 
-	return ngx_rtmp_cmd_start_play(s, &v);
+	return ngx_rtmp_cmd_play_local(s, &v);
 }
 
 
@@ -306,7 +306,7 @@ ngx_http_flv_connect_local(ngx_http_request_t *r, ngx_str_t *app, ngx_str_t *nam
         ngx_rtmp_set_ctx(s, rtmpctx, ngx_http_flv_rtmpmodule);
     }
 
-    return ngx_rtmp_cmd_start_connect(s, &v);
+    return ngx_rtmp_cmd_connect_local(s, &v);
 }
 
 
