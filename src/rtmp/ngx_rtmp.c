@@ -1010,7 +1010,7 @@ ngx_rtmp_add_listening(ngx_conf_t *cf, ngx_rtmp_conf_addr_t *addr)
 #endif
 
 #if (NGX_HAVE_INET6 && defined IPV6_V6ONLY)
-    ls->ipv6only = addr.ipv6only;
+    ls->ipv6only = addr->opt.ipv6only;
 #endif
 
 #if (NGX_HAVE_REUSEPORT)
