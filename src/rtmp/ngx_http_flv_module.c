@@ -345,11 +345,6 @@ ngx_http_flv_http_handler(ngx_http_request_t *r)
     	return NGX_DECLINED;
     }
 
-    httpctx = ngx_http_get_module_ctx(r, ngx_http_flv_httpmodule);
-    if (httpctx != NULL) {
-        return NGX_CUSTOME;
-    }
-
     if (!(r->method & (NGX_HTTP_GET|NGX_HTTP_HEAD))
         || r->headers_in.host == NULL) {
         return NGX_HTTP_NOT_ALLOWED;
@@ -417,7 +412,7 @@ ngx_http_flv_http_handler(ngx_http_request_t *r)
     cln->handler = ngx_http_flv_cleanup;
     cln->data = r;
 
-    return NGX_CUSTOME;
+    return NGX_OK;
 }
 
 
