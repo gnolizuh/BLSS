@@ -1481,7 +1481,7 @@ ngx_rtmp_dash_merge_app_conf(ngx_conf_t *cf, void *parent, void *child)
             return NGX_CONF_ERROR;
         }
 
-        conf->slot->manager = ngx_rtmp_dash_cleanup;
+        conf->slot->manager = (ngx_path_manager_pt) ngx_rtmp_dash_cleanup;
         conf->slot->name = conf->path;
         conf->slot->data = cleanup;
         conf->slot->conf_file = cf->conf_file->file.name.data;
