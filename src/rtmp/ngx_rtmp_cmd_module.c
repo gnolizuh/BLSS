@@ -523,25 +523,49 @@ ngx_rtmp_cmd_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
 
 
 ngx_int_t
-ngx_rtmp_cmd_start_connect(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
+ngx_rtmp_cmd_connect_local(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
 {
+    ngx_rtmp_core_srv_conf_t   *cscf;
+    ngx_rtmp_core_app_conf_t  **cacfp;
+    ngx_uint_t                  n;
+
+    cscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_core_module);
+
+    /* find application & set app_conf */
+    cacfp = cscf->applications.elts;
+    for(n = 0; n < cscf->applications.nelts; ++n, ++cacfp) {
+        if ((*cacfp)->name.len == s->app.len &&
+            ngx_strncmp((*cacfp)->name.data, s->app.data, s->app.len) == 0)
+        {
+            /* found app! */
+            s->app_conf = (*cacfp)->app_conf;
+            break;
+        }
+    }
+
+    if (s->app_conf == NULL) {
+        ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+                      "connect: application not found: '%V'", &s->app);
+        return NGX_ERROR;
+    }
+
     ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
-                  "connect: app='%s' args='%s' flashver='%s' swf_url='%s' "
-                  "tc_url='%s' page_url='%s' acodecs=%uD vcodecs=%uD "
-                  "object_encoding=%ui",
-                  v->app, v->args, v->flashver, v->swf_url, v->tc_url, v->page_url,
-                  (uint32_t)v->acodecs, (uint32_t)v->vcodecs,
-                  (ngx_int_t)v->object_encoding);
+            "local connect: app='%s' args='%s' flashver='%s' swf_url='%s' "
+            "tc_url='%s' page_url='%s' acodecs=%uD vcodecs=%uD "
+            "object_encoding=%ui",
+            v->app, v->args, v->flashver, v->swf_url, v->tc_url, v->page_url,
+            (uint32_t)v->acodecs, (uint32_t)v->vcodecs,
+            (ngx_int_t)v->object_encoding);
 
     return ngx_rtmp_connect(s, v);
 }
 
 
 ngx_int_t
-ngx_rtmp_cmd_start_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
+ngx_rtmp_cmd_play_local(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
 {
     ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
-                   "play: name='%s' args='%s' start=%i duration=%i "
+                   "local play: name='%s' args='%s' start=%i duration=%i "
                    "reset=%i silent=%i",
                    v->name, v->args, (ngx_int_t) v->start,
                    (ngx_int_t) v->duration, (ngx_int_t) v->reset,

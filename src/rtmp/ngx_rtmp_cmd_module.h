@@ -100,9 +100,9 @@ typedef struct {
 void ngx_rtmp_cmd_fill_args(u_char name[NGX_RTMP_MAX_NAME],
         u_char args[NGX_RTMP_MAX_ARGS]);
 ngx_int_t
-ngx_rtmp_cmd_start_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v);
+ngx_rtmp_cmd_play_local(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v);
 ngx_int_t
-ngx_rtmp_cmd_start_connect(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v);
+ngx_rtmp_cmd_connect_local(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v);
 ngx_int_t
 ngx_rtmp_cmd_get_core_srv_conf(ngx_rtmp_session_t *s, ngx_int_t type, ngx_str_t *host, ngx_str_t *app,
     ngx_rtmp_core_srv_conf_t **pcscf, ngx_rtmp_core_app_conf_t **pcacf);
