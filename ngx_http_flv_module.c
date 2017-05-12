@@ -1154,10 +1154,10 @@ ngx_http_flv_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
         goto next;
     }
 
-    ngx_log_debug4(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
-                   "http flv: play: name='%s' start=%uD duration=%uD reset=%d",
-                   v->name, (uint32_t) v->start,
-                   (uint32_t) v->duration, (uint32_t) v->reset);
+    ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+                  "http flv: play: name='%s' start=%uD duration=%uD reset=%d",
+                  v->name, (uint32_t) v->start,
+                  (uint32_t) v->duration, (uint32_t) v->reset);
 
     /* join stream as subscriber */
 
