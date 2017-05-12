@@ -660,9 +660,19 @@ ngx_rtmp_gop_cache_send(ngx_rtmp_session_t *ss)
         return;
     }
 
-    for (pctx = player->stream->ctx; pctx; pctx = pctx->next) {
-        if (pctx->publishing) {
-            break;
+    if (pctx == NULL) {
+        for (pctx = player->stream->ctx; pctx; pctx = pctx->next) {
+            if (pctx->publishing) {
+                break;
+            }
+        }
+    }
+
+    if (pctx == NULL) {
+        for (pctx = player->stream->hctx; pctx; pctx = pctx->next) {
+            if (pctx->publishing) {
+                break;
+            }
         }
     }
 
