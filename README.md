@@ -29,12 +29,24 @@ A bravo live streaming service powered by [nginx-rtmp-module](https://github.com
 
 * Linux/FreeBSD/MacOS/Windows
 
-## Build
-cd to BLSS source directory & run this:
+### Build
 
-    ./configure
+cd to NGINX source directory & run this:
+
+    ./configure --add-module=/path/to/BLSS
     make
     make install
+
+### Push/Pull URL format
+
+    rtmp://rtmp.example.com/app/name
+    http://rtmp.example.com/app/name.flv
+
+app -  should match one of application {}
+         blocks in config
+
+name - interpreted by each application
+         can be empty
 
 ## Example(blss.conf)
 
