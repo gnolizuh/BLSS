@@ -685,7 +685,7 @@ ngx_rtmp_live_close_stream(ngx_rtmp_session_t *s, ngx_rtmp_close_stream_t *v)
         }
     }
 
-    if (ctx->stream->ctx && ctx->stream->hctx && ctx->stream->pctx) {
+    if (ctx->stream->ctx || ctx->stream->hctx || ctx->stream->pctx) {
         ctx->stream = NULL;
         goto next;
     }
