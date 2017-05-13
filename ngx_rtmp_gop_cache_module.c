@@ -676,7 +676,7 @@ ngx_rtmp_gop_cache_send(ngx_rtmp_session_t *ss)
         /* send metadata */
         if (meta && meta_version != ctx->meta_version) {
             ngx_log_debug0(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
-                           "live: meta");
+                           "gop send: meta");
 
             if (handler->send_message(ss, meta, 0) == NGX_OK) {
                 ctx->meta_version = meta_version;
@@ -730,7 +730,7 @@ ngx_rtmp_gop_cache_send(ngx_rtmp_session_t *ss)
             }
 
             ngx_log_debug3(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
-                           "gop_send: send tag type='%s' prio='%d' ltimestamp='%uD'",
+                           "gop_send: tag type='%s' prio='%d' ltimestamp='%uD'",
                            gop_frame->h.type == NGX_RTMP_MSG_AUDIO ? "audio" : "video",
                            gop_frame->prio,
                            lh.timestamp);
