@@ -655,14 +655,14 @@ ngx_rtmp_gop_cache_send(ngx_rtmp_session_t *ss)
     header = NULL;
     meta_version = 0;
 
-    pctx = ctx->stream->pctx;
-    s    = ctx->stream->pctx->session;
-    ss   = ctx->session;
+    s = ctx->stream->pctx->session;
 
     gctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_gop_cache_module);
     if (gctx == NULL) {
         return;
     }
+
+    pctx = ctx->stream->pctx;
 
     handler = ngx_rtmp_gop_cache_send_handler[ss->protocol == NGX_PROTO_TYPE_HTTP_FLV_PULL ? 1 : 0];
 
@@ -674,19 +674,19 @@ ngx_rtmp_gop_cache_send(ngx_rtmp_session_t *ss)
         }
 
         /* send metadata */
-        if (meta && meta_version != player->meta_version) {
+        if (meta && meta_version != ss->meta_version) {
             ngx_log_debug0(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
                            "live: meta");
 
             if (handler->send_message(ss, meta, 0) == NGX_OK) {
-                player->meta_version = meta_version;
+                ss->meta_version = meta_version;
             }
         }
 
         for (gop_frame = cache->head; gop_frame; gop_frame = gop_frame->next) {
             csidx = !(lacf->interleave || gop_frame->h.type == NGX_RTMP_MSG_VIDEO);
 
-            cs = &player->cs[csidx];
+            cs = &ss->cs[csidx];
 
             lh = ch = gop_frame->h;
 
