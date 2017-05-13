@@ -1135,7 +1135,7 @@ ngx_http_flv_close_stream(ngx_rtmp_session_t *s, ngx_rtmp_close_stream_t *v)
         ngx_http_flv_stop(s);
     }
 
-    if (ctx->stream->hctx) {
+    if (ctx->stream->ctx || ctx->stream->hctx || ctx->stream->pctx) {
         ctx->stream = NULL;
         goto next;
     }
