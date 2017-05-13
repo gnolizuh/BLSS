@@ -834,7 +834,7 @@ ngx_rtmp_gop_cache_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
                    v->name, (uint32_t) v->start,
                    (uint32_t) v->duration, (uint32_t) v->reset);
 
-	ngx_rtmp_gop_cache_send(s);
+    ngx_rtmp_gop_cache_send(s);
 
 next:
     return next_play(s, v);
