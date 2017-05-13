@@ -918,8 +918,7 @@ ngx_http_flv_message(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
 
 static ngx_int_t
-ngx_http_flv_play_end(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
-    ngx_chain_t *in)
+ngx_http_flv_send_header(ngx_rtmp_session_t *s)
 {
     static u_char httpheader[] = {
         "HTTP/1.1 200 OK\r\n"
@@ -947,31 +946,11 @@ ngx_http_flv_play_end(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
         0x00  /* PreviousTagSize0 (not actually a header) */
     };
 
-    ngx_http_flv_rtmp_ctx_t        *rtmpctx;
     ngx_rtmp_core_srv_conf_t       *cscf;
-    ngx_http_flv_rtmp_app_conf_t   *lacf;
     ngx_chain_t                     c1, c2, *pkt;
     ngx_buf_t                       b1, b2;
 
-    lacf = ngx_rtmp_get_module_app_conf(s, ngx_http_flv_rtmpmodule);
-    if (lacf == NULL) {
-        return NGX_ERROR;
-    }
-
-    if (!lacf->http_flv) {
-        return NGX_OK;
-    }
-
     cscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_core_module);
-
-    rtmpctx = ngx_rtmp_get_module_ctx(s, ngx_http_flv_rtmpmodule);
-    if (rtmpctx == NULL) {
-        return NGX_OK;
-    }
-
-    if (rtmpctx->initialized) {
-        return NGX_OK;
-    }
 
     c1.buf = &b1;
     c2.buf = &b2;
@@ -989,10 +968,6 @@ ngx_http_flv_play_end(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     ngx_http_flv_send_message(s, pkt, 0);
 
     ngx_rtmp_free_shared_chain(cscf, pkt);
-
-    if (!rtmpctx->initialized) {
-        rtmpctx->initialized = 1;
-    }
 
     return NGX_OK;
 }
@@ -1163,6 +1138,7 @@ static ngx_int_t
 ngx_http_flv_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
 {
     ngx_http_flv_rtmp_app_conf_t        *hacf;
+    ngx_http_flv_rtmp_ctx_t             *ctx;
 
     if (s->protocol != NGX_PROTO_TYPE_HTTP_FLV_PULL) {
         goto next;
@@ -1173,14 +1149,25 @@ ngx_http_flv_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
         goto next;
     }
 
-    ngx_log_debug4(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
-                   "http flv: play: name='%s' start=%uD duration=%uD reset=%d",
-                   v->name, (uint32_t) v->start,
-                   (uint32_t) v->duration, (uint32_t) v->reset);
+    ctx = ngx_rtmp_get_module_ctx(s, ngx_http_flv_rtmpmodule);
+    if (ctx == NULL) {
+        goto next;
+    }
+
+    ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+                  "http flv play: name='%s' start=%uD duration=%uD reset=%d",
+                  v->name, (uint32_t) v->start,
+                  (uint32_t) v->duration, (uint32_t) v->reset);
 
     /* join stream as subscriber */
 
     ngx_http_flv_join(s, v->name, 0);
+
+    if (!ctx->initialized) {
+        ngx_http_flv_send_header(s);
+
+        ctx->initialized = 1;
+    }
 
     ngx_rtmp_playing++;
 
@@ -1207,9 +1194,6 @@ ngx_http_flv_rtmp_init(ngx_conf_t *cf)
 
     h = ngx_array_push(&cmcf->events[NGX_RTMP_CONNECT_END]);
     *h = ngx_http_flv_connect_end;
-
-    h = ngx_array_push(&cmcf->events[NGX_RTMP_PLAY_END]);
-    *h = ngx_http_flv_play_end;
 
     h = ngx_array_push(&cmcf->events[NGX_RTMP_ON_MESSAGE]);
     *h = ngx_http_flv_message;
