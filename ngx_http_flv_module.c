@@ -163,7 +163,7 @@ ngx_http_flv_send_message(ngx_rtmp_session_t *s, ngx_chain_t *out,
     ngx_rtmp_acquire_shared_chain(out);
 
     ngx_log_debug3(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
-            "RTMP send nmsg=%ui, priority=%ui #%ui",
+            "HTTP FLV send nmsg=%ui, priority=%ui #%ui",
             nmsg, priority, s->out_last);
 
     if (priority && s->out_buffer && nmsg < s->out_cork) {
@@ -714,9 +714,9 @@ ngx_http_flv_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
             }
         }
 
-        if (codec_ctx->meta) {
+        if (codec_ctx->meta_orig) {
             mh = codec_ctx->meta_header;
-            meta = codec_ctx->meta;
+            meta = codec_ctx->meta_orig;
             meta_version = codec_ctx->meta_version;
         }
     }
@@ -770,7 +770,7 @@ ngx_http_flv_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
             }
 
             if (lacf->wait_video && h->type == NGX_RTMP_MSG_AUDIO &&
-                !pctx->cs[0].active && !gacf->gop_cache)
+                !pctx->cs[0].active)
             {
                 ngx_log_debug0(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
                                "http_flv: waiting for video");
@@ -778,8 +778,7 @@ ngx_http_flv_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
             }
 
             if (lacf->wait_key && prio != NGX_RTMP_VIDEO_KEY_FRAME &&
-               (lacf->interleave || h->type == NGX_RTMP_MSG_VIDEO) &&
-               !gacf->gop_cache)
+               (lacf->interleave || h->type == NGX_RTMP_MSG_VIDEO))
             {
                 ngx_log_debug0(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
                                "http_flv: skip non-key");
@@ -1110,7 +1109,7 @@ ngx_http_flv_close_stream(ngx_rtmp_session_t *s, ngx_rtmp_close_stream_t *v)
         ngx_http_flv_stop(s);
     }
 
-    if (ctx->stream->hctx) {
+    if (ctx->stream->ctx || ctx->stream->hctx || ctx->stream->pctx) {
         ctx->stream = NULL;
         goto next;
     }

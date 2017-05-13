@@ -379,10 +379,8 @@ ngx_rtmp_live_set_status(ngx_rtmp_session_t *s, ngx_chain_t *control,
         ctx->stream->active = active;
 
         for (pctx = ctx->stream->ctx; pctx; pctx = pctx->next) {
-            if (pctx->publishing == 0) {
-                ngx_rtmp_live_set_status(pctx->session, control, status,
-                                         nstatus, active);
-            }
+            ngx_rtmp_live_set_status(pctx->session, control, status,
+                                     nstatus, active);
         }
 
         return;
@@ -596,13 +594,14 @@ ngx_rtmp_live_join(ngx_rtmp_session_t *s, u_char *name, unsigned publisher)
         }
 
         (*stream)->publishing = 1;
+        (*stream)->pctx = ctx;
+    } else {
+        ctx->next = (*stream)->ctx;
+        (*stream)->ctx = ctx;
     }
 
     ctx->stream = *stream;
     ctx->publishing = publisher;
-    ctx->next = (*stream)->ctx;
-
-    (*stream)->ctx = ctx;
 
     if (lacf->buflen) {
         s->out_buffer = 1;
@@ -624,6 +623,7 @@ ngx_rtmp_live_close_stream(ngx_rtmp_session_t *s, ngx_rtmp_close_stream_t *v)
     ngx_rtmp_live_ctx_t            *ctx, **cctx, *pctx;
     ngx_rtmp_live_stream_t        **stream;
     ngx_rtmp_live_app_conf_t       *lacf;
+    ngx_uint_t                      n;
 
     if (s->protocol != NGX_PROTO_TYPE_RTMP_PUSH &&
         s->protocol != NGX_PROTO_TYPE_RTMP_PULL) {
@@ -653,10 +653,14 @@ ngx_rtmp_live_close_stream(ngx_rtmp_session_t *s, ngx_rtmp_close_stream_t *v)
         ctx->stream->publishing = 0;
     }
 
-    for (cctx = &ctx->stream->ctx; *cctx; cctx = &(*cctx)->next) {
-        if (*cctx == ctx) {
-            *cctx = ctx->next;
-            break;
+    if (ctx->publishing) {
+        ctx->stream->pctx = NULL;
+    } else {
+        for (cctx = &ctx->stream->ctx; *cctx; cctx = &(*cctx)->next) {
+            if (*cctx == ctx) {
+                *cctx = ctx->next;
+                break;
+            }
         }
     }
 
@@ -668,8 +672,10 @@ ngx_rtmp_live_close_stream(ngx_rtmp_session_t *s, ngx_rtmp_close_stream_t *v)
         ngx_rtmp_send_status(s, "NetStream.Unpublish.Success",
                              "status", "Stop publishing");
         if (!lacf->idle_streams) {
-            for (pctx = ctx->stream->ctx; pctx; pctx = pctx->next) {
-                if (pctx->publishing == 0) {
+            // close both rtmp and http flv connection.
+            for (n = 0; n < 2; ++ n) {
+                pctx = (n == 0 ? ctx->stream->ctx : ctx->stream->hctx);
+                for (; pctx; pctx = pctx->next) {
                     ss = pctx->session;
                     ngx_log_debug0(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
                                    "live: no publisher");
@@ -679,7 +685,7 @@ ngx_rtmp_live_close_stream(ngx_rtmp_session_t *s, ngx_rtmp_close_stream_t *v)
         }
     }
 
-    if (ctx->stream->ctx) {
+    if (ctx->stream->ctx || ctx->stream->hctx || ctx->stream->pctx) {
         ctx->stream = NULL;
         goto next;
     }

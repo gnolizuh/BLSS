@@ -705,13 +705,13 @@ ngx_rtmp_optimize_servers(ngx_conf_t *cf, ngx_rtmp_core_main_conf_t *cmcf,
 
                 if (addr[a].servers.nelts > 1) {
 #ifdef NGX_DEBUG
-                    if (ngx_rtmp_hls_play_domains(cf, cmcf, &addr[a]) != NGX_OK ||
+                    /*if (ngx_rtmp_hls_play_domains(cf, cmcf, &addr[a]) != NGX_OK ||
                         ngx_rtmp_rtmp_play_domains(cf, cmcf, &addr[a]) != NGX_OK ||
                         ngx_rtmp_hdl_play_domains(cf, cmcf, &addr[a]) != NGX_OK ||
                         ngx_rtmp_rtmp_publish_domains(cf, cmcf, &addr[a]) != NGX_OK) {
 
                         return NGX_ERROR;
-                    }
+                    }*/
 #endif
                 }
             }
