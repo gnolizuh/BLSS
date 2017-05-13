@@ -615,7 +615,7 @@ ngx_rtmp_gop_cache_frame(ngx_rtmp_session_t *s, ngx_uint_t prio, ngx_rtmp_header
     ngx_rtmp_gop_update(s);
 
     ngx_log_debug2(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
-               "gop_cache: cache packet type='%s' timestamp='%uD'",
+               "gop cache: cache packet type='%s' timestamp='%uD'",
                gop_frame->h.type == NGX_RTMP_MSG_AUDIO ? "audio" : "video",
                gop_frame->h.timestamp);
 }
@@ -667,14 +667,6 @@ ngx_rtmp_gop_cache_send(ngx_rtmp_session_t *ss)
     }
 
     if (pctx == NULL) {
-        for (pctx = player->stream->hctx; pctx; pctx = pctx->next) {
-            if (pctx->publishing) {
-                break;
-            }
-        }
-    }
-
-    if (pctx == NULL) {
         return;
     }
 
@@ -709,7 +701,7 @@ ngx_rtmp_gop_cache_send(ngx_rtmp_session_t *ss)
         /* send metadata */
         if (meta && meta_version != player->meta_version) {
             ngx_log_debug0(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
-                           "live: meta");
+                           "gop cache send: meta");
 
             if (handler->send_message(ss, meta, 0) == NGX_OK) {
                 player->meta_version = meta_version;
@@ -763,7 +755,7 @@ ngx_rtmp_gop_cache_send(ngx_rtmp_session_t *ss)
             }
 
             ngx_log_debug3(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
-                           "gop_send: send tag type='%s' prio='%d' ltimestamp='%uD'",
+                           "gop cache send: tag type='%s' prio='%d' ltimestamp='%uD'",
                            gop_frame->h.type == NGX_RTMP_MSG_AUDIO ? "audio" : "video",
                            gop_frame->prio,
                            lh.timestamp);
@@ -835,9 +827,9 @@ ngx_rtmp_gop_cache_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
         goto next;
     }
 
-    ngx_log_debug2(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
-                   "gop_cache publish: name='%s' type='%s'",
-                   v->name, v->type);
+    ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+                  "gop cache publish: name='%s' type='%s'",
+                  v->name, v->type);
 
     ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_gop_cache_module);
     if (ctx == NULL) {
@@ -863,7 +855,7 @@ ngx_rtmp_gop_cache_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
     }
 
     ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
-                  "gop_cache play: name='%s' start=%uD duration=%uD reset=%d",
+                  "gop cache play: name='%s' start=%uD duration=%uD reset=%d",
                   v->name, (uint32_t) v->start,
                   (uint32_t) v->duration, (uint32_t) v->reset);
 
