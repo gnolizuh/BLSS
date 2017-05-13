@@ -163,7 +163,7 @@ ngx_http_flv_send_message(ngx_rtmp_session_t *s, ngx_chain_t *out,
     ngx_rtmp_acquire_shared_chain(out);
 
     ngx_log_debug3(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
-            "RTMP send nmsg=%ui, priority=%ui #%ui",
+            "HTTP FLV send nmsg=%ui, priority=%ui #%ui",
             nmsg, priority, s->out_last);
 
     if (priority && s->out_buffer && nmsg < s->out_cork) {
