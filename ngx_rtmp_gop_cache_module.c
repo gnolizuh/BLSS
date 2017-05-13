@@ -293,7 +293,7 @@ ngx_rtmp_gop_alloc_cache(ngx_rtmp_session_t *s)
     }
 
     // save metadata.
-    if (codec_ctx->meta != NULL) {
+    if (codec_ctx->meta != NULL && codec_ctx->meta_orig != NULL) {
         cache->meta_header  = codec_ctx->meta_header;
         cache->meta_version = codec_ctx->meta_version;
         cache->meta_data = ngx_rtmp_append_shared_bufs(cscf, NULL, codec_ctx->meta_orig);

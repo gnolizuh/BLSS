@@ -714,9 +714,9 @@ ngx_http_flv_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
             }
         }
 
-        if (codec_ctx->meta) {
+        if (codec_ctx->meta_orig) {
             mh = codec_ctx->meta_header;
-            meta = codec_ctx->meta;
+            meta = codec_ctx->meta_orig;
             meta_version = codec_ctx->meta_version;
         }
     }
