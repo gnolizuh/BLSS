@@ -668,8 +668,8 @@ ngx_rtmp_gop_cache_send(ngx_rtmp_session_t *ss)
 
     for (cache = gctx->head; cache; cache = cache->next) {
 
-        if (cache->meta_data) {
-            meta = (ss->protocol == NGX_PROTO_TYPE_HTTP_FLV_PULL ? cache->meta_data_flv : cache->meta_data);
+        meta = (ss->protocol == NGX_PROTO_TYPE_HTTP_FLV_PULL ? cache->meta_data_flv : cache->meta_data);
+        if (meta) {
             meta_version = cache->meta_version;
         }
 
