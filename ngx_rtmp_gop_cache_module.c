@@ -674,19 +674,19 @@ ngx_rtmp_gop_cache_send(ngx_rtmp_session_t *ss)
         }
 
         /* send metadata */
-        if (meta && meta_version != ss->meta_version) {
+        if (meta && meta_version != ctx->meta_version) {
             ngx_log_debug0(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
                            "live: meta");
 
             if (handler->send_message(ss, meta, 0) == NGX_OK) {
-                ss->meta_version = meta_version;
+                ctx->meta_version = meta_version;
             }
         }
 
         for (gop_frame = cache->head; gop_frame; gop_frame = gop_frame->next) {
             csidx = !(lacf->interleave || gop_frame->h.type == NGX_RTMP_MSG_VIDEO);
 
-            cs = &ss->cs[csidx];
+            cs = &ctx->cs[csidx];
 
             lh = ch = gop_frame->h;
 
