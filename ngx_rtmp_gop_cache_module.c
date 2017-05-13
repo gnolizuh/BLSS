@@ -626,11 +626,9 @@ ngx_rtmp_gop_cache_send(ngx_rtmp_session_t *ss)
 {
     ngx_rtmp_session_t             *s;
     ngx_chain_t                    *pkt, *apkt, *meta, *header;
-    ngx_rtmp_live_ctx_t            *pctx, *publisher, *player;
+    ngx_rtmp_live_ctx_t            *ctx, *pctx;
     ngx_rtmp_gop_cache_ctx_t       *gctx;
-    ngx_rtmp_core_srv_conf_t       *cscf;
     ngx_rtmp_live_app_conf_t       *lacf;
-    ngx_rtmp_gop_cache_app_conf_t  *gacf;
     ngx_rtmp_gop_cache_t           *cache;
     ngx_rtmp_gop_frame_t           *gop_frame;
     ngx_rtmp_gop_cache_handler_t   *handler;
@@ -645,28 +643,9 @@ ngx_rtmp_gop_cache_send(ngx_rtmp_session_t *ss)
         return;
     }
 
-    gacf = ngx_rtmp_get_module_app_conf(ss, ngx_rtmp_gop_cache_module);
-    if (gacf == NULL) {
-        return;
-    }
-
-    cscf = ngx_rtmp_get_module_srv_conf(ss, ngx_rtmp_core_module);
-    if (cscf == NULL) {
-        return;
-    }
-
-    player = ngx_rtmp_get_module_ctx(ss, ngx_rtmp_live_module);
-    if (player == NULL || player->stream == NULL) {
-        return;
-    }
-
-    for (pctx = player->stream->ctx; pctx; pctx = pctx->next) {
-        if (pctx->publishing) {
-            break;
-        }
-    }
-
-    if (pctx == NULL) {
+    ctx = ngx_rtmp_get_module_ctx(ss, ngx_rtmp_live_module);
+    if (ctx == NULL || ctx->stream == NULL ||
+        ctx->stream->pctx == NULL || !ctx->stream->publishing) {
         return;
     }
 
@@ -676,9 +655,9 @@ ngx_rtmp_gop_cache_send(ngx_rtmp_session_t *ss)
     header = NULL;
     meta_version = 0;
 
-    publisher = pctx;
-    s         = publisher->session;
-    ss        = player->session;
+    pctx = ctx->stream->pctx;
+    s    = ctx->stream->pctx->session;
+    ss   = ctx->session;
 
     gctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_gop_cache_module);
     if (gctx == NULL) {
@@ -686,10 +665,6 @@ ngx_rtmp_gop_cache_send(ngx_rtmp_session_t *ss)
     }
 
     handler = ngx_rtmp_gop_cache_send_handler[ss->protocol == NGX_PROTO_TYPE_HTTP_FLV_PULL ? 1 : 0];
-
-    if (!gacf->gop_cache) {
-        return;
-    }
 
     for (cache = gctx->head; cache; cache = cache->next) {
 
