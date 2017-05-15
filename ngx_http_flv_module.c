@@ -601,7 +601,6 @@ static ngx_int_t
 ngx_http_flv_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
                  ngx_chain_t *in)
 {
-    ngx_rtmp_gop_cache_app_conf_t  *gacf;
     ngx_rtmp_live_app_conf_t       *lacf;
     ngx_http_flv_rtmp_app_conf_t   *hacf;
     ngx_rtmp_core_srv_conf_t       *cscf;
@@ -622,26 +621,17 @@ ngx_http_flv_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     type_s = (h->type == NGX_RTMP_MSG_VIDEO ? "video" : "audio"); 
 #endif
 
+    hacf = ngx_rtmp_get_module_app_conf(s, ngx_http_flv_rtmpmodule);
+    if (hacf == NULL || !hacf->http_flv) {
+        return NGX_OK;
+    }
+
     lacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_live_module);
     if (lacf == NULL) {
         return NGX_ERROR;
     }
 
-    gacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_gop_cache_module);
-    if (gacf == NULL) {
-        return NGX_ERROR;
-    }
-
-    hacf = ngx_rtmp_get_module_app_conf(s, ngx_http_flv_rtmpmodule);
-    if (hacf == NULL) {
-        return NGX_ERROR;
-    }
-
-    if (!lacf->live || !hacf->http_flv) {
-        return NGX_OK;
-    }
-
-    if (in == NULL || in->buf == NULL) {
+    if (!lacf->live || in == NULL || in->buf == NULL)) {
         return NGX_OK;
     }
 
