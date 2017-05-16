@@ -456,7 +456,7 @@ ngx_rtmp_stat_live(ngx_http_request_t *r, ngx_chain_t ***lll,
 
             nclients = 0;
             codec = NULL;
-            for (ctx = stream->ctx; ctx; ctx = ctx->next, ++nclients) {
+            for (ctx = stream->ctx[0]; ctx; ctx = ctx->next, ++nclients) {  // TODO
                 s = ctx->session;
                 if (slcf->stat & NGX_RTMP_STAT_CLIENTS) {
                     NGX_RTMP_STAT_L("<client>");

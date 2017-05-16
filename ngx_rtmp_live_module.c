@@ -378,7 +378,7 @@ ngx_rtmp_live_set_status(ngx_rtmp_session_t *s, ngx_chain_t *control,
 
         ctx->stream->active = active;
 
-        for (pctx = ctx->stream->ctx; pctx; pctx = pctx->next) {
+        for (pctx = ctx->stream->ctx[0]; pctx; pctx = pctx->next) {
             ngx_rtmp_live_set_status(pctx->session, control, status,
                                      nstatus, active);
         }
@@ -656,7 +656,7 @@ ngx_rtmp_live_close_stream(ngx_rtmp_session_t *s, ngx_rtmp_close_stream_t *v)
     if (ctx->publishing) {
         ctx->stream->pctx = NULL;
     } else {
-        for (cctx = &ctx->stream->ctx; *cctx; cctx = &(*cctx)->next) {
+        for (cctx = &ctx->stream->ctx[0]; *cctx; cctx = &(*cctx)->next) {
             if (*cctx == ctx) {
                 *cctx = ctx->next;
                 break;
@@ -674,8 +674,7 @@ ngx_rtmp_live_close_stream(ngx_rtmp_session_t *s, ngx_rtmp_close_stream_t *v)
         if (!lacf->idle_streams) {
             // close both rtmp and http flv connection.
             for (n = 0; n < 2; ++ n) {
-                pctx = (n == 0 ? ctx->stream->ctx : ctx->stream->hctx);
-                for (; pctx; pctx = pctx->next) {
+                for (pctx = ctx->stream->ctx[n]; pctx; pctx = pctx->next) {
                     ss = pctx->session;
                     ngx_log_debug0(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
                                    "live: no publisher");
@@ -685,7 +684,7 @@ ngx_rtmp_live_close_stream(ngx_rtmp_session_t *s, ngx_rtmp_close_stream_t *v)
         }
     }
 
-    if (ctx->stream->ctx || ctx->stream->hctx || ctx->stream->pctx) {
+    if (ctx->stream->ctx[0] || ctx->stream->ctx[1] || ctx->stream->pctx) {
         ctx->stream = NULL;
         goto next;
     }
@@ -871,7 +870,7 @@ ngx_rtmp_live_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     rpkt = ngx_rtmp_append_shared_bufs(cscf, NULL, in);
 
     ngx_rtmp_prepare_message(s, &ch, &lh, rpkt);
-	
+
     codec_ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_codec_module);
 
     if (codec_ctx) {
@@ -914,7 +913,7 @@ ngx_rtmp_live_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
     /* broadcast to all subscribers */
 
-    for (pctx = ctx->stream->ctx; pctx; pctx = pctx->next) {
+    for (pctx = ctx->stream->ctx[0]; pctx; pctx = pctx->next) {
         if (pctx == ctx || pctx->paused) {
             continue;
         }
