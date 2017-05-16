@@ -596,8 +596,8 @@ ngx_rtmp_live_join(ngx_rtmp_session_t *s, u_char *name, unsigned publisher)
         (*stream)->publishing = 1;
         (*stream)->pctx = ctx;
     } else {
-        ctx->next = (*stream)->ctx;
-        (*stream)->ctx = ctx;
+        ctx->next = (*stream)->ctx[0];
+        (*stream)->ctx[0] = ctx;
     }
 
     ctx->stream = *stream;
