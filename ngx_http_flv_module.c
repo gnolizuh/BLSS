@@ -612,7 +612,7 @@ ngx_http_flv_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     ngx_uint_t                      csidx;
     ngx_uint_t                      prio;
     ngx_uint_t                      meta_version;
-    ngx_chain_t                    *header, *fpkt, *apkt, *mpkt, *meta;
+    ngx_chain_t                    *header, *fpkt, *apkt, *meta;
     ngx_rtmp_live_chunk_stream_t   *cs;
     uint32_t                        delta = 0;
 #ifdef NGX_DEBUG
@@ -648,7 +648,6 @@ ngx_http_flv_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
     apkt = NULL;
     fpkt = NULL;
-    mpkt = NULL;
     header = NULL;
     meta = NULL;
     meta_version = 0;
@@ -728,14 +727,8 @@ ngx_http_flv_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
             ngx_log_debug0(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
                            "http_flv: meta");
 
-            mpkt = ngx_http_flv_append_shared_bufs(cscf, &mh, meta);
-
-            if (ngx_http_flv_send_message(ss, mpkt, 0) == NGX_OK) {
+            if (ngx_http_flv_send_message(ss, meta, 0) == NGX_OK) {
                 pctx->meta_version = meta_version;
-            }
-
-            if (mpkt) {
-                ngx_rtmp_free_shared_chain(cscf, mpkt);
             }
         }
 
