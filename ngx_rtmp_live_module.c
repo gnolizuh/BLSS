@@ -838,9 +838,6 @@ ngx_rtmp_live_broadcast(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
         ch.timestamp = lh.timestamp;
     }
 */
-    rpkt = ngx_rtmp_append_shared_bufs(cscf, NULL, in);
-
-    ngx_rtmp_prepare_message(s, &ch, &lh, rpkt);
 
     codec_ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_codec_module);
 
@@ -886,6 +883,8 @@ ngx_rtmp_live_broadcast(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
     for (n = 0; n < 2; ++ n) {
         handler = ngx_rtmp_gop_cache_send_handler[n];
+
+        rpkt = handler->append_shared_bufs(s, &ch, &lh, in);
 
         meta = NULL;
         if (codec_ctx) {
