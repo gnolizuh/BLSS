@@ -601,7 +601,6 @@ static ngx_int_t
 ngx_http_flv_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
                  ngx_chain_t *in)
 {
-    ngx_rtmp_gop_cache_app_conf_t  *gacf;
     ngx_rtmp_live_app_conf_t       *lacf;
     ngx_http_flv_rtmp_app_conf_t   *hacf;
     ngx_rtmp_core_srv_conf_t       *cscf;
@@ -622,26 +621,17 @@ ngx_http_flv_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     type_s = (h->type == NGX_RTMP_MSG_VIDEO ? "video" : "audio"); 
 #endif
 
+    hacf = ngx_rtmp_get_module_app_conf(s, ngx_http_flv_rtmpmodule);
+    if (hacf == NULL || !hacf->http_flv) {
+        return NGX_OK;
+    }
+
     lacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_live_module);
     if (lacf == NULL) {
         return NGX_ERROR;
     }
 
-    gacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_gop_cache_module);
-    if (gacf == NULL) {
-        return NGX_ERROR;
-    }
-
-    hacf = ngx_rtmp_get_module_app_conf(s, ngx_http_flv_rtmpmodule);
-    if (hacf == NULL) {
-        return NGX_ERROR;
-    }
-
-    if (!lacf->live || !hacf->http_flv) {
-        return NGX_OK;
-    }
-
-    if (in == NULL || in->buf == NULL) {
+    if (!lacf->live || in == NULL || in->buf == NULL) {
         return NGX_OK;
     }
 
@@ -724,7 +714,7 @@ ngx_http_flv_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     /* broadcast to all subscribers */
     fpkt = ngx_http_flv_append_shared_bufs(cscf, &ch, in);
 
-    for (pctx = ctx->stream->hctx; pctx; pctx = pctx->next) {
+    for (pctx = ctx->stream->ctx[1]; pctx; pctx = pctx->next) {
         if (pctx == ctx || pctx->paused) {
             continue;
         }
@@ -898,7 +888,7 @@ ngx_http_flv_message(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     }
 
     /* broadcast to all subscribers */
-    for (pctx = ctx->stream->hctx; pctx; pctx = pctx->next) {
+    for (pctx = ctx->stream->ctx[1]; pctx; pctx = pctx->next) {
         if (pctx == ctx || pctx->paused) {
             continue;
         }
@@ -1051,9 +1041,9 @@ ngx_http_flv_join(ngx_rtmp_session_t *s, u_char *name, unsigned publisher)
     }
 
     ctx->stream = *stream;
-    ctx->next = (*stream)->hctx;
+    ctx->next = (*stream)->ctx[1];
 
-    (*stream)->hctx = ctx;
+    (*stream)->ctx[1] = ctx;
 
     if (lacf->buflen) {
         s->out_buffer = 1;
@@ -1098,7 +1088,7 @@ ngx_http_flv_close_stream(ngx_rtmp_session_t *s, ngx_rtmp_close_stream_t *v)
     ngx_log_debug1(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
                    "http flv: leave '%s'", ctx->stream->name);
 
-    for (cctx = &ctx->stream->hctx; *cctx; cctx = &(*cctx)->next) {
+    for (cctx = &ctx->stream->ctx[1]; *cctx; cctx = &(*cctx)->next) {
         if (*cctx == ctx) {
             *cctx = ctx->next;
             break;
@@ -1109,7 +1099,7 @@ ngx_http_flv_close_stream(ngx_rtmp_session_t *s, ngx_rtmp_close_stream_t *v)
         ngx_http_flv_stop(s);
     }
 
-    if (ctx->stream->ctx || ctx->stream->hctx || ctx->stream->pctx) {
+    if (ctx->stream->ctx[0] || ctx->stream->ctx[1] || ctx->stream->pctx) {
         ctx->stream = NULL;
         goto next;
     }

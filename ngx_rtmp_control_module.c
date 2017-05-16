@@ -294,13 +294,16 @@ static const char *
 ngx_rtmp_control_walk_stream(ngx_http_request_t *r,
     ngx_rtmp_live_stream_t *ls)
 {
+    ngx_uint_t            n;
     const char           *s;
     ngx_rtmp_live_ctx_t  *lctx;
 
-    for (lctx = ls->ctx; lctx; lctx = lctx->next) {
-        s = ngx_rtmp_control_walk_session(r, lctx);
-        if (s != NGX_CONF_OK) {
-            return s;
+    for (n = 0; n < 2; ++ n) {
+        for (lctx = ls->ctx[n]; lctx; lctx = lctx->next) {
+            s = ngx_rtmp_control_walk_session(r, lctx);
+            if (s != NGX_CONF_OK) {
+                return s;
+            }
         }
     }
 
