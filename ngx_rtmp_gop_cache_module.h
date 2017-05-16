@@ -77,7 +77,8 @@ typedef struct {
 } ngx_rtmp_gop_cache_app_conf_t;
 
 
-extern ngx_module_t  ngx_rtmp_gop_cache_module;
+extern ngx_module_t ngx_rtmp_gop_cache_module;
+extern ngx_rtmp_gop_cache_handler_t **ngx_rtmp_gop_cache_send_handler;
 
 ngx_rtmp_gop_frame_t *ngx_rtmp_gop_alloc_frame(ngx_rtmp_session_t *s);
 ngx_rtmp_gop_frame_t *ngx_rtmp_gop_free_frame(ngx_rtmp_session_t *s, ngx_rtmp_gop_frame_t *frame);
