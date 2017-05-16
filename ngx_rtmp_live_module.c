@@ -765,7 +765,7 @@ ngx_rtmp_live_broadcast(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     ngx_rtmp_live_ctx_t            *ctx, *pctx;
     ngx_rtmp_codec_ctx_t           *codec_ctx;
     ngx_chain_t                    *header, *coheader, *meta,
-                                   *apkt, *aapkt, *acopkt, *rpkt;
+                                   *apkt, *aapkt, *hapkt, *acopkt, *rpkt;
     ngx_rtmp_core_srv_conf_t       *cscf;
     ngx_rtmp_live_app_conf_t       *lacf;
     ngx_rtmp_session_t             *ss;
@@ -955,6 +955,10 @@ ngx_rtmp_live_broadcast(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
                         aapkt = ngx_rtmp_alloc_shared_buf(cscf);
                         ngx_rtmp_prepare_message(s, &clh, NULL, aapkt);
                     }
+
+                    if (hapkt == NULL) {
+                        hapkt = ngx_rtmp_alloc_shared_buf(cscf);
+                    }
                 }
 
                 if (header || coheader) {
@@ -987,7 +991,7 @@ ngx_rtmp_live_broadcast(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
                         }
 
                     } else if (dummy_audio) {
-                        handler->send_message(ss, aapkt, 0);
+                        handler->send_message(ss, (n == 0 ? aapkt : hapkt), 0);
                     }
 
                     cs->timestamp = lh.timestamp;
@@ -1060,6 +1064,10 @@ ngx_rtmp_live_broadcast(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
         if (aapkt) {
             handler->free_shared_chain(s, aapkt);
+        }
+
+        if (hapkt) {
+            handler->free_shared_chain(s, hapkt);
         }
 
         if (acopkt) {
