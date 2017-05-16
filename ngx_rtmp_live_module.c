@@ -1067,6 +1067,14 @@ ngx_rtmp_live_broadcast(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
         }
     }
 
+    ngx_rtmp_update_bandwidth(&ctx->stream->bw_in, h->mlen);
+    ngx_rtmp_update_bandwidth(&ctx->stream->bw_out, h->mlen * peers);
+
+    ngx_rtmp_update_bandwidth(h->type == NGX_RTMP_MSG_AUDIO ?
+                              &ctx->stream->bw_in_audio :
+                              &ctx->stream->bw_in_video,
+                              h->mlen);
+
     return NGX_OK;
 }
 
@@ -1075,21 +1083,8 @@ static ngx_int_t
 ngx_rtmp_live_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
                  ngx_chain_t *in)
 {
-    ngx_rtmp_live_ctx_t            *ctx, *pctx;
-    ngx_rtmp_codec_ctx_t           *codec_ctx;
-    ngx_chain_t                    *header, *coheader, *meta,
-                                   *apkt, *aapkt, *acopkt, *rpkt;
-    ngx_rtmp_core_srv_conf_t       *cscf;
+    ngx_rtmp_live_ctx_t            *ctx;
     ngx_rtmp_live_app_conf_t       *lacf;
-    ngx_rtmp_session_t             *ss;
-    ngx_rtmp_header_t               ch, lh, clh;
-    ngx_int_t                       rc, mandatory, dummy_audio;
-    ngx_uint_t                      prio;
-    ngx_uint_t                      peers;
-    ngx_uint_t                      meta_version;
-    ngx_uint_t                      csidx;
-    uint32_t                        delta;
-    ngx_rtmp_live_chunk_stream_t   *cs;
 #ifdef NGX_DEBUG
     const char                     *type_s;
 
@@ -1101,7 +1096,7 @@ ngx_rtmp_live_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
         return NGX_ERROR;
     }
 
-    if (!lacf->live || in == NULL  || in->buf == NULL) {
+    if (!lacf->live || in == NULL || in->buf == NULL) {
         return NGX_OK;
     }
 
@@ -1131,14 +1126,6 @@ ngx_rtmp_live_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     s->current_time = h->timestamp;
 
     ngx_rtmp_live_broadcast(s, h, in);
-
-    ngx_rtmp_update_bandwidth(&ctx->stream->bw_in, h->mlen);
-    ngx_rtmp_update_bandwidth(&ctx->stream->bw_out, h->mlen * peers);
-
-    ngx_rtmp_update_bandwidth(h->type == NGX_RTMP_MSG_AUDIO ?
-                              &ctx->stream->bw_in_audio :
-                              &ctx->stream->bw_in_video,
-                              h->mlen);
 
     return NGX_OK;
 }
