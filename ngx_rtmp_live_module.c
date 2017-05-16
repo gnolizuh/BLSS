@@ -794,6 +794,7 @@ ngx_rtmp_live_broadcast(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     peers = 0;
     apkt = NULL;
     aapkt = NULL;
+    hapkt = NULL;
     acopkt = NULL;
     header = NULL;
     coheader = NULL;
