@@ -758,22 +758,25 @@ next:
 
 
 static ngx_int_t
-ngx_rtmp_live_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
+ngx_rtmp_live_broadcast(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
                  ngx_chain_t *in)
 {
+    ngx_rtmp_gop_cache_handler_t   *handler;
     ngx_rtmp_live_ctx_t            *ctx, *pctx;
     ngx_rtmp_codec_ctx_t           *codec_ctx;
     ngx_chain_t                    *header, *coheader, *meta,
-                                   *apkt, *aapkt, *acopkt, *rpkt;
+                                   *apkt, *aapkt, *hapkt, *acopkt, *rpkt;
     ngx_rtmp_core_srv_conf_t       *cscf;
+    ngx_http_flv_rtmp_app_conf_t   *hacf;
     ngx_rtmp_live_app_conf_t       *lacf;
     ngx_rtmp_session_t             *ss;
-    ngx_rtmp_header_t               ch, lh, clh;
+    ngx_rtmp_header_t               ch, lh, clh, mh;
     ngx_int_t                       rc, mandatory, dummy_audio;
     ngx_uint_t                      prio;
     ngx_uint_t                      peers;
     ngx_uint_t                      meta_version;
     ngx_uint_t                      csidx;
+    ngx_uint_t                      n;
     uint32_t                        delta;
     ngx_rtmp_live_chunk_stream_t   *cs;
 #ifdef NGX_DEBUG
@@ -782,47 +785,19 @@ ngx_rtmp_live_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     type_s = (h->type == NGX_RTMP_MSG_VIDEO ? "video" : "audio");
 #endif
 
-    lacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_live_module);
-    if (lacf == NULL) {
-        return NGX_ERROR;
-    }
+    hacf = ngx_rtmp_get_module_app_conf(s, ngx_http_flv_rtmpmodule);
 
-    if (!lacf->live || in == NULL  || in->buf == NULL) {
-        return NGX_OK;
-    }
+    lacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_live_module);
 
     ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_live_module);
-    if (ctx == NULL || ctx->stream == NULL) {
-        return NGX_OK;
-    }
-
-    if (ctx->publishing == 0) {
-        ngx_log_debug1(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
-                       "live: %s from non-publisher", type_s);
-        return NGX_OK;
-    }
-
-    if (!ctx->stream->active) {
-        ngx_rtmp_live_start(s);
-    }
-
-    if (ctx->idle_evt.timer_set) {
-        ngx_add_timer(&ctx->idle_evt, lacf->idle_timeout);
-    }
-
-    ngx_log_debug2(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
-                   "live: %s packet timestamp=%uD",
-                   type_s, h->timestamp);
-
-    s->current_time = h->timestamp;
 
     peers = 0;
     apkt = NULL;
     aapkt = NULL;
+    hapkt = NULL;
     acopkt = NULL;
     header = NULL;
     coheader = NULL;
-    meta = NULL;
     meta_version = 0;
     mandatory = 0;
 
@@ -867,9 +842,6 @@ ngx_rtmp_live_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
         ch.timestamp = lh.timestamp;
     }
 */
-    rpkt = ngx_rtmp_append_shared_bufs(cscf, NULL, in);
-
-    ngx_rtmp_prepare_message(s, &ch, &lh, rpkt);
 
     codec_ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_codec_module);
 
@@ -905,190 +877,215 @@ ngx_rtmp_live_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
             }
         }
 
-        if (codec_ctx->meta) {
-            meta = codec_ctx->meta;
+        if (codec_ctx) {
+            mh = codec_ctx->meta_header;
             meta_version = codec_ctx->meta_version;
         }
     }
 
     /* broadcast to all subscribers */
 
-    for (pctx = ctx->stream->ctx[0]; pctx; pctx = pctx->next) {
-        if (pctx == ctx || pctx->paused) {
+    for (n = 0; n < 2; ++ n) {
+        if (n == 1 && !hacf->http_flv) {
             continue;
         }
 
-        ss = pctx->session;
-        cs = &pctx->cs[csidx];
+        handler = ngx_rtmp_gop_cache_send_handler[n];
 
-        /* send metadata */
+        rpkt = handler->append_shared_bufs(s, &ch, &lh, in);
 
-        if (meta && meta_version != pctx->meta_version) {
-            ngx_log_debug0(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
-                           "live: meta");
-
-            if (ngx_rtmp_send_message(ss, meta, 0) == NGX_OK) {
-                pctx->meta_version = meta_version;
-            }
+        meta = NULL;
+        if (codec_ctx) {
+            meta = (n == 0 ? codec_ctx->meta : codec_ctx->meta_orig);
         }
 
-        /* sync stream */
-
-        if (cs->active && (lacf->sync && cs->dropped > lacf->sync)) {
-            ngx_log_debug2(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
-                           "live: sync %s dropped=%uD", type_s, cs->dropped);
-
-            cs->active = 0;
-            cs->dropped = 0;
-        }
-
-        /* absolute packet */
-
-        if (!cs->active) {
-
-            if (mandatory) {
-                ngx_log_debug0(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
-                               "live: skipping header");
+        for (pctx = ctx->stream->ctx[n]; pctx; pctx = pctx->next) {
+            if (pctx == ctx || pctx->paused) {
                 continue;
             }
 
-            if (lacf->wait_video && h->type == NGX_RTMP_MSG_AUDIO &&
-                !pctx->cs[0].active)
-            {
-                ngx_log_debug0(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
-                               "live: waiting for video");
-                continue;
-            }
+            ss = pctx->session;
+            cs = &pctx->cs[csidx];
 
-            if (lacf->wait_key && prio != NGX_RTMP_VIDEO_KEY_FRAME &&
-               (lacf->interleave || h->type == NGX_RTMP_MSG_VIDEO))
-            {
-                ngx_log_debug0(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
-                               "live: skip non-key");
-                continue;
-            }
+            /* send metadata */
 
-            dummy_audio = 0;
-            if (lacf->wait_video && h->type == NGX_RTMP_MSG_VIDEO &&
-                !pctx->cs[1].active)
-            {
-                dummy_audio = 1;
-                if (aapkt == NULL) {
-                    aapkt = ngx_rtmp_alloc_shared_buf(cscf);
-                    ngx_rtmp_prepare_message(s, &clh, NULL, aapkt);
+            if (meta && meta_version != pctx->meta_version) {
+                ngx_log_debug0(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
+                               "live: meta");
+
+                if (handler->send_message(ss, meta, 0) == NGX_OK) {
+                    ctx->meta_version = meta_version;
                 }
             }
 
-            if (header || coheader) {
+            /* sync stream */
 
-                /* send absolute codec header */
-
+            if (cs->active && (lacf->sync && cs->dropped > lacf->sync)) {
                 ngx_log_debug2(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
-                               "live: abs %s header timestamp=%uD",
-                               type_s, lh.timestamp);
+                               "live: sync %s dropped=%uD", type_s, cs->dropped);
 
-                if (header) {
-                    if (apkt == NULL) {
-                        apkt = ngx_rtmp_append_shared_bufs(cscf, NULL, header);
-                        ngx_rtmp_prepare_message(s, &lh, NULL, apkt);
-                    }
+                cs->active = 0;
+                cs->dropped = 0;
+            }
 
-                    rc = ngx_rtmp_send_message(ss, apkt, 0);
-                    if (rc != NGX_OK) {
-                        continue;
-                    }
-                }
+            /* absolute packet */
 
-                if (coheader) {
-                    if (acopkt == NULL) {
-                        acopkt = ngx_rtmp_append_shared_bufs(cscf, NULL, coheader);
-                        ngx_rtmp_prepare_message(s, &clh, NULL, acopkt);
-                    }
+            if (!cs->active) {
 
-                    rc = ngx_rtmp_send_message(ss, acopkt, 0);
-                    if (rc != NGX_OK) {
-                        continue;
-                    }
-
-                } else if (dummy_audio) {
-                    ngx_rtmp_send_message(ss, aapkt, 0);
-                }
-
-                cs->timestamp = lh.timestamp;
-                cs->active = 1;
-                ss->current_time = cs->timestamp;
-
-            } else {
-
-                /* send absolute packet */
-
-                ngx_log_debug2(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
-                               "live: abs %s packet timestamp=%uD",
-                               type_s, ch.timestamp);
-
-                if (apkt == NULL) {
-                    apkt = ngx_rtmp_append_shared_bufs(cscf, NULL, in);
-                    ngx_rtmp_prepare_message(s, &ch, NULL, apkt);
-                }
-
-                rc = ngx_rtmp_send_message(ss, apkt, prio);
-                if (rc != NGX_OK) {
+                if (mandatory) {
+                    ngx_log_debug0(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
+                                   "live: skipping header");
                     continue;
                 }
 
-                cs->timestamp = ch.timestamp;
-                cs->active = 1;
-                ss->current_time = cs->timestamp;
+                if (lacf->wait_video && h->type == NGX_RTMP_MSG_AUDIO &&
+                    !pctx->cs[0].active)
+                {
+                    ngx_log_debug0(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
+                                   "live: waiting for video");
+                    continue;
+                }
 
-                ++peers;
+                if (lacf->wait_key && prio != NGX_RTMP_VIDEO_KEY_FRAME &&
+                   (lacf->interleave || h->type == NGX_RTMP_MSG_VIDEO))
+                {
+                    ngx_log_debug0(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
+                                   "live: skip non-key");
+                    continue;
+                }
 
-                if (dummy_audio) {
-                    ngx_rtmp_send_message(ss, aapkt, 0);
+                dummy_audio = 0;
+                if (lacf->wait_video && h->type == NGX_RTMP_MSG_VIDEO &&
+                    !pctx->cs[1].active)
+                {
+                    dummy_audio = 1;
+                    if (aapkt == NULL) {
+                        aapkt = ngx_rtmp_alloc_shared_buf(cscf);
+                        ngx_rtmp_prepare_message(s, &clh, NULL, aapkt);
+                    }
+
+                    if (hapkt == NULL) {
+                        hapkt = ngx_rtmp_alloc_shared_buf(cscf);
+                    }
+                }
+
+                if (header || coheader) {
+
+                    /* send absolute codec header */
+
+                    ngx_log_debug2(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
+                                   "live: abs %s header timestamp=%uD",
+                                   type_s, lh.timestamp);
+
+                    if (header) {
+                        if (apkt == NULL) {
+                            apkt = handler->append_shared_bufs(s, &lh, NULL, header);
+                        }
+
+                        rc = handler->send_message(ss, apkt, 0);
+                        if (rc != NGX_OK) {
+                            continue;
+                        }
+                    }
+
+                    if (coheader) {
+                        if (acopkt == NULL) {
+                            acopkt = handler->append_shared_bufs(s, &clh, NULL, coheader);
+                        }
+
+                        rc = handler->send_message(ss, acopkt, 0);
+                        if (rc != NGX_OK) {
+                            continue;
+                        }
+
+                    } else if (dummy_audio) {
+                        handler->send_message(ss, (n == 0 ? aapkt : hapkt), 0);
+                    }
+
+                    cs->timestamp = lh.timestamp;
+                    cs->active = 1;
+                    ss->current_time = cs->timestamp;
+
+                } else {
+
+                    /* send absolute packet */
+
+                    ngx_log_debug2(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
+                                   "live: abs %s packet timestamp=%uD",
+                                   type_s, ch.timestamp);
+
+                    if (apkt == NULL) {
+                        apkt = handler->append_shared_bufs(s, &ch, NULL, in);
+                    }
+
+                    rc = handler->send_message(ss, apkt, prio);
+                    if (rc != NGX_OK) {
+                        continue;
+                    }
+
+                    cs->timestamp = ch.timestamp;
+                    cs->active = 1;
+                    ss->current_time = cs->timestamp;
+
+                    ++peers;
+
+                    if (dummy_audio) {
+                        handler->send_message(ss, aapkt, 0);
+                    }
+
+                    continue;
+                }
+            }
+
+            /* send relative packet */
+
+            ngx_log_debug2(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
+                           "live: rel %s packet delta=%uD",
+                           type_s, delta);
+
+            if (handler->send_message(ss, rpkt, prio) != NGX_OK) {
+                ++pctx->ndropped;
+
+                cs->dropped += delta;
+
+                if (mandatory) {
+                    ngx_log_debug0(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
+                                   "live: mandatory packet failed");
+                    ngx_rtmp_finalize_session(ss);
                 }
 
                 continue;
             }
+
+            cs->timestamp += delta;
+            ++peers;
+            ss->current_time = cs->timestamp;
         }
 
-        /* send relative packet */
-
-        ngx_log_debug2(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
-                       "live: rel %s packet delta=%uD",
-                       type_s, delta);
-
-        if (ngx_rtmp_send_message(ss, rpkt, prio) != NGX_OK) {
-            ++pctx->ndropped;
-
-            cs->dropped += delta;
-
-            if (mandatory) {
-                ngx_log_debug0(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
-                               "live: mandatory packet failed");
-                ngx_rtmp_finalize_session(ss);
-            }
-
-            continue;
+        if (rpkt) {
+            handler->free_shared_chain(s, rpkt);
+            rpkt = NULL;
         }
 
-        cs->timestamp += delta;
-        ++peers;
-        ss->current_time = cs->timestamp;
-    }
+        if (apkt) {
+            handler->free_shared_chain(s, apkt);
+            apkt = NULL;
+        }
 
-    if (rpkt) {
-        ngx_rtmp_free_shared_chain(cscf, rpkt);
-    }
+        if (aapkt) {
+            handler->free_shared_chain(s, aapkt);
+            aapkt = NULL;
+        }
 
-    if (apkt) {
-        ngx_rtmp_free_shared_chain(cscf, apkt);
-    }
+        if (hapkt) {
+            handler->free_shared_chain(s, hapkt);
+            hapkt = NULL;
+        }
 
-    if (aapkt) {
-        ngx_rtmp_free_shared_chain(cscf, aapkt);
-    }
-
-    if (acopkt) {
-        ngx_rtmp_free_shared_chain(cscf, acopkt);
+        if (acopkt) {
+            handler->free_shared_chain(s, acopkt);
+            acopkt = NULL;
+        }
     }
 
     ngx_rtmp_update_bandwidth(&ctx->stream->bw_in, h->mlen);
@@ -1098,6 +1095,58 @@ ngx_rtmp_live_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
                               &ctx->stream->bw_in_audio :
                               &ctx->stream->bw_in_video,
                               h->mlen);
+
+    return NGX_OK;
+}
+
+
+static ngx_int_t
+ngx_rtmp_live_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
+                 ngx_chain_t *in)
+{
+    ngx_rtmp_live_ctx_t            *ctx;
+    ngx_rtmp_live_app_conf_t       *lacf;
+#ifdef NGX_DEBUG
+    const char                     *type_s;
+
+    type_s = (h->type == NGX_RTMP_MSG_VIDEO ? "video" : "audio");
+#endif
+
+    lacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_live_module);
+    if (lacf == NULL) {
+        return NGX_ERROR;
+    }
+
+    if (!lacf->live || in == NULL || in->buf == NULL) {
+        return NGX_OK;
+    }
+
+    ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_live_module);
+    if (ctx == NULL || ctx->stream == NULL) {
+        return NGX_OK;
+    }
+
+    if (ctx->publishing == 0) {
+        ngx_log_debug1(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
+                       "live: %s from non-publisher", type_s);
+        return NGX_OK;
+    }
+
+    if (!ctx->stream->active) {
+        ngx_rtmp_live_start(s);
+    }
+
+    if (ctx->idle_evt.timer_set) {
+        ngx_add_timer(&ctx->idle_evt, lacf->idle_timeout);
+    }
+
+    ngx_log_debug2(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
+                   "live: %s packet timestamp=%uD",
+                   type_s, h->timestamp);
+
+    s->current_time = h->timestamp;
+
+    ngx_rtmp_live_broadcast(s, h, in);
 
     return NGX_OK;
 }
