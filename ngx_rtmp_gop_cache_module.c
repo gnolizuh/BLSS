@@ -19,12 +19,12 @@ static void * ngx_rtmp_gop_cache_create_app_conf(ngx_conf_t *cf);
 static char * ngx_rtmp_gop_cache_merge_app_conf(ngx_conf_t *cf, void *parent, void *child);
 
 
-extern ngx_rtmp_gop_cache_handler_t ngx_rtmp_gop_cache_handler;
-extern ngx_rtmp_gop_cache_handler_t ngx_http_flv_gop_cache_handler;
+extern ngx_rtmp_send_handler_t ngx_rtmp_live_send_handler;
+extern ngx_rtmp_send_handler_t ngx_http_flv_send_handler;
 
-ngx_rtmp_gop_cache_handler_t *ngx_rtmp_gop_cache_send_handler[] = {
-    &ngx_rtmp_gop_cache_handler,
-    &ngx_http_flv_gop_cache_handler
+ngx_rtmp_send_handler_t *ngx_rtmp_send_handlers[] = {
+    &ngx_rtmp_live_send_handler,
+    &ngx_http_flv_send_handler
 };
 
 
@@ -631,7 +631,7 @@ ngx_rtmp_gop_cache_send(ngx_rtmp_session_t *ss)
     ngx_rtmp_live_app_conf_t       *lacf;
     ngx_rtmp_gop_cache_t           *cache;
     ngx_rtmp_gop_frame_t           *gop_frame;
-    ngx_rtmp_gop_cache_handler_t   *handler;
+    ngx_rtmp_send_handler_t        *handler;
     ngx_rtmp_header_t               ch, lh;
     ngx_uint_t                      meta_version;
     uint32_t                        delta;
@@ -664,7 +664,7 @@ ngx_rtmp_gop_cache_send(ngx_rtmp_session_t *ss)
 
     pctx = ctx->stream->pctx;
 
-    handler = ngx_rtmp_gop_cache_send_handler[ss->protocol == NGX_PROTO_TYPE_HTTP_FLV_PULL ? 1 : 0];
+    handler = ngx_rtmp_send_handlers[ss->protocol == NGX_PROTO_TYPE_HTTP_FLV_PULL ? 1 : 0];
 
     for (cache = gctx->head; cache; cache = cache->next) {
 

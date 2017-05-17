@@ -31,7 +31,7 @@ typedef struct {
     ngx_int_t                           (*send_message)(ngx_rtmp_session_t *s, ngx_chain_t *in, ngx_uint_t priority);
     ngx_chain_t                        *(*append_shared_bufs)(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_rtmp_header_t *lh, ngx_chain_t *in);
     void                                (*free_shared_chain)(ngx_rtmp_session_t *s, ngx_chain_t *in);
-} ngx_rtmp_gop_cache_handler_t;
+} ngx_rtmp_send_handler_t;
 
 
 struct ngx_rtmp_gop_frame_s {
@@ -78,7 +78,7 @@ typedef struct {
 
 
 extern ngx_module_t ngx_rtmp_gop_cache_module;
-extern ngx_rtmp_gop_cache_handler_t *ngx_rtmp_gop_cache_send_handler[2];
+extern ngx_rtmp_send_handler_t *ngx_rtmp_send_handlers[2];
 
 ngx_rtmp_gop_frame_t *ngx_rtmp_gop_alloc_frame(ngx_rtmp_session_t *s);
 ngx_rtmp_gop_frame_t *ngx_rtmp_gop_free_frame(ngx_rtmp_session_t *s, ngx_rtmp_gop_frame_t *frame);
