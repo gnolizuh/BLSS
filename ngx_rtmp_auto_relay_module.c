@@ -141,7 +141,7 @@ ngx_rtmp_auto_relay_init_process(ngx_cycle_t *cycle)
     }
 
     apcf = (ngx_rtmp_auto_relay_conf_t *) ngx_get_conf(cycle->conf_ctx,
-                                                    ngx_rtmp_auto_relay_module);
+                                                       ngx_rtmp_auto_relay_module);
     if (apcf->auto_relay_mode == 0) {
         return NGX_OK;
     }
@@ -158,7 +158,7 @@ ngx_rtmp_auto_relay_init_process(ngx_cycle_t *cycle)
     ngx_log_debug0(NGX_LOG_DEBUG_RTMP, cycle->log, 0,
             "auto_relay: creating sockets");
 
-    /*TODO: clone all RTMP listenings? */
+    /* TODO: clone all RTMP listenings? */
     ls = cycle->listening.elts;
     lss = NULL;
     for (n = 0; n < cycle->listening.nelts; ++n, ++ls) {
