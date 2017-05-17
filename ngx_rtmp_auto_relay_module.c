@@ -155,7 +155,7 @@ ngx_rtmp_auto_relay_init_process(ngx_cycle_t *cycle)
 
     apcf = (ngx_rtmp_auto_relay_conf_t *) ngx_get_conf(cycle->conf_ctx,
                                                        ngx_rtmp_auto_relay_module);
-    if (apcf->auto_relay_mode == 0) {
+    if (apcf->auto_relay_mode == NGX_RTMP_AUTO_RELAY_MODE_OFF) {
         return NGX_OK;
     }
 
@@ -291,7 +291,7 @@ ngx_rtmp_auto_relay_exit_process(ngx_cycle_t *cycle)
 
     apcf = (ngx_rtmp_auto_relay_conf_t *) ngx_get_conf(cycle->conf_ctx,
                                                        ngx_rtmp_auto_relay_module);
-    if (apcf->auto_relay_mode == 0) {
+    if (apcf->auto_relay_mode == NGX_RTMP_AUTO_RELAY_MODE_OFF) {
         return;
     }
 
@@ -499,7 +499,7 @@ ngx_rtmp_auto_relay_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
 
     apcf = (ngx_rtmp_auto_relay_conf_t *) ngx_get_conf(ngx_cycle->conf_ctx,
                                                        ngx_rtmp_auto_relay_module);
-    if (apcf->auto_relay_mode == 0) {
+    if (apcf->auto_relay_mode == NGX_RTMP_AUTO_RELAY_MODE_OFF) {
         goto next;
     }
 
@@ -546,7 +546,7 @@ ngx_rtmp_auto_relay_delete_stream(ngx_rtmp_session_t *s,
 
     apcf = (ngx_rtmp_auto_relay_conf_t *) ngx_get_conf(ngx_cycle->conf_ctx,
                                                        ngx_rtmp_auto_relay_module);
-    if (apcf->auto_relay_mode == 0) {
+    if (apcf->auto_relay_mode == NGX_RTMP_AUTO_RELAY_MODE_OFF) {
         goto next;
     }
 
