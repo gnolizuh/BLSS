@@ -63,7 +63,7 @@ static ngx_command_t  ngx_rtmp_auto_relay_commands[] = {
       ngx_conf_set_enum_slot,
       0,
       offsetof(ngx_rtmp_auto_relay_conf_t, auto_relay_mode),
-      NULL },
+      &ngx_rtmp_auto_relay_mode_slots },
 
     { ngx_string("auto_relay_reconnect"),
       NGX_MAIN_CONF|NGX_DIRECT_CONF|NGX_CONF_TAKE1,
