@@ -315,7 +315,7 @@ ngx_rtmp_auto_relay_create_conf(ngx_cycle_t *cycle)
         return NULL;
     }
 
-    apcf->auto_relay_mode = NGX_CONF_UNSET;
+    apcf->auto_relay_mode = NGX_CONF_UNSET_UINT;
     apcf->auto_relay_reconnect = NGX_CONF_UNSET_MSEC;
 
     return apcf;
@@ -327,7 +327,7 @@ ngx_rtmp_auto_relay_init_conf(ngx_cycle_t *cycle, void *conf)
 {
     ngx_rtmp_auto_relay_conf_t      *apcf = conf;
 
-    ngx_conf_init_value(apcf->auto_relay_mode, 0);
+    ngx_conf_init_uint_value(apcf->auto_relay_mode, NGX_RTMP_AUTO_RELAY_MODE_OFF);
     ngx_conf_init_msec_value(apcf->auto_relay_reconnect, 100);
 
     if (apcf->auto_relay_socket_dir.len == 0) {
