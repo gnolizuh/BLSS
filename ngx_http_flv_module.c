@@ -36,15 +36,15 @@ static char * ngx_http_flv_rtmp_merge_app_conf(ngx_conf_t *cf, void *parent, voi
 
 static ngx_int_t ngx_http_flv_send_message(ngx_rtmp_session_t *s, ngx_chain_t *out, ngx_uint_t priority);
 static ngx_int_t ngx_http_flv_connect_local(ngx_http_request_t *r, ngx_str_t *app, ngx_str_t *name);
-static ngx_int_t ngx_http_flv_gop_cache_send_message(ngx_rtmp_session_t *s, ngx_chain_t *in, ngx_uint_t priority);
-static ngx_chain_t * ngx_http_flv_gop_cache_append_shared_bufs(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_rtmp_header_t *lh, ngx_chain_t *in);
-static void ngx_http_flv_gop_cache_free_shared_chain(ngx_rtmp_session_t *s, ngx_chain_t *in);
+static ngx_int_t ngx_http_flv_http_send_message(ngx_rtmp_session_t *s, ngx_chain_t *in, ngx_uint_t priority);
+static ngx_chain_t * ngx_http_flv_http_append_shared_bufs(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_rtmp_header_t *lh, ngx_chain_t *in);
+static void ngx_http_flv_http_free_shared_chain(ngx_rtmp_session_t *s, ngx_chain_t *in);
 
 
-ngx_rtmp_gop_cache_handler_t ngx_http_flv_gop_cache_handler = {
-    ngx_http_flv_gop_cache_send_message,
-    ngx_http_flv_gop_cache_append_shared_bufs,
-    ngx_http_flv_gop_cache_free_shared_chain
+ngx_rtmp_send_handler_t ngx_http_flv_send_handler = {
+    ngx_http_flv_http_send_message,
+    ngx_http_flv_http_append_shared_bufs,
+    ngx_http_flv_http_free_shared_chain
 };
 
 
@@ -562,14 +562,14 @@ ngx_http_flv_append_shared_bufs(ngx_rtmp_core_srv_conf_t *cscf, ngx_rtmp_header_
 
 
 static ngx_int_t
-ngx_http_flv_gop_cache_send_message(ngx_rtmp_session_t *s, ngx_chain_t *in, ngx_uint_t priority)
+ngx_http_flv_http_send_message(ngx_rtmp_session_t *s, ngx_chain_t *in, ngx_uint_t priority)
 {
     return ngx_http_flv_send_message(s, in, priority);
 }
 
 
 static ngx_chain_t *
-ngx_http_flv_gop_cache_append_shared_bufs(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_rtmp_header_t *lh, ngx_chain_t *in)
+ngx_http_flv_http_append_shared_bufs(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_rtmp_header_t *lh, ngx_chain_t *in)
 {
     ngx_rtmp_core_srv_conf_t       *cscf;
 
@@ -583,7 +583,7 @@ ngx_http_flv_gop_cache_append_shared_bufs(ngx_rtmp_session_t *s, ngx_rtmp_header
 
 
 static void
-ngx_http_flv_gop_cache_free_shared_chain(ngx_rtmp_session_t *s, ngx_chain_t *in)
+ngx_http_flv_http_free_shared_chain(ngx_rtmp_session_t *s, ngx_chain_t *in)
 {
     ngx_rtmp_core_srv_conf_t       *cscf;
 
