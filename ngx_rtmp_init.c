@@ -142,7 +142,7 @@ ngx_http_flv_init_connection(ngx_http_request_t *r, ngx_uint_t protocol)
     c->write->handler = ngx_http_flv_send;
 	c->read->handler = ngx_http_flv_recv;
 
-	s->auto_pushed = unix_socket;
+	s->auto_relayed = unix_socket;
 
 	s->protocol = protocol;
 }
@@ -356,7 +356,7 @@ ngx_rtmp_init_connection(ngx_connection_t *c)
     /* only auto-pushed connections are
      * done through unix socket */
 
-    s->auto_pushed = unix_socket;
+    s->auto_relayed = unix_socket;
 
     if (addr_conf->proxy_protocol) {
         ngx_rtmp_proxy_protocol(s);
