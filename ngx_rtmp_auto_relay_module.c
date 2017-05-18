@@ -504,7 +504,7 @@ ngx_rtmp_auto_relay_hash_push(ngx_event_t *ev)
     ngx_str_t                       name;
     u_char                         *p;
     ngx_str_t                      *u;
-    ngx_uint_t                      h;
+    ngx_uint_t                      h, n;
     ngx_pid_t                       pid;
     ngx_core_conf_t                *ccf;
     ngx_file_info_t                 fi;
@@ -537,14 +537,14 @@ ngx_rtmp_auto_relay_hash_push(ngx_event_t *ev)
     }
 
     h = ngx_hash_key(ctx->name, ngx_strlen(ctx->name)) % ccf->worker_processes;
-    h = ngx_min(h + 1, NGX_MAX_PROCESSES - 1);
+    n = ngx_min(h + 1, NGX_MAX_PROCESSES - 1);
 
-    pid = ngx_processes[h].pid;
+    pid = ngx_processes[n].pid;
     if (pid == 0 || pid == NGX_INVALID_PID) {
         return;
     }
 
-    at.data = &ngx_processes[h];
+    at.data = &ngx_processes[n];
 
     ngx_memzero(&at.url, sizeof(at.url));
     u = &at.url.url;
@@ -557,7 +557,7 @@ ngx_rtmp_auto_relay_hash_push(ngx_event_t *ev)
         ngx_log_debug5(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
                        "auto_relay_hash_push: " ngx_file_info_n " failed: "
                        "slot=%i pid=%P socket='%s'" "url='%V' name='%s'",
-                       h, pid, path, u, ctx->name);
+                       n, pid, path, u, ctx->name);
         return;
     }
 
@@ -578,7 +578,7 @@ ngx_rtmp_auto_relay_hash_push(ngx_event_t *ev)
 
     ngx_log_debug4(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
                    "auto_relay_hash_push: connect slot=%i pid=%P socket='%s' name='%s'",
-                   h, pid, path, ctx->name);
+                   n, pid, path, ctx->name);
 
     if (ngx_rtmp_relay_push(s, &name, &at) == NGX_OK) {
         return;
@@ -587,7 +587,7 @@ ngx_rtmp_auto_relay_hash_push(ngx_event_t *ev)
     ngx_log_debug5(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
                   "auto_relay_hash_push: connect failed: slot=%i pid=%P socket='%s'"
                   "url='%V' name='%s'",
-                  h, pid, path, u, ctx->name);
+                  n, pid, path, u, ctx->name);
 
     if (!ctx->push_evt.timer_set) {
         ngx_add_timer(&ctx->push_evt, apcf->auto_relay_reconnect);
