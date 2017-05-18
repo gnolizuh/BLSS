@@ -525,6 +525,18 @@ ngx_rtmp_auto_relay_hash_push(ngx_event_t *ev)
     name.data = ctx->name;
     name.len = ngx_strlen(name.data);
 
+    h = ngx_hash_key(ctx->name, ngx_strlen(ctx->name)) % ccf->worker_processes;
+    n = ngx_min(h + 1, NGX_MAX_PROCESSES - 1);
+
+    if (n == ngx_process_slot) {
+        return;
+    }
+
+    pid = ngx_processes[n].pid;
+    if (pid == 0 || pid == NGX_INVALID_PID) {
+        return;
+    }
+
     ngx_memzero(&at, sizeof(at));
     ngx_str_set(&at.page_url, "nginx-auto-hash-push");
     at.tag = &ngx_rtmp_auto_relay_module;
@@ -534,14 +546,6 @@ ngx_rtmp_auto_relay_hash_push(ngx_event_t *ev)
         at.play_path.len = ngx_snprintf(play_path, sizeof(play_path),
                                         "%s?%s", ctx->name, ctx->args) -
                            play_path;
-    }
-
-    h = ngx_hash_key(ctx->name, ngx_strlen(ctx->name)) % ccf->worker_processes;
-    n = ngx_min(h + 1, NGX_MAX_PROCESSES - 1);
-
-    pid = ngx_processes[n].pid;
-    if (pid == 0 || pid == NGX_INVALID_PID) {
-        return;
     }
 
     at.data = &ngx_processes[n];
