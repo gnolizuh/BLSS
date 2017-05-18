@@ -537,7 +537,7 @@ ngx_rtmp_auto_relay_hash_push(ngx_event_t *ev)
 
     pid = ngx_processes[h].pid;
     if (pid == 0 || pid == NGX_INVALID_PID) {
-        continue;
+        return;
     }
 
     at.data = &ngx_processes[h];
@@ -554,7 +554,7 @@ ngx_rtmp_auto_relay_hash_push(ngx_event_t *ev)
                        "auto_relay_hash_push: " ngx_file_info_n " failed: "
                        "slot=%i pid=%P socket='%s'" "url='%V' name='%s'",
                        h, pid, path, u, ctx->name);
-        continue;
+        return;
     }
 
     u->data = path;
@@ -564,7 +564,7 @@ ngx_rtmp_auto_relay_hash_push(ngx_event_t *ev)
                       "auto_relay_hash_push: auto-push parse_url failed "
                       "url='%V' name='%s'",
                       u, ctx->name);
-        continue;
+        return;
     }
 
     p = ngx_snprintf(flash_ver, sizeof(flash_ver) - 1, "APSH %i,%i",
@@ -577,7 +577,7 @@ ngx_rtmp_auto_relay_hash_push(ngx_event_t *ev)
                    h, pid, path, ctx->name);
 
     if (ngx_rtmp_relay_push(s, &name, &at) == NGX_OK) {
-        continue;
+        return;
     }
 
     ngx_log_debug5(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
