@@ -25,10 +25,9 @@ static void ngx_rtmp_auto_relay_exit_process(ngx_cycle_t *cycle);
 static void * ngx_rtmp_auto_relay_create_conf(ngx_cycle_t *cf);
 static char * ngx_rtmp_auto_relay_init_conf(ngx_cycle_t *cycle, void *conf);
 #if (NGX_HAVE_UNIX_DOMAIN)
-static ngx_int_t ngx_rtmp_auto_relay_publish(ngx_rtmp_session_t *s,
-       ngx_rtmp_publish_t *v);
-static ngx_int_t ngx_rtmp_auto_relay_delete_stream(ngx_rtmp_session_t *s,
-       ngx_rtmp_delete_stream_t *v);
+static ngx_int_t ngx_rtmp_auto_relay_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v);
+static ngx_int_t ngx_rtmp_auto_relay_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v);
+static ngx_int_t ngx_rtmp_auto_relay_delete_stream(ngx_rtmp_session_t *s, ngx_rtmp_delete_stream_t *v);
 #endif
 
 
