@@ -598,11 +598,15 @@ static ngx_int_t
 ngx_rtmp_auto_relay_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
 {
     ngx_rtmp_auto_relay_conf_t     *apcf;
+    ngx_core_conf_t                *ccf;
     ngx_rtmp_auto_relay_ctx_t      *ctx;
 
     if (s->auto_relayed || (s->relay && !s->static_relay)) {
         goto next;
     }
+
+    ccf = (ngx_core_conf_t *) ngx_get_conf(ngx_cycle->conf_ctx,
+                                           ngx_core_module);
 
     apcf = (ngx_rtmp_auto_relay_conf_t *) ngx_get_conf(ngx_cycle->conf_ctx,
                                                        ngx_rtmp_auto_relay_module);
