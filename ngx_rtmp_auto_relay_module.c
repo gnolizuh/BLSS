@@ -504,8 +504,7 @@ ngx_rtmp_auto_relay_hash_push(ngx_event_t *ev)
     ngx_str_t                       name;
     u_char                         *p;
     ngx_str_t                      *u;
-    ngx_int_t                       n;
-    ngx_uint_t                      h;
+    ngx_int_t                       h;
     ngx_pid_t                       pid;
     ngx_core_conf_t                *ccf;
     ngx_file_info_t                 fi;
