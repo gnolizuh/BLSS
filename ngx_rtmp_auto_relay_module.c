@@ -16,6 +16,7 @@
 
 
 static ngx_rtmp_publish_pt          next_publish;
+static ngx_rtmp_play_pt             next_play;
 static ngx_rtmp_delete_stream_pt    next_delete_stream;
 
 
@@ -162,6 +163,9 @@ ngx_rtmp_auto_relay_init_process(ngx_cycle_t *cycle)
     next_publish = ngx_rtmp_publish;
     ngx_rtmp_publish = ngx_rtmp_auto_relay_publish;
 
+    next_play = ngx_rtmp_play;
+    ngx_rtmp_play = ngx_rtmp_auto_relay_play;
+
     next_delete_stream = ngx_rtmp_delete_stream;
     ngx_rtmp_delete_stream = ngx_rtmp_auto_relay_delete_stream;
 
@@ -300,7 +304,6 @@ ngx_rtmp_auto_relay_exit_process(ngx_cycle_t *cycle)
                   &apcf->auto_relay_socket_dir, ngx_process_slot) = 0;
 
     ngx_delete_file(path);
-
 #endif
 }
 
@@ -340,7 +343,7 @@ ngx_rtmp_auto_relay_init_conf(ngx_cycle_t *cycle, void *conf)
 
 #if (NGX_HAVE_UNIX_DOMAIN)
 static void
-ngx_rtmp_auto_relay_reconnect(ngx_event_t *ev)
+ngx_rtmp_auto_relay_all_push(ngx_event_t *ev)
 {
     ngx_rtmp_session_t             *s = ev->data;
 
@@ -362,7 +365,7 @@ ngx_rtmp_auto_relay_reconnect(ngx_event_t *ev)
     ngx_file_info_t                 fi;
 
     ngx_log_debug0(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
-                   "auto_relay: reconnect");
+                   "auto_relay_all_push: connect");
 
     apcf = (ngx_rtmp_auto_relay_conf_t *) ngx_get_conf(ngx_cycle->conf_ctx,
                                                        ngx_rtmp_auto_relay_module);
@@ -375,7 +378,7 @@ ngx_rtmp_auto_relay_reconnect(ngx_event_t *ev)
     name.len = ngx_strlen(name.data);
 
     ngx_memzero(&at, sizeof(at));
-    ngx_str_set(&at.page_url, "nginx-auto-push");
+    ngx_str_set(&at.page_url, "nginx-auto-all-push");
     at.tag = &ngx_rtmp_auto_relay_module;
 
     if (ctx->args[0]) {
@@ -414,7 +417,7 @@ ngx_rtmp_auto_relay_reconnect(ngx_event_t *ev)
 
         if (ngx_file_info(path + sizeof("unix:") - 1, &fi) != NGX_OK) {
             ngx_log_debug5(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
-                           "auto_relay: " ngx_file_info_n " failed: "
+                           "auto_relay_all_push: " ngx_file_info_n " failed: "
                            "slot=%i pid=%P socket='%s'" "url='%V' name='%s'",
                            n, pid, path, u, ctx->name);
             continue;
@@ -424,7 +427,7 @@ ngx_rtmp_auto_relay_reconnect(ngx_event_t *ev)
         u->len = p - path;
         if (ngx_parse_url(s->connection->pool, &at.url) != NGX_OK) {
             ngx_log_error(NGX_LOG_ERR, s->connection->log, 0,
-                          "auto_relay: auto-push parse_url failed "
+                          "auto_relay_all_push: auto-push parse_url failed "
                           "url='%V' name='%s'",
                           u, ctx->name);
             continue;
@@ -436,7 +439,7 @@ ngx_rtmp_auto_relay_reconnect(ngx_event_t *ev)
         at.flash_ver.len = p - flash_ver;
 
         ngx_log_debug4(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
-                       "auto_relay: connect slot=%i pid=%P socket='%s' name='%s'",
+                       "auto_relay_all_push: connect slot=%i pid=%P socket='%s' name='%s'",
                        n, pid, path, ctx->name);
 
         if (ngx_rtmp_relay_push(s, &name, &at) == NGX_OK) {
@@ -446,7 +449,7 @@ ngx_rtmp_auto_relay_reconnect(ngx_event_t *ev)
         }
 
         ngx_log_debug5(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
-                      "auto_relay: connect failed: slot=%i pid=%P socket='%s'"
+                      "auto_relay_all_push: connect failed: slot=%i pid=%P socket='%s'"
                       "url='%V' name='%s'",
                       n, pid, path, u, ctx->name);
     }
@@ -455,7 +458,7 @@ ngx_rtmp_auto_relay_reconnect(ngx_event_t *ev)
                                            ngx_core_module);
 
     ngx_log_debug3(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
-                   "auto_relay: pushed=%i total=%i failed=%i",
+                   "auto_relay_all_push: pushed=%i total=%i failed=%i",
                    npushed, ccf->worker_processes,
                    ccf->worker_processes - 1 - npushed);
 
@@ -477,9 +480,111 @@ ngx_rtmp_auto_relay_reconnect(ngx_event_t *ev)
         }
 
         ngx_log_error(NGX_LOG_ERR, s->connection->log, 0,
-                      "auto_relay: connect failed: slot=%i pid=%P name='%s'",
+                      "auto_relay_all_push: connect failed: slot=%i pid=%P name='%s'",
                       n, pid, ctx->name);
     }
+
+    if (!ctx->push_evt.timer_set) {
+        ngx_add_timer(&ctx->push_evt, apcf->auto_relay_reconnect);
+    }
+}
+
+
+static void
+ngx_rtmp_auto_relay_hash_push(ngx_event_t *ev)
+{
+    ngx_rtmp_session_t             *s = ev->data;
+
+    ngx_rtmp_auto_relay_conf_t     *apcf;
+    ngx_rtmp_auto_relay_ctx_t      *ctx;
+    ngx_rtmp_relay_target_t         at;
+    u_char                          path[sizeof("unix:") + NGX_MAX_PATH];
+    u_char                          flash_ver[sizeof("APSH ,") +
+                                              NGX_INT_T_LEN * 2];
+    u_char                          play_path[NGX_RTMP_MAX_NAME];
+    ngx_str_t                       name;
+    u_char                         *p;
+    ngx_str_t                      *u;
+    ngx_uint_t                      h;
+    ngx_pid_t                       pid;
+    ngx_core_conf_t                *ccf;
+    ngx_file_info_t                 fi;
+
+    ngx_log_debug0(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
+                   "auto_relay_hash_push: connect");
+
+    apcf = (ngx_rtmp_auto_relay_conf_t *) ngx_get_conf(ngx_cycle->conf_ctx,
+                                                       ngx_rtmp_auto_relay_module);
+    ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_auto_relay_index_module);
+    if (ctx == NULL) {
+        return;
+    }
+
+    name.data = ctx->name;
+    name.len = ngx_strlen(name.data);
+
+    ngx_memzero(&at, sizeof(at));
+    ngx_str_set(&at.page_url, "nginx-auto-hash-push");
+    at.tag = &ngx_rtmp_auto_relay_module;
+
+    if (ctx->args[0]) {
+        at.play_path.data = play_path;
+        at.play_path.len = ngx_snprintf(play_path, sizeof(play_path),
+                                        "%s?%s", ctx->name, ctx->args) -
+                           play_path;
+    }
+
+    h = ngx_hash_key(ctx->name, ngx_strlen(ctx->name)) % NGX_MAX_PROCESSES;
+
+    pid = ngx_processes[h].pid;
+    if (pid == 0 || pid == NGX_INVALID_PID) {
+        continue;
+    }
+
+    at.data = &ngx_processes[h];
+
+    ngx_memzero(&at.url, sizeof(at.url));
+    u = &at.url.url;
+    p = ngx_snprintf(path, sizeof(path) - 1,
+                     "unix:%V/" NGX_RTMP_AUTO_PUSH_SOCKNAME ".%i",
+                     &apcf->auto_relay_socket_dir, h);
+    *p = 0;
+
+    if (ngx_file_info(path + sizeof("unix:") - 1, &fi) != NGX_OK) {
+        ngx_log_debug5(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
+                       "auto_relay_hash_push: " ngx_file_info_n " failed: "
+                       "slot=%i pid=%P socket='%s'" "url='%V' name='%s'",
+                       h, pid, path, u, ctx->name);
+        continue;
+    }
+
+    u->data = path;
+    u->len = p - path;
+    if (ngx_parse_url(s->connection->pool, &at.url) != NGX_OK) {
+        ngx_log_error(NGX_LOG_ERR, s->connection->log, 0,
+                      "auto_relay_hash_push: auto-push parse_url failed "
+                      "url='%V' name='%s'",
+                      u, ctx->name);
+        continue;
+    }
+
+    p = ngx_snprintf(flash_ver, sizeof(flash_ver) - 1, "APSH %i,%i",
+                     (ngx_int_t) ngx_process_slot, (ngx_int_t) ngx_pid);
+    at.flash_ver.data = flash_ver;
+    at.flash_ver.len = p - flash_ver;
+
+    ngx_log_debug4(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
+                   "auto_relay_hash_push: connect slot=%i pid=%P socket='%s' name='%s'",
+                   h, pid, path, ctx->name);
+
+    if (ngx_rtmp_relay_push(s, &name, &at) == NGX_OK) {
+        continue;
+    }
+
+    ngx_log_debug5(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
+                  "auto_relay_hash_push: connect failed: slot=%i pid=%P socket='%s'"
+                  "url='%V' name='%s'",
+                  h, pid, path, u, ctx->name);
 
     if (!ctx->push_evt.timer_set) {
         ngx_add_timer(&ctx->push_evt, apcf->auto_relay_reconnect);
@@ -515,23 +620,75 @@ ngx_rtmp_auto_relay_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
     }
     ngx_memzero(ctx, sizeof(*ctx));
 
+    ngx_memcpy(ctx->name, v->name, sizeof(ctx->name));
+    ngx_memcpy(ctx->args, v->args, sizeof(ctx->args));
+
     ctx->push_evt.data = s;
     ctx->push_evt.log = s->connection->log;
-    ctx->push_evt.handler = ngx_rtmp_auto_relay_reconnect;
+    ctx->push_evt.handler = ngx_rtmp_auto_relay_all_push;
 
-    ctx->slots = ngx_pcalloc(s->connection->pool,
-                             sizeof(ngx_int_t) * NGX_MAX_PROCESSES);
-    if (ctx->slots == NULL) {
+    if (apcf->auto_relay_mode == NGX_RTMP_AUTO_RELAY_MODE_ALL) {
+
+        ctx->slots = ngx_pcalloc(s->connection->pool,
+                                 sizeof(ngx_int_t) * NGX_MAX_PROCESSES);
+        if (ctx->slots == NULL) {
+            goto next;
+        }
+
+        ngx_rtmp_auto_relay_all_push(&ctx->push_evt);
+    } else if (apcf->auto_relay_mode == NGX_RTMP_AUTO_RELAY_MODE_HASH) {
+
+        ngx_rtmp_auto_relay_hash_push(&ctx->push_evt);
+    }
+
+next:
+    return next_publish(s, v);
+}
+
+
+static ngx_int_t
+ngx_rtmp_auto_relay_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
+{
+    ngx_rtmp_auto_relay_conf_t     *apcf;
+    ngx_rtmp_auto_relay_ctx_t      *ctx;
+
+    if (s->auto_relayed || (s->relay && !s->static_relay)) {
         goto next;
     }
+
+    apcf = (ngx_rtmp_auto_relay_conf_t *) ngx_get_conf(ngx_cycle->conf_ctx,
+                                                       ngx_rtmp_auto_relay_module);
+    if (apcf->auto_relay_mode != NGX_RTMP_AUTO_RELAY_MODE_HASH) {
+        goto next;
+    }
+
+    ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_auto_relay_index_module);
+    if (ctx == NULL) {
+        ctx = ngx_palloc(s->connection->pool,
+                         sizeof(ngx_rtmp_auto_relay_ctx_t));
+        if (ctx == NULL) {
+            goto next;
+        }
+        ngx_rtmp_set_ctx(s, ctx, ngx_rtmp_auto_relay_index_module);
+
+    }
+    ngx_memzero(ctx, sizeof(*ctx));
 
     ngx_memcpy(ctx->name, v->name, sizeof(ctx->name));
     ngx_memcpy(ctx->args, v->args, sizeof(ctx->args));
 
-    ngx_rtmp_auto_relay_reconnect(&ctx->push_evt);
+    if (ngx_rtmp_relay_pull(s, &name, target) == NGX_OK) {
+        continue;
+    }
+
+    ngx_log_error(NGX_LOG_ERR, s->connection->log, 0,
+            "relay: pull failed name='%V' app='%V' "
+            "playpath='%V' url='%V'",
+            &name, &target->app, &target->play_path,
+            &target->url.url);
 
 next:
-    return next_publish(s, v);
+    return next_play(s, v);
 }
 
 
