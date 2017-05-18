@@ -668,7 +668,7 @@ ngx_rtmp_auto_relay_hash_pull(ngx_rtmp_session_t *s)
     ngx_str_t                       name;
     u_char                         *p;
     ngx_str_t                      *u;
-    ngx_uint_t                      h;
+    ngx_int_t                       h;
     ngx_pid_t                       pid;
     ngx_core_conf_t                *ccf;
     ngx_file_info_t                 fi;
@@ -689,6 +689,16 @@ ngx_rtmp_auto_relay_hash_pull(ngx_rtmp_session_t *s)
     name.data = ctx->name;
     name.len = ngx_strlen(name.data);
 
+    h = ngx_hash_key(ctx->name, ngx_strlen(ctx->name)) % ccf->worker_processes;
+    if (h == ngx_process_slot) {
+        return;
+    }
+
+    pid = ngx_processes[h].pid;
+    if (pid == 0 || pid == NGX_INVALID_PID) {
+        return;
+    }
+
     ngx_memzero(&at, sizeof(at));
     ngx_str_set(&at.page_url, "nginx-auto-hash-pull");
     at.tag = &ngx_rtmp_auto_relay_module;
@@ -698,13 +708,6 @@ ngx_rtmp_auto_relay_hash_pull(ngx_rtmp_session_t *s)
         at.play_path.len = ngx_snprintf(play_path, sizeof(play_path),
                                         "%s?%s", ctx->name, ctx->args) -
                            play_path;
-    }
-
-    h = ngx_hash_key(ctx->name, ngx_strlen(ctx->name)) % ccf->worker_processes;
-
-    pid = ngx_processes[h].pid;
-    if (pid == 0 || pid == NGX_INVALID_PID) {
-        return;
     }
 
     at.data = &ngx_processes[h];
