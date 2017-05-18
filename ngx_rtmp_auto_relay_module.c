@@ -506,7 +506,6 @@ ngx_rtmp_auto_relay_hash_push(ngx_event_t *ev)
     ngx_str_t                      *u;
     ngx_uint_t                      h;
     ngx_pid_t                       pid;
-    ngx_core_conf_t                *ccf;
     ngx_file_info_t                 fi;
 
     ngx_log_debug0(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
@@ -660,7 +659,6 @@ ngx_rtmp_auto_relay_hash_pull(ngx_rtmp_session_t *s)
     ngx_str_t                      *u;
     ngx_uint_t                      h;
     ngx_pid_t                       pid;
-    ngx_core_conf_t                *ccf;
     ngx_file_info_t                 fi;
 
     ngx_log_debug0(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
