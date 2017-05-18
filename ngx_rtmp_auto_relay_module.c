@@ -34,7 +34,7 @@ static ngx_int_t ngx_rtmp_auto_relay_delete_stream(ngx_rtmp_session_t *s, ngx_rt
 typedef struct ngx_rtmp_auto_relay_ctx_s ngx_rtmp_auto_relay_ctx_t;
 
 struct ngx_rtmp_auto_relay_ctx_s {
-    ngx_int_t                      *slots; /* ccf->worker_processes */
+    ngx_int_t                      *slots; /* NGX_MAX_PROCESSES */
     u_char                          name[NGX_RTMP_MAX_NAME];
     u_char                          args[NGX_RTMP_MAX_ARGS];
     ngx_event_t                     push_evt;
@@ -393,7 +393,7 @@ ngx_rtmp_auto_relay_all_push(ngx_event_t *ev)
     slot = ctx->slots;
     npushed = 0;
 
-    for (n = 0; n < ccf->worker_processes; ++n, ++slot) {
+    for (n = 0; n < NGX_MAX_PROCESSES; ++n, ++slot) {
         if (n == ngx_process_slot) {
             continue;
         }
@@ -469,7 +469,7 @@ ngx_rtmp_auto_relay_all_push(ngx_event_t *ev)
 
     slot = ctx->slots;
 
-    for (n = 0; n < ccf->worker_processes; ++n, ++slot) {
+    for (n = 0; n < NGX_MAX_PROCESSES; ++n, ++slot) {
         pid = ngx_processes[n].pid;
 
         if (n == ngx_process_slot || *slot == 1 ||
@@ -537,6 +537,7 @@ ngx_rtmp_auto_relay_hash_push(ngx_event_t *ev)
     }
 
     h = ngx_hash_key(ctx->name, ngx_strlen(ctx->name)) % ccf->worker_processes;
+    h = ngx_min(h + 1, NGX_MAX_PROCESSES - 1);
 
     pid = ngx_processes[h].pid;
     if (pid == 0 || pid == NGX_INVALID_PID) {
@@ -636,7 +637,7 @@ ngx_rtmp_auto_relay_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
     if (apcf->auto_relay_mode == NGX_RTMP_AUTO_RELAY_MODE_ALL) {
 
         ctx->slots = ngx_pcalloc(s->connection->pool,
-                                 sizeof(ngx_int_t) * ccf->worker_processes);
+                                 sizeof(ngx_int_t) * NGX_MAX_PROCESSES);
         if (ctx->slots == NULL) {
             goto next;
         }
