@@ -645,6 +645,102 @@ next:
 }
 
 
+static void
+ngx_rtmp_auto_relay_hash_pull(ngx_rtmp_session_t *s)
+{
+    ngx_rtmp_auto_relay_conf_t     *apcf;
+    ngx_rtmp_auto_relay_ctx_t      *ctx;
+    ngx_rtmp_relay_target_t         at;
+    u_char                          path[sizeof("unix:") + NGX_MAX_PATH];
+    u_char                          flash_ver[sizeof("APSH ,") +
+                                              NGX_INT_T_LEN * 2];
+    u_char                          play_path[NGX_RTMP_MAX_NAME];
+    ngx_str_t                       name;
+    u_char                         *p;
+    ngx_str_t                      *u;
+    ngx_uint_t                      h;
+    ngx_pid_t                       pid;
+    ngx_core_conf_t                *ccf;
+    ngx_file_info_t                 fi;
+
+    ngx_log_debug0(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
+                   "auto_relay_hash_pull: connect");
+
+    apcf = (ngx_rtmp_auto_relay_conf_t *) ngx_get_conf(ngx_cycle->conf_ctx,
+                                                       ngx_rtmp_auto_relay_module);
+    ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_auto_relay_index_module);
+    if (ctx == NULL) {
+        return;
+    }
+
+    name.data = ctx->name;
+    name.len = ngx_strlen(name.data);
+
+    ngx_memzero(&at, sizeof(at));
+    ngx_str_set(&at.page_url, "nginx-auto-hash-pull");
+    at.tag = &ngx_rtmp_auto_relay_module;
+
+    if (ctx->args[0]) {
+        at.play_path.data = play_path;
+        at.play_path.len = ngx_snprintf(play_path, sizeof(play_path),
+                                        "%s?%s", ctx->name, ctx->args) -
+                           play_path;
+    }
+
+    h = ngx_hash_key(ctx->name, ngx_strlen(ctx->name)) % NGX_MAX_PROCESSES;
+
+    pid = ngx_processes[h].pid;
+    if (pid == 0 || pid == NGX_INVALID_PID) {
+        return;
+    }
+
+    at.data = &ngx_processes[h];
+
+    ngx_memzero(&at.url, sizeof(at.url));
+    u = &at.url.url;
+    p = ngx_snprintf(path, sizeof(path) - 1,
+                     "unix:%V/" NGX_RTMP_AUTO_PUSH_SOCKNAME ".%i",
+                     &apcf->auto_relay_socket_dir, h);
+    *p = 0;
+
+    if (ngx_file_info(path + sizeof("unix:") - 1, &fi) != NGX_OK) {
+        ngx_log_debug5(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
+                       "auto_relay_hash_pull: " ngx_file_info_n " failed: "
+                       "slot=%i pid=%P socket='%s'" "url='%V' name='%s'",
+                       h, pid, path, u, ctx->name);
+        return;
+    }
+
+    u->data = path;
+    u->len = p - path;
+    if (ngx_parse_url(s->connection->pool, &at.url) != NGX_OK) {
+        ngx_log_error(NGX_LOG_ERR, s->connection->log, 0,
+                      "auto_relay_hash_pull: auto-push parse_url failed "
+                      "url='%V' name='%s'",
+                      u, ctx->name);
+        return;
+    }
+
+    p = ngx_snprintf(flash_ver, sizeof(flash_ver) - 1, "APSH %i,%i",
+                     (ngx_int_t) ngx_process_slot, (ngx_int_t) ngx_pid);
+    at.flash_ver.data = flash_ver;
+    at.flash_ver.len = p - flash_ver;
+
+    ngx_log_debug4(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
+                   "auto_relay_hash_pull: connect slot=%i pid=%P socket='%s' name='%s'",
+                   h, pid, path, ctx->name);
+
+    if (ngx_rtmp_relay_pull(s, &name, &at) == NGX_OK) {
+        return;
+    }
+
+    ngx_log_debug5(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
+                  "auto_relay_hash_pull: connect failed: slot=%i pid=%P socket='%s'"
+                  "url='%V' name='%s'",
+                  h, pid, path, u, ctx->name);
+}
+
+
 static ngx_int_t
 ngx_rtmp_auto_relay_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
 {
@@ -676,15 +772,7 @@ ngx_rtmp_auto_relay_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
     ngx_memcpy(ctx->name, v->name, sizeof(ctx->name));
     ngx_memcpy(ctx->args, v->args, sizeof(ctx->args));
 
-    if (ngx_rtmp_relay_pull(s, &name, target) == NGX_OK) {
-        continue;
-    }
-
-    ngx_log_error(NGX_LOG_ERR, s->connection->log, 0,
-            "relay: pull failed name='%V' app='%V' "
-            "playpath='%V' url='%V'",
-            &name, &target->app, &target->play_path,
-            &target->url.url);
+    ngx_rtmp_auto_relay_hash_pull(s);
 
 next:
     return next_play(s, v);
