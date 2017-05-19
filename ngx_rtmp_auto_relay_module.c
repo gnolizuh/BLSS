@@ -11,9 +11,9 @@
 #include "ngx_rtmp_live_module.h"
 
 
-#define NGX_RTMP_AUTO_RELAY_MODE_OFF   0
-#define NGX_RTMP_AUTO_RELAY_MODE_ALL   1
-#define NGX_RTMP_AUTO_RELAY_MODE_HASH  2
+#define NGX_RTMP_RELAY_STREAM_OFF   0
+#define NGX_RTMP_RELAY_STREAM_ALL   1
+#define NGX_RTMP_RELAY_STREAM_HASH  2
 
 
 static ngx_rtmp_publish_pt          next_publish;
@@ -43,34 +43,34 @@ struct ngx_rtmp_auto_relay_ctx_s {
 
 
 typedef struct {
-    ngx_uint_t                      auto_relay_mode;
+    ngx_uint_t                      relay_stream;
     ngx_str_t                       auto_relay_socket_dir;
-    ngx_msec_t                      auto_relay_reconnect;
+    ngx_msec_t                      relay_reconnect_time;
 } ngx_rtmp_auto_relay_conf_t;
 
 
 static ngx_conf_enum_t ngx_rtmp_auto_relay_mode_slots[] = {
-    { ngx_string("off"),            NGX_RTMP_AUTO_RELAY_MODE_OFF  },
-    { ngx_string("all"),            NGX_RTMP_AUTO_RELAY_MODE_ALL  },
-    { ngx_string("hash"),           NGX_RTMP_AUTO_RELAY_MODE_HASH },
+    { ngx_string("off"),            NGX_RTMP_RELAY_STREAM_OFF  },
+    { ngx_string("all"),            NGX_RTMP_RELAY_STREAM_ALL  },
+    { ngx_string("hash"),           NGX_RTMP_RELAY_STREAM_HASH },
     { ngx_null_string,              0 }
 };
 
 
 static ngx_command_t  ngx_rtmp_auto_relay_commands[] = {
 
-    { ngx_string("auto_relay_mode"),
+    { ngx_string("relay_stream"),
       NGX_MAIN_CONF|NGX_DIRECT_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_enum_slot,
       0,
-      offsetof(ngx_rtmp_auto_relay_conf_t, auto_relay_mode),
+      offsetof(ngx_rtmp_auto_relay_conf_t, relay_stream),
       &ngx_rtmp_auto_relay_mode_slots },
 
-    { ngx_string("auto_relay_reconnect"),
+    { ngx_string("relay_reconnect_time"),
       NGX_MAIN_CONF|NGX_DIRECT_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_msec_slot,
       0,
-      offsetof(ngx_rtmp_auto_relay_conf_t, auto_relay_reconnect),
+      offsetof(ngx_rtmp_auto_relay_conf_t, relay_reconnect_time),
       NULL },
 
     { ngx_string("auto_relay_socket_dir"),
@@ -156,7 +156,7 @@ ngx_rtmp_auto_relay_init_process(ngx_cycle_t *cycle)
 
     apcf = (ngx_rtmp_auto_relay_conf_t *) ngx_get_conf(cycle->conf_ctx,
                                                        ngx_rtmp_auto_relay_module);
-    if (apcf->auto_relay_mode == NGX_RTMP_AUTO_RELAY_MODE_OFF) {
+    if (apcf->relay_stream == NGX_RTMP_RELAY_STREAM_OFF) {
         return NGX_OK;
     }
 
@@ -295,7 +295,7 @@ ngx_rtmp_auto_relay_exit_process(ngx_cycle_t *cycle)
 
     apcf = (ngx_rtmp_auto_relay_conf_t *) ngx_get_conf(cycle->conf_ctx,
                                                        ngx_rtmp_auto_relay_module);
-    if (apcf->auto_relay_mode == NGX_RTMP_AUTO_RELAY_MODE_OFF) {
+    if (apcf->relay_stream == NGX_RTMP_RELAY_STREAM_OFF) {
         return;
     }
 
@@ -318,8 +318,8 @@ ngx_rtmp_auto_relay_create_conf(ngx_cycle_t *cycle)
         return NULL;
     }
 
-    apcf->auto_relay_mode = NGX_CONF_UNSET_UINT;
-    apcf->auto_relay_reconnect = NGX_CONF_UNSET_MSEC;
+    apcf->relay_stream = NGX_CONF_UNSET_UINT;
+    apcf->relay_reconnect_time = NGX_CONF_UNSET_MSEC;
 
     return apcf;
 }
@@ -330,8 +330,8 @@ ngx_rtmp_auto_relay_init_conf(ngx_cycle_t *cycle, void *conf)
 {
     ngx_rtmp_auto_relay_conf_t      *apcf = conf;
 
-    ngx_conf_init_uint_value(apcf->auto_relay_mode, NGX_RTMP_AUTO_RELAY_MODE_OFF);
-    ngx_conf_init_msec_value(apcf->auto_relay_reconnect, 100);
+    ngx_conf_init_uint_value(apcf->relay_stream, NGX_RTMP_RELAY_STREAM_OFF);
+    ngx_conf_init_msec_value(apcf->relay_reconnect_time, 100);
 
     if (apcf->auto_relay_socket_dir.len == 0) {
         ngx_str_set(&apcf->auto_relay_socket_dir, "/tmp");
@@ -485,7 +485,7 @@ ngx_rtmp_auto_relay_all_push(ngx_event_t *ev)
     }
 
     if (!ctx->push_evt.timer_set) {
-        ngx_add_timer(&ctx->push_evt, apcf->auto_relay_reconnect);
+        ngx_add_timer(&ctx->push_evt, apcf->relay_reconnect_time);
     }
 }
 
@@ -593,7 +593,7 @@ ngx_rtmp_auto_relay_hash_push(ngx_event_t *ev)
                   h, pid, path, u, ctx->name);
 
     if (!ctx->push_evt.timer_set) {
-        ngx_add_timer(&ctx->push_evt, apcf->auto_relay_reconnect);
+        ngx_add_timer(&ctx->push_evt, apcf->relay_reconnect_time);
     }
 }
 
@@ -615,7 +615,7 @@ ngx_rtmp_auto_relay_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
 
     apcf = (ngx_rtmp_auto_relay_conf_t *) ngx_get_conf(ngx_cycle->conf_ctx,
                                                        ngx_rtmp_auto_relay_module);
-    if (apcf->auto_relay_mode == NGX_RTMP_AUTO_RELAY_MODE_OFF) {
+    if (apcf->relay_stream == NGX_RTMP_RELAY_STREAM_OFF) {
         goto next;
     }
 
@@ -643,7 +643,7 @@ ngx_rtmp_auto_relay_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
         goto next;
     }
 
-    if (apcf->auto_relay_mode == NGX_RTMP_AUTO_RELAY_MODE_ALL) {
+    if (apcf->relay_stream == NGX_RTMP_RELAY_STREAM_ALL) {
 
         ctx->slots = ngx_pcalloc(s->connection->pool,
                                  sizeof(ngx_int_t) * NGX_MAX_PROCESSES);
@@ -652,7 +652,7 @@ ngx_rtmp_auto_relay_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
         }
 
         ngx_rtmp_auto_relay_all_push(&ctx->push_evt);
-    } else if (apcf->auto_relay_mode == NGX_RTMP_AUTO_RELAY_MODE_HASH) {
+    } else if (apcf->relay_stream == NGX_RTMP_RELAY_STREAM_HASH) {
 
         ngx_rtmp_auto_relay_hash_push(&ctx->push_evt);
     }
@@ -777,7 +777,7 @@ ngx_rtmp_auto_relay_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
 
     apcf = (ngx_rtmp_auto_relay_conf_t *) ngx_get_conf(ngx_cycle->conf_ctx,
                                                        ngx_rtmp_auto_relay_module);
-    if (apcf->auto_relay_mode != NGX_RTMP_AUTO_RELAY_MODE_HASH) {
+    if (apcf->relay_stream != NGX_RTMP_RELAY_STREAM_HASH) {
         goto next;
     }
 
@@ -819,7 +819,7 @@ ngx_rtmp_auto_relay_delete_stream(ngx_rtmp_session_t *s,
 
     apcf = (ngx_rtmp_auto_relay_conf_t *) ngx_get_conf(ngx_cycle->conf_ctx,
                                                        ngx_rtmp_auto_relay_module);
-    if (apcf->auto_relay_mode == NGX_RTMP_AUTO_RELAY_MODE_OFF) {
+    if (apcf->relay_stream == NGX_RTMP_RELAY_STREAM_OFF) {
         goto next;
     }
 
@@ -856,7 +856,7 @@ ngx_rtmp_auto_relay_delete_stream(ngx_rtmp_session_t *s,
 
     /* push reconnect */
     if (!pctx->push_evt.timer_set) {
-        ngx_add_timer(&pctx->push_evt, apcf->auto_relay_reconnect);
+        ngx_add_timer(&pctx->push_evt, apcf->relay_reconnect_time);
     }
 
 next:
