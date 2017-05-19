@@ -657,7 +657,7 @@ ngx_rtmp_relay_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
     size_t                          n;
     ngx_rtmp_relay_ctx_t           *ctx;
 
-    if (s->auto_pushed) {
+    if (s->auto_relayed) {
         goto next;
     }
 
@@ -768,6 +768,8 @@ ngx_rtmp_relay_play_local(ngx_rtmp_session_t *s)
     *(ngx_cpymem(v.name, ctx->name.data,
             ngx_min(sizeof(v.name) - 1, ctx->name.len))) = 0;
 
+    s->protocol = NGX_PROTO_TYPE_RTMP_PULL;
+
     return ngx_rtmp_play(s, &v);
 }
 
@@ -787,6 +789,8 @@ ngx_rtmp_relay_publish_local(ngx_rtmp_session_t *s)
     v.silent = 1;
     *(ngx_cpymem(v.name, ctx->name.data,
             ngx_min(sizeof(v.name) - 1, ctx->name.len))) = 0;
+
+    s->protocol = NGX_PROTO_TYPE_RTMP_PUSH;
 
     return ngx_rtmp_publish(s, &v);
 }

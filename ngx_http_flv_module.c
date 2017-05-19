@@ -151,7 +151,7 @@ ngx_http_flv_send_message(ngx_rtmp_session_t *s, ngx_chain_t *out,
                 nmsg, priority);
     */
         ngx_log_error(NGX_LOG_WARN, s->connection->log, 0,
-            "RTMP drop message bufs=%ui, priority=%ui, s->out_last=%d, s->out_pos=%d, s->out_queue=%d ",
+            "HTTP FLV drop message bufs=%ui, priority=%ui, s->out_last=%d, s->out_pos=%d, s->out_queue=%d ",
             nmsg, priority, s->out_last, s->out_pos, s->out_queue);
         return NGX_AGAIN;
     }
