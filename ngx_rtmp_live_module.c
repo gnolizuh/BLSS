@@ -770,7 +770,7 @@ ngx_rtmp_live_broadcast(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     ngx_http_flv_rtmp_app_conf_t   *hacf;
     ngx_rtmp_live_app_conf_t       *lacf;
     ngx_rtmp_session_t             *ss;
-    ngx_rtmp_header_t               ch, lh, clh, mh;
+    ngx_rtmp_header_t               ch, lh, clh;
     ngx_int_t                       rc, mandatory, dummy_audio;
     ngx_uint_t                      prio;
     ngx_uint_t                      peers;
@@ -878,7 +878,6 @@ ngx_rtmp_live_broadcast(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
         }
 
         if (codec_ctx) {
-            mh = codec_ctx->meta_header;
             meta_version = codec_ctx->meta_version;
         }
     }
