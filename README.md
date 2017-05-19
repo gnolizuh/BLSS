@@ -50,7 +50,8 @@ name - interpreted by each application
 
 ## Example(blss.conf)
 
-    # for multi-worker streaming, support hash/all.
+    # for multi-worker streaming, we support off|hash|all option, default is off.
+    worker_processes 8;
     relay_stream hash;
 
     rtmp {
