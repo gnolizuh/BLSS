@@ -914,7 +914,7 @@ ngx_rtmp_live_broadcast(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
                                "live: meta");
 
                 if (handler->send_message(ss, meta, 0) == NGX_OK) {
-                    ctx->meta_version = meta_version;
+                    pctx->meta_version = meta_version;
                 }
             }
 
