@@ -50,6 +50,7 @@ name - interpreted by each application
 
 ## Example(blss.conf)
 
+    # for multi-worker streaming, support hash/all.
     relay_stream hash;
 
     rtmp {
