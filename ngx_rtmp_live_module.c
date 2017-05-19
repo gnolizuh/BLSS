@@ -896,7 +896,7 @@ ngx_rtmp_live_broadcast(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
         meta = NULL;
         if (codec_ctx) {
-            meta = (n == 0 ? codec_ctx->meta : codec_ctx->meta_orig);
+            meta = (n == 0 ? codec_ctx->meta : codec_ctx->meta_flv);
         }
 
         for (pctx = ctx->stream->ctx[n]; pctx; pctx = pctx->next) {
