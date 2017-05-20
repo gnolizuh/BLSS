@@ -31,21 +31,21 @@ ngx_rtmp_send_handler_t *ngx_rtmp_send_handlers[] = {
 static ngx_command_t  ngx_rtmp_gop_cache_commands[] = {
 
     { ngx_string("gop_cache"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_flag_slot,
       NGX_RTMP_APP_CONF_OFFSET,
       offsetof(ngx_rtmp_gop_cache_app_conf_t, gop_cache),
       NULL },
 
     { ngx_string("gop_cache_mintime"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_msec_slot,
       NGX_RTMP_APP_CONF_OFFSET,
       offsetof(ngx_rtmp_gop_cache_app_conf_t, gop_cache_mintime),
       NULL },
 
     { ngx_string("gop_cache_maxtime"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_msec_slot,
       NGX_RTMP_APP_CONF_OFFSET,
       offsetof(ngx_rtmp_gop_cache_app_conf_t, gop_cache_maxtime),

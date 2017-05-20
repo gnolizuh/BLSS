@@ -27,6 +27,9 @@ static ngx_int_t ngx_rtmp_init_events(ngx_conf_t *cf,
         ngx_rtmp_core_main_conf_t *cmcf);
 static ngx_int_t ngx_rtmp_init_event_handlers(ngx_conf_t *cf,
         ngx_rtmp_core_main_conf_t *cmcf);
+static char * ngx_rtmp_merge_services(ngx_conf_t *cf,
+        ngx_array_t *services, void **svi_conf, ngx_rtmp_module_t *module,
+        ngx_uint_t ctx_index);
 static char * ngx_rtmp_merge_applications(ngx_conf_t *cf,
         ngx_array_t *applications, void **app_conf, ngx_rtmp_module_t *module,
         ngx_uint_t ctx_index);
@@ -97,6 +100,7 @@ ngx_rtmp_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_rtmp_module_t           *module;
     ngx_rtmp_conf_ctx_t         *ctx;
     ngx_rtmp_core_srv_conf_t    *cscf, **cscfp;
+    ngx_rtmp_core_svi_conf_t    *csicf, **csicfp;
     ngx_rtmp_core_main_conf_t   *cmcf;
 
     ctx = ngx_pcalloc(cf->pool, sizeof(ngx_rtmp_conf_ctx_t));
@@ -190,6 +194,13 @@ ngx_rtmp_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
             }
         }
 
+        if (module->create_svi_conf) {
+            ctx->sri_conf[mi] = module->create_svi_conf(cf);
+            if (ctx->sri_conf[mi] == NULL) {
+                return NGX_CONF_ERROR;
+            }
+        }
+
         if (module->create_app_conf) {
             ctx->app_conf[mi] = module->create_app_conf(cf);
             if (ctx->app_conf[mi] == NULL) {
@@ -268,11 +279,36 @@ ngx_rtmp_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
                 }
             }
 
+            if (module->merge_svi_conf) {
+
+                /* merge the server{}'s svi_conf */
+
+                rv = module->merge_svi_conf(cf,
+                                            ctx->svi_conf[mi],
+                                            cscfp[s]->ctx->svi_conf[mi]);
+                if (rv != NGX_CONF_OK) {
+                    *cf = pcf;
+                    return rv;
+                }
+
+                /* merge the services{}' svi_conf's */
+
+                cscf = cscfp[s]->ctx->srv_conf[ngx_rtmp_core_module.ctx_index];
+
+                rv = ngx_rtmp_merge_services(cf, &cscf->services,
+                                            cscfp[s]->ctx->svi_conf,
+                                            module, mi);
+                if (rv != NGX_CONF_OK) {
+                    *cf = pcf;
+                    return rv;
+                }
+            }
+
             if (module->merge_app_conf) {
 
-                /* merge the server{}'s app_conf */
+                /* merge the service{}'s app_conf */
 
-                /*ctx->app_conf = cscfp[s]->ctx->loc_conf;*/
+                /*ctx->app_conf = csicfp[s]->ctx->loc_conf;*/
 
                 rv = module->merge_app_conf(cf,
                                             ctx->app_conf[mi],
@@ -284,7 +320,7 @@ ngx_rtmp_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
                 /* merge the applications{}' app_conf's */
 
-                cscf = cscfp[s]->ctx->srv_conf[ngx_rtmp_core_module.ctx_index];
+                cscf = cscfp[s]->ctx->svi_conf[ngx_rtmp_core_module.ctx_index];
 
                 rv = ngx_rtmp_merge_applications(cf, &cscf->applications,
                                             cscfp[s]->ctx->app_conf,

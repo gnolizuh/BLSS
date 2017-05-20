@@ -153,7 +153,7 @@ static ngx_command_t  ngx_rtmp_exec_commands[] = {
       NULL },
 */
     { ngx_string("exec"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_1MORE,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_1MORE,
       ngx_rtmp_exec_conf,
       NGX_RTMP_APP_CONF_OFFSET,
       offsetof(ngx_rtmp_exec_app_conf_t, conf) +
@@ -161,7 +161,7 @@ static ngx_command_t  ngx_rtmp_exec_commands[] = {
       NULL },
 
     { ngx_string("exec_push"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_1MORE,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_1MORE,
       ngx_rtmp_exec_conf,
       NGX_RTMP_APP_CONF_OFFSET,
       offsetof(ngx_rtmp_exec_app_conf_t, conf) +
@@ -169,7 +169,7 @@ static ngx_command_t  ngx_rtmp_exec_commands[] = {
       NULL },
 
     { ngx_string("exec_pull"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_1MORE,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_1MORE,
       ngx_rtmp_exec_conf,
       NGX_RTMP_APP_CONF_OFFSET,
       offsetof(ngx_rtmp_exec_app_conf_t, conf) +
@@ -177,7 +177,7 @@ static ngx_command_t  ngx_rtmp_exec_commands[] = {
       NULL },
 
     { ngx_string("exec_publish"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_1MORE,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_1MORE,
       ngx_rtmp_exec_conf,
       NGX_RTMP_APP_CONF_OFFSET,
       offsetof(ngx_rtmp_exec_app_conf_t, conf) +
@@ -185,7 +185,7 @@ static ngx_command_t  ngx_rtmp_exec_commands[] = {
       NULL },
 
     { ngx_string("exec_publish_done"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_1MORE,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_1MORE,
       ngx_rtmp_exec_conf,
       NGX_RTMP_APP_CONF_OFFSET,
       offsetof(ngx_rtmp_exec_app_conf_t, conf) +
@@ -193,7 +193,7 @@ static ngx_command_t  ngx_rtmp_exec_commands[] = {
       NULL },
 
     { ngx_string("exec_play"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_1MORE,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_1MORE,
       ngx_rtmp_exec_conf,
       NGX_RTMP_APP_CONF_OFFSET,
       offsetof(ngx_rtmp_exec_app_conf_t, conf) +
@@ -201,7 +201,7 @@ static ngx_command_t  ngx_rtmp_exec_commands[] = {
       NULL },
 
     { ngx_string("exec_play_done"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_1MORE,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_1MORE,
       ngx_rtmp_exec_conf,
       NGX_RTMP_APP_CONF_OFFSET,
       offsetof(ngx_rtmp_exec_app_conf_t, conf) +
@@ -209,7 +209,7 @@ static ngx_command_t  ngx_rtmp_exec_commands[] = {
       NULL },
 
     { ngx_string("exec_record_done"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_RTMP_REC_CONF|
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_RTMP_REC_CONF|
                          NGX_CONF_1MORE,
       ngx_rtmp_exec_conf,
       NGX_RTMP_APP_CONF_OFFSET,
@@ -218,35 +218,35 @@ static ngx_command_t  ngx_rtmp_exec_commands[] = {
       NULL },
 
     { ngx_string("exec_static"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_1MORE,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_1MORE,
       ngx_rtmp_exec_conf,
       NGX_RTMP_MAIN_CONF_OFFSET,
       offsetof(ngx_rtmp_exec_main_conf_t, static_conf),
       NULL },
 
     { ngx_string("respawn"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_flag_slot,
       NGX_RTMP_APP_CONF_OFFSET,
       offsetof(ngx_rtmp_exec_app_conf_t, respawn),
       NULL },
 
     { ngx_string("respawn_timeout"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_msec_slot,
       NGX_RTMP_MAIN_CONF_OFFSET,
       offsetof(ngx_rtmp_exec_main_conf_t, respawn_timeout),
       NULL },
 
     { ngx_string("exec_kill_signal"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
       ngx_rtmp_exec_kill_signal,
       NGX_RTMP_MAIN_CONF_OFFSET,
       0,
       NULL },
 
     { ngx_string("exec_options"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_flag_slot,
       NGX_RTMP_APP_CONF_OFFSET,
       offsetof(ngx_rtmp_exec_app_conf_t, options),
