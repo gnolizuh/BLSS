@@ -59,21 +59,27 @@ name - interpreted by each application
 
             listen 1935 reuseport;
 
-            bucket blss {
+            service cctv {
 
                 pubhost {
-                    rtmp blss.rtmppub.live.cn;
+                    rtmp cctv.rtmppub.live.cn;
                 }
 
                 subhost {
-                    rtmp blss.rtmpsub.live.cn;
-                    flv blss.flvsub.live.cn;
-                    hls blss.hlssub.live.cn;
+                    rtmp cctv.rtmpsub.live.cn;
+                    flv cctv.flvsub.live.cn;
+                    hls cctv.hlssub.live.cn;
                 }
 
                 application news {
-
+                    live on;
                     http_flv on;
+                    gop_cache on;
+                }
+
+                application sports {
+                    live on;
+                    gop_cache on;
                     hls on;
                 }
             }
