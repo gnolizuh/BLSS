@@ -59,7 +59,7 @@ static ngx_conf_bitmask_t  ngx_rtmp_record_mask[] = {
 static ngx_command_t  ngx_rtmp_record_commands[] = {
 
     { ngx_string("record"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_APP_CONF|
                          NGX_RTMP_REC_CONF|NGX_CONF_1MORE,
       ngx_conf_set_bitmask_slot,
       NGX_RTMP_APP_CONF_OFFSET,
@@ -67,7 +67,7 @@ static ngx_command_t  ngx_rtmp_record_commands[] = {
       ngx_rtmp_record_mask },
 
     { ngx_string("record_path"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_APP_CONF|
                          NGX_RTMP_REC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_str_slot,
       NGX_RTMP_APP_CONF_OFFSET,
@@ -75,7 +75,7 @@ static ngx_command_t  ngx_rtmp_record_commands[] = {
       NULL },
 
     { ngx_string("record_suffix"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_APP_CONF|
                          NGX_RTMP_REC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_str_slot,
       NGX_RTMP_APP_CONF_OFFSET,
@@ -83,7 +83,7 @@ static ngx_command_t  ngx_rtmp_record_commands[] = {
       NULL },
 
     { ngx_string("record_unique"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_APP_CONF|
                          NGX_RTMP_REC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_flag_slot,
       NGX_RTMP_APP_CONF_OFFSET,
@@ -91,7 +91,7 @@ static ngx_command_t  ngx_rtmp_record_commands[] = {
       NULL },
 
     { ngx_string("record_append"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_APP_CONF|
                          NGX_RTMP_REC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_flag_slot,
       NGX_RTMP_APP_CONF_OFFSET,
@@ -99,7 +99,7 @@ static ngx_command_t  ngx_rtmp_record_commands[] = {
       NULL },
 
     { ngx_string("record_lock"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_APP_CONF|
                          NGX_RTMP_REC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_flag_slot,
       NGX_RTMP_APP_CONF_OFFSET,
@@ -107,7 +107,7 @@ static ngx_command_t  ngx_rtmp_record_commands[] = {
       NULL },
 
     { ngx_string("record_max_size"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_APP_CONF|
                          NGX_RTMP_REC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_size_slot,
       NGX_RTMP_APP_CONF_OFFSET,
@@ -115,7 +115,7 @@ static ngx_command_t  ngx_rtmp_record_commands[] = {
       NULL },
 
     { ngx_string("record_max_frames"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_APP_CONF|
                          NGX_RTMP_REC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_size_slot,
       NGX_RTMP_APP_CONF_OFFSET,
@@ -123,7 +123,7 @@ static ngx_command_t  ngx_rtmp_record_commands[] = {
       NULL },
 
     { ngx_string("record_interval"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_APP_CONF|
                          NGX_RTMP_REC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_msec_slot,
       NGX_RTMP_APP_CONF_OFFSET,
@@ -131,7 +131,7 @@ static ngx_command_t  ngx_rtmp_record_commands[] = {
       NULL },
 
     { ngx_string("record_notify"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_APP_CONF|
                          NGX_RTMP_REC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_flag_slot,
       NGX_RTMP_APP_CONF_OFFSET,

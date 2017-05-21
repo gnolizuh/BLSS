@@ -57,14 +57,14 @@ typedef struct {
 static ngx_command_t  ngx_rtmp_access_commands[] = {
 
     { ngx_string("allow"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE12,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE12,
       ngx_rtmp_access_rule,
       NGX_RTMP_APP_CONF_OFFSET,
       0,
       NULL },
 
     { ngx_string("deny"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE12,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE12,
       ngx_rtmp_access_rule,
       NGX_RTMP_APP_CONF_OFFSET,
       0,

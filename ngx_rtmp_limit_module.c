@@ -25,7 +25,7 @@ static void *ngx_rtmp_limit_create_main_conf(ngx_conf_t *cf);
 static ngx_command_t  ngx_rtmp_limit_commands[] = {
 
     { ngx_string("max_connections"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_num_slot,
       NGX_RTMP_MAIN_CONF_OFFSET,
       offsetof(ngx_rtmp_limit_main_conf_t, max_conn),

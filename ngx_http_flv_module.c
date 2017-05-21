@@ -92,7 +92,7 @@ ngx_module_t ngx_http_flv_httpmodule = {
 static ngx_command_t ngx_http_flv_rtmpcommands[] = {
 
     { ngx_string("http_flv"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_flag_slot,
       NGX_RTMP_APP_CONF_OFFSET,
       offsetof(ngx_http_flv_rtmp_app_conf_t, http_flv),

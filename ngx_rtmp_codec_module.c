@@ -69,7 +69,7 @@ static ngx_conf_enum_t ngx_rtmp_codec_meta_slots[] = {
 static ngx_command_t  ngx_rtmp_codec_commands[] = {
 
     { ngx_string("meta"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_enum_slot,
       NGX_RTMP_APP_CONF_OFFSET,
       offsetof(ngx_rtmp_codec_app_conf_t, meta),
