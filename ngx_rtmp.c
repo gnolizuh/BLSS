@@ -27,9 +27,6 @@ static ngx_int_t ngx_rtmp_init_events(ngx_conf_t *cf,
         ngx_rtmp_core_main_conf_t *cmcf);
 static ngx_int_t ngx_rtmp_init_event_handlers(ngx_conf_t *cf,
         ngx_rtmp_core_main_conf_t *cmcf);
-static char * ngx_rtmp_merge_services(ngx_conf_t *cf,
-        ngx_array_t *services, void **svi_conf, ngx_rtmp_module_t *module,
-        ngx_uint_t ctx_index);
 static char * ngx_rtmp_merge_applications(ngx_conf_t *cf,
         ngx_array_t *applications, void **app_conf, ngx_rtmp_module_t *module,
         ngx_uint_t ctx_index);
@@ -307,18 +304,6 @@ ngx_rtmp_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
                         *cf = pcf;
                         return rv;
                     }
-
-                    /* merge the services{}'s svi_conf */
-
-                    cscf = cscfp[s]->ctx->srv_conf[ngx_rtmp_core_module.ctx_index];
-
-                    rv = ngx_rtmp_merge_services(cf, &cscf->services,
-                                                cscfp[s]->ctx->svi_conf,
-                                                module, mi);
-                    if (rv != NGX_CONF_OK) {
-                        *cf = pcf;
-                        return rv;
-                    }
                 }
 
                 if (module->merge_app_conf) {
@@ -377,40 +362,6 @@ ngx_rtmp_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     if (ngx_rtmp_optimize_servers(cf, cmcf, cmcf->ports) != NGX_OK) {
         return NGX_CONF_ERROR;
     }
-
-    return NGX_CONF_OK;
-}
-
-
-static char *
-ngx_rtmp_merge_services(ngx_conf_t *cf, ngx_array_t *services,
-            void **svi_conf, ngx_rtmp_module_t *module, ngx_uint_t ctx_index)
-{
-    char                           *rv;
-    ngx_rtmp_conf_ctx_t            *ctx, saved;
-    ngx_rtmp_core_svi_conf_t      **csicfp;
-    ngx_uint_t                      n;
-
-    if (services == NULL) {
-        return NGX_CONF_OK;
-    }
-
-    ctx = (ngx_rtmp_conf_ctx_t *) cf->ctx;
-    saved = *ctx;
-
-    csicfp = services->elts;
-    for (n = 0; n < services->nelts; ++n, ++csicfp) {
-
-        ctx->svi_conf = (*csicfp)->svi_conf;
-
-        rv = module->merge_app_conf(cf, svi_conf[ctx_index],
-                (*csicfp)->svi_conf[ctx_index]);
-        if (rv != NGX_CONF_OK) {
-            return rv;
-        }
-    }
-
-    *ctx = saved;
 
     return NGX_CONF_OK;
 }
