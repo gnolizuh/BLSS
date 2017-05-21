@@ -265,7 +265,7 @@ ngx_rtmp_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
         for (s = 0; s < cmcf->servers.nelts; s++) {
 
-            /* merge the server{}s' srv_conf's */
+            /* merge the server{}'s srv_conf */
 
             cf->ctx = cscfp[s]->ctx;
 
@@ -283,7 +283,7 @@ ngx_rtmp_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
             for (si = 0; si < cscfp[s]->services.nelts; si++) {
 
-                /* merge the service{}s' svi_conf's */
+                /* merge the services{}'s svi_conf */
 
                 cf->ctx = csicfp[si]->ctx;
 
@@ -297,7 +297,7 @@ ngx_rtmp_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
                         return rv;
                     }
 
-                    /* merge the services{}' svi_conf's */
+                    /* merge the services{}'s svi_conf */
 
                     cscf = csicfp[si]->ctx->srv_conf[ngx_rtmp_core_module.ctx_index];
 
@@ -322,7 +322,7 @@ ngx_rtmp_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
                         return rv;
                     }
 
-                    /* merge the applications{}' app_conf's */
+                    /* merge the applications{}'s app_conf */
 
                     cscf = csicfp[si]->ctx->svi_conf[ngx_rtmp_core_module.ctx_index];
 

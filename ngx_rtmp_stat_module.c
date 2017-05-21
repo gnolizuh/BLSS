@@ -704,10 +704,28 @@ ngx_rtmp_stat_application(ngx_http_request_t *r, ngx_chain_t ***lll,
 
 
 static void
+ngx_rtmp_stat_service(ngx_http_request_t *r, ngx_chain_t ***lll,
+        ngx_rtmp_core_svi_conf_t *csicf)
+{
+    ngx_rtmp_core_app_conf_t      **cacf;
+    size_t                          n;
+
+    NGX_RTMP_STAT_L("<service>\r\n");
+
+    cacf = csicf->applications.elts;
+    for (n = 0; n < csicf->applications.nelts; ++n, ++cacf) {
+        ngx_rtmp_stat_application(r, lll, *cacf);
+    }
+
+    NGX_RTMP_STAT_L("</service>\r\n");
+}
+
+
+static void
 ngx_rtmp_stat_server(ngx_http_request_t *r, ngx_chain_t ***lll,
         ngx_rtmp_core_srv_conf_t *cscf)
 {
-    ngx_rtmp_core_app_conf_t      **cacf;
+    ngx_rtmp_core_svi_conf_t      **csicf;
     size_t                          n;
 
     NGX_RTMP_STAT_L("<server>\r\n");
@@ -716,9 +734,9 @@ ngx_rtmp_stat_server(ngx_http_request_t *r, ngx_chain_t ***lll,
     ngx_rtmp_stat_dump_pool(r, lll, cscf->pool);
 #endif
 
-    cacf = cscf->applications.elts;
-    for (n = 0; n < cscf->applications.nelts; ++n, ++cacf) {
-        ngx_rtmp_stat_application(r, lll, *cacf);
+    csicf = cscf->services.elts;
+    for (n = 0; n < cscf->services.nelts; ++n, ++csicf) {
+        ngx_rtmp_stat_service(r, lll, *csicf);
     }
 
     NGX_RTMP_STAT_L("</server>\r\n");

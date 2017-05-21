@@ -58,6 +58,13 @@ static ngx_command_t  ngx_rtmp_core_commands[] = {
       0,
       NULL },
 
+    { ngx_string("application"),
+      NGX_RTMP_SVI_CONF|NGX_CONF_BLOCK|NGX_CONF_TAKE1,
+      ngx_rtmp_core_application,
+      NGX_RTMP_SRV_CONF_OFFSET,
+      0,
+      NULL },
+
     { ngx_string("so_keepalive"),
       NGX_RTMP_MAIN_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_SRV_CONF|NGX_CONF_FLAG,
       ngx_conf_set_flag_slot,
