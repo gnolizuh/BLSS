@@ -534,6 +534,11 @@ ngx_rtmp_core_service(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return NGX_CONF_ERROR;
     }
 
+    ctx->app_conf = ngx_pcalloc(cf->pool, sizeof(void *) * ngx_rtmp_max_module);
+    if (ctx->app_conf == NULL) {
+        return NGX_CONF_ERROR;
+    }
+
 #if (nginx_version >= 1009011)
     modules = cf->cycle->modules;
 #else
@@ -550,6 +555,13 @@ ngx_rtmp_core_service(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         if (module->create_svi_conf) {
             ctx->svi_conf[modules[i]->ctx_index] = module->create_svi_conf(cf);
             if (ctx->svi_conf[modules[i]->ctx_index] == NULL) {
+                return NGX_CONF_ERROR;
+            }
+        }
+
+        if (module->create_app_conf) {
+            ctx->app_conf[modules[i]->ctx_index] = module->create_app_conf(cf);
+            if (ctx->app_conf[modules[i]->ctx_index] == NULL) {
                 return NGX_CONF_ERROR;
             }
         }
