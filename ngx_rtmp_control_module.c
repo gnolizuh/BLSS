@@ -357,7 +357,7 @@ ngx_rtmp_control_walk_app(ngx_http_request_t *r,
 
 
 static const char *
-ngx_rtmp_control_walk_serivce(ngx_http_request_t *r,
+ngx_rtmp_control_walk_service(ngx_http_request_t *r,
     ngx_rtmp_core_svi_conf_t *csicf)
 {
     ngx_str_t                   app;
