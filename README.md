@@ -50,6 +50,10 @@ name - interpreted by each application
 
 ## Example(blss.conf)
 
+    # for multi-worker streaming, we support off|hash|all option, default is off.
+    worker_processes 8;
+    relay_stream hash;
+
     rtmp {
         log_format bw_in  '[$time_local] pid:$pid sid:$sid slot:$slot bucket:$bucket vhost:$vhost app:$app name:$name remote_addr:$remote_addr protocol:$protocol rtype:$rtype event:$event bw_in_video_kb:$bw_in_video_kb bw_in_audio_kb:$bw_in_audio_kb bw_in_real_kb:$bw_in_real_kb bw_in_exp_kb:$bw_in_exp_kb bw_in_diff_kb:$bw_in_diff_kb last_audio_ts:$last_audio_ts last_video_ts:$last_video_ts last_av_ts_diff:$last_av_ts_diff audio_ts_min:$audio_ts_min audio_ts_max:$audio_ts_max audio_ts_diff:$audio_ts_diff video_ts_min:$video_ts_min video_ts_max:$video_ts_max video_ts_diff:$video_ts_diff last_video_cts:$last_video_cts bw_in_total_diff_kb:$bw_in_total_diff_kb bw_in_video_exp_kb:$bw_in_video_exp_kb bw_in_audio_exp_kb:$bw_in_audio_exp_kb';
         log_format bw_out '[$time_local] pid:$pid sid:$sid slot:$slot bucket:$bucket vhost:$vhost app:$app name:$name remote_addr:$remote_addr protocol:$protocol rtype:$rtype event:$event bw_out_kb:$bw_out_kb bw_out_buf_kb:$bw_out_buf_kb last_audio_ts:$last_audio_ts last_video_ts:$last_video_ts last_av_ts_diff:$last_av_ts_diff audio_ts_min:$audio_ts_min audio_ts_max:$audio_ts_max audio_ts_diff:$audio_ts_diff video_ts_min:$video_ts_min video_ts_max:$video_ts_max video_ts_diff:$video_ts_diff';
@@ -61,26 +65,32 @@ name - interpreted by each application
 
             service cctv {
 
-                pubhost {
-                    rtmp cctv.rtmppub.live.cn;
-                }
-
-                subhost {
-                    rtmp cctv.rtmpsub.live.cn;
-                    flv cctv.flvsub.live.cn;
-                    hls cctv.hlssub.live.cn;
-                }
-
                 application news {
+
                     live on;
                     http_flv on;
                     gop_cache on;
+
+                    hls on;
+                    hls_fragment 10s;
+                    hls_playlist_length 30s;
                 }
 
                 application sports {
-                    live on;
-                    gop_cache on;
+
                     hls on;
+                    hls_fragment 1m;
+                    hls_playlist_length 3m;
+                }
+            }
+
+            service hunantv {
+
+                application show {
+
+                    live on;
+                    http_flv on;
+                    gop_cache on;
                 }
             }
         }

@@ -25,7 +25,8 @@ static void * ngx_rtmp_codec_create_app_conf(ngx_conf_t *cf);
 static char * ngx_rtmp_codec_merge_app_conf(ngx_conf_t *cf,
        void *parent, void *child);
 static ngx_int_t ngx_rtmp_codec_postconfiguration(ngx_conf_t *cf);
-static ngx_int_t ngx_rtmp_codec_reconstruct_meta(ngx_rtmp_session_t *s);
+static ngx_int_t ngx_rtmp_codec_reconstruct_meta(ngx_rtmp_session_t *s,
+       ngx_rtmp_header_t *h);
 static ngx_int_t ngx_rtmp_codec_copy_meta(ngx_rtmp_session_t *s,
        ngx_rtmp_header_t *h, ngx_chain_t *in);
 static ngx_int_t ngx_rtmp_codec_prepare_meta(ngx_rtmp_session_t *s,
@@ -202,9 +203,9 @@ ngx_rtmp_codec_disconnect(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
         ctx->meta = NULL;
     }
 
-    if (ctx->meta_orig) {
-        ngx_rtmp_free_shared_chain(cscf, ctx->meta_orig);
-        ctx->meta_orig = NULL;
+    if (ctx->meta_flv) {
+        ngx_rtmp_free_shared_chain(cscf, ctx->meta_flv);
+        ctx->meta_flv = NULL;
     }
 
     return NGX_OK;
@@ -1232,7 +1233,7 @@ ngx_rtmp_codec_dump_header(ngx_rtmp_session_t *s, const char *type,
 
 
 static ngx_int_t
-ngx_rtmp_codec_reconstruct_meta(ngx_rtmp_session_t *s)
+ngx_rtmp_codec_reconstruct_meta(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h)
 {
     ngx_rtmp_codec_ctx_t           *ctx;
     ngx_rtmp_core_srv_conf_t       *cscf;
@@ -1333,9 +1334,9 @@ ngx_rtmp_codec_reconstruct_meta(ngx_rtmp_session_t *s)
         ctx->meta = NULL;
     }
 
-    if (ctx->meta_orig) {
-        ngx_rtmp_free_shared_chain(cscf, ctx->meta_orig);
-        ctx->meta_orig = NULL;
+    if (ctx->meta_flv) {
+        ngx_rtmp_free_shared_chain(cscf, ctx->meta_flv);
+        ctx->meta_flv = NULL;
     }
 
     v.width = ctx->width;
@@ -1355,8 +1356,8 @@ ngx_rtmp_codec_reconstruct_meta(ngx_rtmp_session_t *s)
         return NGX_ERROR;
     }
 
-    ctx->meta_orig = ngx_rtmp_append_shared_bufs(cscf, NULL, ctx->meta);
-    if (ctx->meta_orig == NULL) {
+    ctx->meta_flv = ngx_http_flv_append_shared_bufs(cscf, h, ctx->meta);
+    if (ctx->meta_flv == NULL) {
         ngx_rtmp_free_shared_chain(cscf, ctx->meta);
         ctx->meta = NULL;
         return NGX_ERROR;
@@ -1386,12 +1387,12 @@ ngx_rtmp_codec_copy_meta(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
         return NGX_ERROR;
     }
 
-    if (ctx->meta_orig) {
-        ngx_rtmp_free_shared_chain(cscf, ctx->meta_orig);
+    if (ctx->meta_flv) {
+        ngx_rtmp_free_shared_chain(cscf, ctx->meta_flv);
     }
 
-    ctx->meta_orig = ngx_rtmp_append_shared_bufs(cscf, NULL, in);
-    if (ctx->meta_orig == NULL) {
+    ctx->meta_flv = ngx_http_flv_append_shared_bufs(cscf, h, in);
+    if (ctx->meta_flv == NULL) {
         ngx_rtmp_free_shared_chain(cscf, ctx->meta);
         ctx->meta = NULL;
         return NGX_ERROR;
@@ -1577,7 +1578,7 @@ ngx_rtmp_codec_meta_data(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
     switch (cacf->meta) {
         case NGX_RTMP_CODEC_META_ON:
-            return ngx_rtmp_codec_reconstruct_meta(s);
+            return ngx_rtmp_codec_reconstruct_meta(s, h);
         case NGX_RTMP_CODEC_META_COPY:
             return ngx_rtmp_codec_copy_meta(s, h, in);
     }

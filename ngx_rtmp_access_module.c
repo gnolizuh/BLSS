@@ -433,7 +433,7 @@ ngx_rtmp_access_rule(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 static ngx_int_t
 ngx_rtmp_access_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
 {
-    if (s->auto_pushed) {
+    if (s->auto_relayed) {
         goto next;
     }
 

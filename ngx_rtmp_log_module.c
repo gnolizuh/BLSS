@@ -834,7 +834,7 @@ ngx_rtmp_log_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
 {
     ngx_rtmp_log_ctx_t *ctx;
 
-    if (s->auto_pushed || s->relay) {
+    if (s->auto_relayed || s->relay) {
         goto next;
     }
 
@@ -855,7 +855,7 @@ ngx_rtmp_log_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
 {
     ngx_rtmp_log_ctx_t *ctx;
 
-    if (s->auto_pushed || s->relay) {
+    if (s->auto_relayed || s->relay) {
         goto next;
     }
 
@@ -924,7 +924,7 @@ ngx_rtmp_log_disconnect(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     u_char                     *line, *p;
     size_t                      len;
 
-    if (s->auto_pushed || s->relay) {
+    if (s->auto_relayed || s->relay) {
         return NGX_OK;
     }
 
