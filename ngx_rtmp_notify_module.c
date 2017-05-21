@@ -202,6 +202,8 @@ static ngx_rtmp_module_t  ngx_rtmp_notify_module_ctx = {
     NULL,                                   /* init main configuration */
     ngx_rtmp_notify_create_srv_conf,        /* create server configuration */
     ngx_rtmp_notify_merge_srv_conf,         /* merge server configuration */
+    NULL,                                   /* create service configuration */
+    NULL,                                   /* merge service configuration */
     ngx_rtmp_notify_create_app_conf,        /* create app configuration */
     ngx_rtmp_notify_merge_app_conf          /* merge app configuration */
 };

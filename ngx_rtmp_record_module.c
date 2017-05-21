@@ -157,6 +157,8 @@ static ngx_rtmp_module_t  ngx_rtmp_record_module_ctx = {
     NULL,                                   /* init main configuration */
     NULL,                                   /* create server configuration */
     NULL,                                   /* merge server configuration */
+    NULL,                                   /* create service configuration */
+    NULL,                                   /* merge service configuration */
     ngx_rtmp_record_create_app_conf,        /* create app configuration */
     ngx_rtmp_record_merge_app_conf          /* merge app configuration */
 };

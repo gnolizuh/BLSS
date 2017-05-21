@@ -263,6 +263,8 @@ static ngx_rtmp_module_t  ngx_rtmp_exec_module_ctx = {
     ngx_rtmp_exec_init_main_conf,           /* init main configuration */
     NULL,                                   /* create server configuration */
     NULL,                                   /* merge server configuration */
+    NULL,                                   /* create service configuration */
+    NULL,                                   /* merge service configuration */
     ngx_rtmp_exec_create_app_conf,          /* create app configuration */
     ngx_rtmp_exec_merge_app_conf            /* merge app configuration */
 };

@@ -22,6 +22,8 @@ static char *ngx_rtmp_core_server(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf);
 static char *ngx_rtmp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf);
+static char *ngx_rtmp_core_service(ngx_conf_t *cf, ngx_command_t *cmd,
+    void *conf);
 static char *ngx_rtmp_core_application(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf);
 
@@ -175,6 +177,8 @@ static ngx_rtmp_module_t  ngx_rtmp_core_module_ctx = {
     NULL,                                   /* init main configuration */
     ngx_rtmp_core_create_srv_conf,          /* create server configuration */
     ngx_rtmp_core_merge_srv_conf,           /* merge server configuration */
+    NULL,                                   /* create service configuration */
+    NULL,                                   /* merge service configuration */
     ngx_rtmp_core_create_app_conf,          /* create app configuration */
     ngx_rtmp_core_merge_app_conf            /* merge app configuration */
 };
