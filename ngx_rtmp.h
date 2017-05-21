@@ -478,6 +478,8 @@ typedef struct {
 #define ngx_rtmp_get_module_main_conf(s, module)                             \
     (s)->main_conf[module.ctx_index]
 #define ngx_rtmp_get_module_srv_conf(s, module)  (s)->srv_conf[module.ctx_index]
+#define ngx_rtmp_get_module_svi_conf(s, module)  ((s)->svi_conf ? \
+    (s)->svi_conf[module.ctx_index] : NULL)
 #define ngx_rtmp_get_module_app_conf(s, module)  ((s)->app_conf ? \
     (s)->app_conf[module.ctx_index] : NULL)
 
