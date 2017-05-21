@@ -62,7 +62,7 @@ enum {
 enum {
     NGX_RTMP_NOTIFY_CONNECT,
     NGX_RTMP_NOTIFY_DISCONNECT,
-    NGX_RTMP_NOTIFY_SRV_MAX
+    NGX_RTMP_NOTIFY_SVI_MAX
 };
 
 
@@ -77,7 +77,7 @@ typedef struct {
 
 
 typedef struct {
-    ngx_url_t                                  *url[NGX_RTMP_NOTIFY_SRV_MAX];
+    ngx_url_t                                  *url[NGX_RTMP_NOTIFY_SVI_MAX];
     ngx_uint_t                                  method;
 } ngx_rtmp_notify_svi_conf_t;
 
@@ -289,7 +289,7 @@ ngx_rtmp_notify_create_svi_conf(ngx_conf_t *cf)
         return NULL;
     }
 
-    for (n = 0; n < NGX_RTMP_NOTIFY_SRV_MAX; ++n) {
+    for (n = 0; n < NGX_RTMP_NOTIFY_SVI_MAX; ++n) {
         nsicf->url[n] = NGX_CONF_UNSET_PTR;
     }
 
@@ -306,7 +306,7 @@ ngx_rtmp_notify_merge_svi_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_rtmp_notify_svi_conf_t *conf = child;
     ngx_uint_t                  n;
 
-    for (n = 0; n < NGX_RTMP_NOTIFY_SRV_MAX; ++n) {
+    for (n = 0; n < NGX_RTMP_NOTIFY_SVI_MAX; ++n) {
         ngx_conf_merge_ptr_value(conf->url[n], prev->url[n], NULL);
     }
 
