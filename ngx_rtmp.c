@@ -195,8 +195,8 @@ ngx_rtmp_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         }
 
         if (module->create_svi_conf) {
-            ctx->sri_conf[mi] = module->create_svi_conf(cf);
-            if (ctx->sri_conf[mi] == NULL) {
+            ctx->svi_conf[mi] = module->create_svi_conf(cf);
+            if (ctx->svi_conf[mi] == NULL) {
                 return NGX_CONF_ERROR;
             }
         }
