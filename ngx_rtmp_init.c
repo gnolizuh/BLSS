@@ -170,6 +170,7 @@ ngx_http_flv_init_session(ngx_http_request_t *r, ngx_rtmp_addr_conf_t *addr_conf
 
     s->main_conf = addr_conf->ctx->main_conf;
     s->srv_conf = addr_conf->ctx->srv_conf;
+    s->svi_conf = addr_conf->ctx->svi_conf;
 
     s->addr_text = &addr_conf->addr_text;
 
@@ -385,6 +386,7 @@ ngx_rtmp_init_session(ngx_connection_t *c, ngx_rtmp_addr_conf_t *addr_conf)
 
     s->main_conf = addr_conf->ctx->main_conf;
     s->srv_conf = addr_conf->ctx->srv_conf;
+    s->svi_conf = addr_conf->ctx->svi_conf;
 
     s->addr_text = &addr_conf->addr_text;
 

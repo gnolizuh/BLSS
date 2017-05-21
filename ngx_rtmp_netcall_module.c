@@ -54,14 +54,14 @@ typedef struct {
 static ngx_command_t  ngx_rtmp_netcall_commands[] = {
 
     { ngx_string("netcall_timeout"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_CONF_TAKE1,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_msec_slot,
       NGX_RTMP_SRV_CONF_OFFSET,
       offsetof(ngx_rtmp_netcall_srv_conf_t, timeout),
       NULL },
 
     { ngx_string("netcall_buffer"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_CONF_TAKE1,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_size_slot,
       NGX_RTMP_SRV_CONF_OFFSET,
       offsetof(ngx_rtmp_netcall_srv_conf_t, bufsize),
@@ -78,6 +78,8 @@ static ngx_rtmp_module_t  ngx_rtmp_netcall_module_ctx = {
     NULL,                                   /* init main configuration */
     ngx_rtmp_netcall_create_srv_conf,       /* create server configuration */
     ngx_rtmp_netcall_merge_srv_conf,        /* merge server configuration */
+    NULL,                                   /* create service configuration */
+    NULL,                                   /* merge service configuration */
     NULL,                                   /* create app configuration */
     NULL                                    /* merge app configuration */
 };

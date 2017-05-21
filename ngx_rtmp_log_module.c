@@ -91,14 +91,14 @@ static ngx_str_t ngx_rtmp_access_log = ngx_string(NGX_HTTP_LOG_PATH);
 static ngx_command_t  ngx_rtmp_log_commands[] = {
 
     { ngx_string("access_log"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE12,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE12,
       ngx_rtmp_log_set_log,
       NGX_RTMP_APP_CONF_OFFSET,
       0,
       NULL },
 
     { ngx_string("log_format"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_2MORE,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_APP_CONF|NGX_CONF_2MORE,
       ngx_rtmp_log_set_format,
       NGX_RTMP_MAIN_CONF_OFFSET,
       0,
@@ -115,6 +115,8 @@ static ngx_rtmp_module_t  ngx_rtmp_log_module_ctx = {
     NULL,                                   /* init main configuration */
     NULL,                                   /* create server configuration */
     NULL,                                   /* merge server configuration */
+    NULL,                                   /* create service configuration */
+    NULL,                                   /* merge service configuration */
     ngx_rtmp_log_create_app_conf,           /* create app configuration */
     ngx_rtmp_log_merge_app_conf             /* merge app configuration */
 };

@@ -95,28 +95,28 @@ static ngx_command_t  ngx_rtmp_relay_commands[] = {
       NULL },
 
     { ngx_string("relay_buffer"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_CONF_TAKE1,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_msec_slot,
       NGX_RTMP_APP_CONF_OFFSET,
       offsetof(ngx_rtmp_relay_app_conf_t, buflen),
       NULL },
 
     { ngx_string("push_reconnect"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_msec_slot,
       NGX_RTMP_APP_CONF_OFFSET,
       offsetof(ngx_rtmp_relay_app_conf_t, push_reconnect),
       NULL },
 
     { ngx_string("pull_reconnect"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_msec_slot,
       NGX_RTMP_APP_CONF_OFFSET,
       offsetof(ngx_rtmp_relay_app_conf_t, pull_reconnect),
       NULL },
 
     { ngx_string("session_relay"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_flag_slot,
       NGX_RTMP_APP_CONF_OFFSET,
       offsetof(ngx_rtmp_relay_app_conf_t, session_relay),
@@ -134,6 +134,8 @@ static ngx_rtmp_module_t  ngx_rtmp_relay_module_ctx = {
     NULL,                                   /* init main configuration */
     NULL,                                   /* create server configuration */
     NULL,                                   /* merge server configuration */
+    NULL,                                   /* create service configuration */
+    NULL,                                   /* merge service configuration */
     ngx_rtmp_relay_create_app_conf,         /* create app configuration */
     ngx_rtmp_relay_merge_app_conf           /* merge app configuration */
 };
@@ -487,6 +489,7 @@ ngx_rtmp_relay_create_connection(ngx_rtmp_conf_ctx_t *cctx, ngx_str_t* name,
     addr_conf->ctx = addr_ctx;
     addr_ctx->main_conf = cctx->main_conf;
     addr_ctx->srv_conf  = cctx->srv_conf;
+    addr_ctx->svi_conf  = cctx->svi_conf;
     ngx_str_set(&addr_conf->addr_text, "ngx-relay");
 
     rs = ngx_rtmp_init_session(c, addr_conf);
@@ -523,6 +526,7 @@ ngx_rtmp_relay_create_remote_ctx(ngx_rtmp_session_t *s, ngx_str_t* name,
 
     cctx.app_conf = s->app_conf;
     cctx.srv_conf = s->srv_conf;
+    cctx.svi_conf = s->svi_conf;
     cctx.main_conf = s->main_conf;
 
     return ngx_rtmp_relay_create_connection(&cctx, name, target);
@@ -1604,9 +1608,10 @@ ngx_rtmp_relay_init_process(ngx_cycle_t *cycle)
 #if !(NGX_WIN32)
     ngx_rtmp_core_main_conf_t  *cmcf = ngx_rtmp_core_main_conf;
     ngx_rtmp_core_srv_conf_t  **pcscf, *cscf;
+    ngx_rtmp_core_svi_conf_t  **pcsicf, *csicf;
     ngx_rtmp_core_app_conf_t  **pcacf, *cacf;
     ngx_rtmp_relay_app_conf_t  *racf;
-    ngx_uint_t                  n, m, k;
+    ngx_uint_t                  n, i, m, k;
     ngx_rtmp_relay_static_t    *rs;
     ngx_rtmp_listen_opt_t      *lst;
     ngx_event_t               **pevent, *event;
@@ -1627,22 +1632,28 @@ ngx_rtmp_relay_init_process(ngx_cycle_t *cycle)
     for (n = 0; n < cmcf->servers.nelts; ++n, ++pcscf) {
 
         cscf = *pcscf;
-        pcacf = cscf->applications.elts;
+        pcsicf = cscf->services.elts;
 
-        for (m = 0; m < cscf->applications.nelts; ++m, ++pcacf) {
+        for (i = 0; i < cscf->services.nelts; ++i, ++pcsicf) {
 
-            cacf = *pcacf;
-            racf = cacf->app_conf[ngx_rtmp_relay_module.ctx_index];
-            pevent = racf->static_events.elts;
+            csicf = *pcsicf;
+            pcacf = csicf->applications.elts;
 
-            for (k = 0; k < racf->static_events.nelts; ++k, ++pevent) {
-                event = *pevent;
+            for (m = 0; m < csicf->applications.nelts; ++m, ++pcacf) {
 
-                rs = event->data;
-                rs->cctx = *lst->ctx;
-                rs->cctx.app_conf = cacf->app_conf;
+                cacf = *pcacf;
+                racf = cacf->app_conf[ngx_rtmp_relay_module.ctx_index];
+                pevent = racf->static_events.elts;
 
-                ngx_post_event(event, &ngx_rtmp_init_queue);
+                for (k = 0; k < racf->static_events.nelts; ++k, ++pevent) {
+                    event = *pevent;
+
+                    rs = event->data;
+                    rs->cctx = *lst->ctx;
+                    rs->cctx.app_conf = cacf->app_conf;
+
+                    ngx_post_event(event, &ngx_rtmp_init_queue);
+                }
             }
         }
     }

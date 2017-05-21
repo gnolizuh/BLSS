@@ -92,7 +92,7 @@ ngx_module_t ngx_http_flv_httpmodule = {
 static ngx_command_t ngx_http_flv_rtmpcommands[] = {
 
     { ngx_string("http_flv"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_flag_slot,
       NGX_RTMP_APP_CONF_OFFSET,
       offsetof(ngx_http_flv_rtmp_app_conf_t, http_flv),
@@ -103,29 +103,31 @@ static ngx_command_t ngx_http_flv_rtmpcommands[] = {
 
 
 static ngx_rtmp_module_t ngx_http_flv_rtmpmodule_ctx = {
-    NULL,                               /* preconfiguration */
-    ngx_http_flv_rtmp_init,             /* postconfiguration */
-    NULL,                               /* create main configuration */
-    NULL,                               /* init main configuration */
-    NULL,                               /* create server configuration */
-    NULL,                               /* merge server configuration */
-    ngx_http_flv_rtmp_create_app_conf,  /* create application configuration */
-    ngx_http_flv_rtmp_merge_app_conf,   /* merge application configuration */
+    NULL,                                   /* preconfiguration */
+    ngx_http_flv_rtmp_init,                 /* postconfiguration */
+    NULL,                                   /* create main configuration */
+    NULL,                                   /* init main configuration */
+    NULL,                                   /* create server configuration */
+    NULL,                                   /* merge server configuration */
+    NULL,                                   /* create service configuration */
+    NULL,                                   /* merge service configuration */
+    ngx_http_flv_rtmp_create_app_conf,      /* create application configuration */
+    ngx_http_flv_rtmp_merge_app_conf,       /* merge application configuration */
 };
 
 
 ngx_module_t ngx_http_flv_rtmpmodule = {
     NGX_MODULE_V1,
-    &ngx_http_flv_rtmpmodule_ctx,       /* module context */
-    ngx_http_flv_rtmpcommands,          /* module directives */
-    NGX_RTMP_MODULE,                    /* module type */
-    NULL,                               /* init master */
-    NULL,                               /* init module */
-    NULL,                               /* init process */
-    NULL,                               /* init thread */
-    NULL,                               /* exit thread */
-    NULL,                               /* exit process */
-    NULL,                               /* exit master */
+    &ngx_http_flv_rtmpmodule_ctx,           /* module context */
+    ngx_http_flv_rtmpcommands,              /* module directives */
+    NGX_RTMP_MODULE,                        /* module type */
+    NULL,                                   /* init master */
+    NULL,                                   /* init module */
+    NULL,                                   /* init process */
+    NULL,                                   /* init thread */
+    NULL,                                   /* exit thread */
+    NULL,                                   /* exit process */
+    NULL,                                   /* exit master */
     NGX_MODULE_V1_PADDING
 };
 

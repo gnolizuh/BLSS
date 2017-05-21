@@ -65,6 +65,8 @@ static ngx_rtmp_module_t  ngx_rtmp_flv_module_ctx = {
     NULL,                                   /* init main configuration */
     NULL,                                   /* create server configuration */
     NULL,                                   /* merge server configuration */
+    NULL,                                   /* create service configuration */
+    NULL,                                   /* merge service configuration */
     NULL,                                   /* create app configuration */
     NULL                                    /* merge app configuration */
 };
