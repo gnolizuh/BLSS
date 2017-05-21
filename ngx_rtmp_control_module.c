@@ -357,8 +357,8 @@ ngx_rtmp_control_walk_app(ngx_http_request_t *r,
 
 
 static const char *
-ngx_rtmp_control_walk_server(ngx_http_request_t *r,
-    ngx_rtmp_core_srv_conf_t *cscf)
+ngx_rtmp_control_walk_serivce(ngx_http_request_t *r,
+    ngx_rtmp_core_svi_conf_t *csicf)
 {
     ngx_str_t                   app;
     ngx_uint_t                  n;
@@ -369,9 +369,9 @@ ngx_rtmp_control_walk_server(ngx_http_request_t *r,
         app.len = 0;
     }
 
-    pcacf = cscf->applications.elts;
+    pcacf = csicf->applications.elts;
 
-    for (n = 0; n < cscf->applications.nelts; ++n, ++pcacf) {
+    for (n = 0; n < csicf->applications.nelts; ++n, ++pcacf) {
         if (app.len && ((*pcacf)->name.len != app.len ||
                         ngx_strncmp((*pcacf)->name.data, app.data, app.len)))
         {
@@ -379,6 +379,38 @@ ngx_rtmp_control_walk_server(ngx_http_request_t *r,
         }
 
         s = ngx_rtmp_control_walk_app(r, *pcacf);
+        if (s != NGX_CONF_OK) {
+            return s;
+        }
+    }
+
+    return NGX_CONF_OK;
+}
+
+
+static const char *
+ngx_rtmp_control_walk_server(ngx_http_request_t *r,
+    ngx_rtmp_core_srv_conf_t *cscf)
+{
+    ngx_str_t                   service;
+    ngx_uint_t                  n;
+    const char                 *s;
+    ngx_rtmp_core_svi_conf_t  **pcsicf;
+
+    if (ngx_http_arg(r, (u_char *) "service", sizeof("service") - 1, &service) != NGX_OK) {
+        service.len = 0;
+    }
+
+    pcsicf = cscf->services.elts;
+
+    for (n = 0; n < cscf->services.nelts; ++n, ++pcsicf) {
+        if (service.len && ((*pcsicf)->name.len != service.len ||
+                        ngx_strncmp((*pcsicf)->name.data, service.data, service.len)))
+        {
+            continue;
+        }
+
+        s = ngx_rtmp_control_walk_service(r, *pcsicf);
         if (s != NGX_CONF_OK) {
             return s;
         }
