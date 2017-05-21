@@ -1606,9 +1606,10 @@ ngx_rtmp_relay_init_process(ngx_cycle_t *cycle)
 #if !(NGX_WIN32)
     ngx_rtmp_core_main_conf_t  *cmcf = ngx_rtmp_core_main_conf;
     ngx_rtmp_core_srv_conf_t  **pcscf, *cscf;
+    ngx_rtmp_core_svi_conf_t  **pcsicf, *csicf;
     ngx_rtmp_core_app_conf_t  **pcacf, *cacf;
     ngx_rtmp_relay_app_conf_t  *racf;
-    ngx_uint_t                  n, m, k;
+    ngx_uint_t                  n, i, m, k;
     ngx_rtmp_relay_static_t    *rs;
     ngx_rtmp_listen_opt_t      *lst;
     ngx_event_t               **pevent, *event;
@@ -1629,22 +1630,28 @@ ngx_rtmp_relay_init_process(ngx_cycle_t *cycle)
     for (n = 0; n < cmcf->servers.nelts; ++n, ++pcscf) {
 
         cscf = *pcscf;
-        pcacf = cscf->applications.elts;
+        pcsicf = cscf->services.elts;
 
-        for (m = 0; m < cscf->applications.nelts; ++m, ++pcacf) {
+        for (i = 0; i < cscf->services.nelts; ++i, ++pcsicf) {
 
-            cacf = *pcacf;
-            racf = cacf->app_conf[ngx_rtmp_relay_module.ctx_index];
-            pevent = racf->static_events.elts;
+            csicf = *pcsicf;
+            pcacf = csicf->applications.elts;
 
-            for (k = 0; k < racf->static_events.nelts; ++k, ++pevent) {
-                event = *pevent;
+            for (m = 0; m < csicf->applications.nelts; ++m, ++pcacf) {
 
-                rs = event->data;
-                rs->cctx = *lst->ctx;
-                rs->cctx.app_conf = cacf->app_conf;
+                cacf = *pcacf;
+                racf = cacf->app_conf[ngx_rtmp_relay_module.ctx_index];
+                pevent = racf->static_events.elts;
 
-                ngx_post_event(event, &ngx_rtmp_init_queue);
+                for (k = 0; k < racf->static_events.nelts; ++k, ++pevent) {
+                    event = *pevent;
+
+                    rs = event->data;
+                    rs->cctx = *lst->ctx;
+                    rs->cctx.app_conf = cacf->app_conf;
+
+                    ngx_post_event(event, &ngx_rtmp_init_queue);
+                }
             }
         }
     }
