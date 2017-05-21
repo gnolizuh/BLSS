@@ -1289,7 +1289,7 @@ ngx_rtmp_notify_connect(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
     ngx_rtmp_netcall_init_t         ci;
     ngx_url_t                      *url;
 
-    if (s->auto_pushed || s->relay) {
+    if (s->auto_relayed || s->relay) {
         goto next;
     }
 
@@ -1325,7 +1325,7 @@ ngx_rtmp_notify_disconnect(ngx_rtmp_session_t *s)
     ngx_rtmp_netcall_init_t         ci;
     ngx_url_t                      *url;
 
-    if (s->auto_pushed || s->relay) {
+    if (s->auto_relayed || s->relay) {
         goto next;
     }
 
@@ -1358,7 +1358,7 @@ ngx_rtmp_notify_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
     ngx_rtmp_netcall_init_t         ci;
     ngx_url_t                      *url;
 
-    if (s->auto_pushed) {
+    if (s->auto_relayed) {
         goto next;
     }
 
@@ -1400,7 +1400,7 @@ ngx_rtmp_notify_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
     ngx_rtmp_netcall_init_t         ci;
     ngx_url_t                      *url;
 
-    if (s->auto_pushed) {
+    if (s->auto_relayed) {
         goto next;
     }
 
@@ -1442,7 +1442,7 @@ ngx_rtmp_notify_close_stream(ngx_rtmp_session_t *s,
     ngx_rtmp_notify_ctx_t          *ctx;
     ngx_rtmp_notify_app_conf_t     *nacf;
 
-    if (s->auto_pushed) {
+    if (s->auto_relayed) {
         goto next;
     }
 
@@ -1487,7 +1487,7 @@ ngx_rtmp_notify_record_done(ngx_rtmp_session_t *s, ngx_rtmp_record_done_t *v)
     ngx_rtmp_netcall_init_t         ci;
     ngx_rtmp_notify_app_conf_t     *nacf;
 
-    if (s->auto_pushed) {
+    if (s->auto_relayed) {
         goto next;
     }
 

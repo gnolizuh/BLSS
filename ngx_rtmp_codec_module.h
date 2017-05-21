@@ -138,7 +138,7 @@ typedef struct {
     ngx_rtmp_header_t           msgh;
 
     ngx_chain_t                *meta;
-    ngx_chain_t                *meta_orig;
+    ngx_chain_t                *meta_flv;
     ngx_chain_t                *msg;
     ngx_uint_t                  meta_version;
 } ngx_rtmp_codec_ctx_t;
