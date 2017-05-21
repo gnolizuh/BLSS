@@ -94,7 +94,7 @@ static char *
 ngx_rtmp_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
     char                        *rv;
-    ngx_uint_t                   m, mi, s;
+    ngx_uint_t                   m, mi, s, si;
     ngx_conf_t                   pcf;
     ngx_module_t               **modules;
     ngx_rtmp_module_t           *module;
