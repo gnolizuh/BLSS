@@ -418,6 +418,8 @@ typedef struct {
     ngx_array_t             applications; /* ngx_rtmp_core_app_conf_t */
     ngx_str_t               name;
     void                  **svi_conf;
+
+    ngx_rtmp_conf_ctx_t    *ctx;
 } ngx_rtmp_core_svi_conf_t;
 
 
