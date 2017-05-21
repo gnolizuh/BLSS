@@ -15,6 +15,9 @@ static void *ngx_rtmp_core_create_main_conf(ngx_conf_t *cf);
 static void *ngx_rtmp_core_create_srv_conf(ngx_conf_t *cf);
 static char *ngx_rtmp_core_merge_srv_conf(ngx_conf_t *cf, void *parent,
     void *child);
+static void *ngx_rtmp_core_create_svi_conf(ngx_conf_t *cf);
+static char *ngx_rtmp_core_merge_svi_conf(ngx_conf_t *cf, void *parent,
+    void *child);
 static void *ngx_rtmp_core_create_app_conf(ngx_conf_t *cf);
 static char *ngx_rtmp_core_merge_app_conf(ngx_conf_t *cf, void *parent,
     void *child);
@@ -177,8 +180,8 @@ static ngx_rtmp_module_t  ngx_rtmp_core_module_ctx = {
     NULL,                                   /* init main configuration */
     ngx_rtmp_core_create_srv_conf,          /* create server configuration */
     ngx_rtmp_core_merge_srv_conf,           /* merge server configuration */
-    NULL,                                   /* create service configuration */
-    NULL,                                   /* merge service configuration */
+    ngx_rtmp_core_create_svi_conf,          /* create service configuration */
+    ngx_rtmp_core_merge_svi_conf,           /* merge service configuration */
     ngx_rtmp_core_create_app_conf,          /* create app configuration */
     ngx_rtmp_core_merge_app_conf            /* merge app configuration */
 };
@@ -239,8 +242,8 @@ ngx_rtmp_core_create_srv_conf(ngx_conf_t *cf)
         return NULL;
     }
 
-    if (ngx_array_init(&conf->applications, cf->pool, 4,
-                       sizeof(ngx_rtmp_core_app_conf_t *))
+    if (ngx_array_init(&conf->services, cf->pool, 4,
+                       sizeof(ngx_rtmp_core_svi_conf_t *))
         != NGX_OK)
     {
         return NULL;
@@ -297,6 +300,40 @@ ngx_rtmp_core_merge_srv_conf(ngx_conf_t *cf, void *parent, void *child)
     }
 
     conf->pool = prev->pool;
+
+    return NGX_CONF_OK;
+}
+
+
+static void *
+ngx_rtmp_core_create_svi_conf(ngx_conf_t *cf)
+{
+    ngx_rtmp_core_svi_conf_t   *conf;
+
+    conf = ngx_pcalloc(cf->pool, sizeof(ngx_rtmp_core_svi_conf_t));
+    if (conf == NULL) {
+        return NULL;
+    }
+
+    if (ngx_array_init(&conf->applications, cf->pool, 4,
+                       sizeof(ngx_rtmp_core_app_conf_t *))
+        != NGX_OK)
+    {
+        return NULL;
+    }
+
+    return conf;
+}
+
+
+static char *
+ngx_rtmp_core_merge_svi_conf(ngx_conf_t *cf, void *parent, void *child)
+{
+    ngx_rtmp_core_svi_conf_t *prev = parent;
+    ngx_rtmp_core_svi_conf_t *conf = child;
+
+    (void)prev;
+    (void)conf;
 
     return NGX_CONF_OK;
 }
