@@ -200,7 +200,7 @@ ngx_rtmp_cmd_connect(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
     ngx_rtmp_core_srv_conf_t   *cscf;
     ngx_rtmp_core_svi_conf_t  **csicfp;
     ngx_rtmp_core_app_conf_t  **cacfp;
-    ngx_uint_t                  n, s;
+    ngx_uint_t                  n, i;
     ngx_rtmp_header_t           h;
     u_char                     *p;
 
@@ -299,9 +299,9 @@ ngx_rtmp_cmd_connect(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
 
     /* find application & set app_conf */
     csicfp = cscf->services.elts;
-    for(s = 0; s < cscf->services.nelts; ++s, ++csicfp) { // TODO: find service by hostname.
-        cacfp = csicfp[s]->applications.elts;
-        for(n = 0; n < csicfp[s]->applications.nelts; ++n, ++cacfp) {
+    for(i = 0; i < cscf->services.nelts; ++i, ++csicfp) { // TODO: find service by hostname.
+        cacfp = csicfp[i]->applications.elts;
+        for(n = 0; n < csicfp[i]->applications.nelts; ++n, ++cacfp) {
             if ((*cacfp)->name.len == s->app.len &&
                 ngx_strncmp((*cacfp)->name.data, s->app.data, s->app.len) == 0)
             {
@@ -534,15 +534,15 @@ ngx_rtmp_cmd_connect_local(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
     ngx_rtmp_core_srv_conf_t   *cscf;
     ngx_rtmp_core_svi_conf_t  **csicfp;
     ngx_rtmp_core_app_conf_t  **cacfp;
-    ngx_uint_t                  n;
+    ngx_uint_t                  n, i;
 
     cscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_core_module);
 
     /* find application & set app_conf */
     csicfp = cscf->services.elts;
-    for(s = 0; s < cscf->services.nelts; ++s, ++csicfp) { // TODO: find service by hostname.
-        cacfp = csicfp[s]->applications.elts;
-        for(n = 0; n < csicfp[s]->applications.nelts; ++n, ++cacfp) {
+    for(i = 0; i < cscf->services.nelts; ++i, ++csicfp) { // TODO: find service by hostname.
+        cacfp = csicfp[i]->applications.elts;
+        for(n = 0; n < csicfp[i]->applications.nelts; ++n, ++cacfp) {
             if ((*cacfp)->name.len == s->app.len &&
                 ngx_strncmp((*cacfp)->name.data, s->app.data, s->app.len) == 0)
             {
