@@ -556,6 +556,7 @@ ngx_rtmp_core_service(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     }
 
     csicf = ctx->svi_conf[ngx_rtmp_core_module.ctx_index];
+    csicf->ctx = ctx;
     csicf->svi_conf = ctx->svi_conf;
 
     value = cf->args->elts;
