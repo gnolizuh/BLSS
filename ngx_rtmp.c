@@ -326,7 +326,7 @@ ngx_rtmp_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
                     cscf = csicfp[si]->ctx->svi_conf[ngx_rtmp_core_module.ctx_index];
 
-                    rv = ngx_rtmp_merge_applications(cf, &cscf->applications,
+                    rv = ngx_rtmp_merge_applications(cf, &csicfp[si]->applications,
                                                 csicfp[si]->ctx->app_conf,
                                                 module, mi);
                     if (rv != NGX_CONF_OK) {
