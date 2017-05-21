@@ -377,7 +377,7 @@ ngx_rtmp_merge_services(ngx_conf_t *cf, ngx_array_t *services,
 {
     char                           *rv;
     ngx_rtmp_conf_ctx_t            *ctx, saved;
-    ngx_rtmp_core_svi_conf_t       *csicf, **csicfp;
+    ngx_rtmp_core_svi_conf_t      **csicfp;
     ngx_uint_t                      n;
 
     if (services == NULL) {
@@ -394,14 +394,6 @@ ngx_rtmp_merge_services(ngx_conf_t *cf, ngx_array_t *services,
 
         rv = module->merge_app_conf(cf, svi_conf[ctx_index],
                 (*csicfp)->svi_conf[ctx_index]);
-        if (rv != NGX_CONF_OK) {
-            return rv;
-        }
-
-        csicf = (*csicfp)->svi_conf[ngx_rtmp_core_module.ctx_index];
-        rv = ngx_rtmp_merge_services(cf, &csicf->services,
-                                     (*csicfp)->svi_conf,
-                                     module, ctx_index);
         if (rv != NGX_CONF_OK) {
             return rv;
         }
