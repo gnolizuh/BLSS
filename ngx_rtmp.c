@@ -96,7 +96,7 @@ ngx_rtmp_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_module_t               **modules;
     ngx_rtmp_module_t           *module;
     ngx_rtmp_conf_ctx_t         *ctx;
-    ngx_rtmp_core_srv_conf_t    *cscf, **cscfp;
+    ngx_rtmp_core_srv_conf_t   **cscfp;
     ngx_rtmp_core_svi_conf_t    *csicf, **csicfp;
     ngx_rtmp_core_main_conf_t   *cmcf;
 
