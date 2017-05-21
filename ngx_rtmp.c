@@ -152,6 +152,17 @@ ngx_rtmp_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     /*
      * the rtmp null app_conf context, it is used to merge
+     * the server{}s' svi_conf's
+     */
+
+    ctx->svi_conf = ngx_pcalloc(cf->pool, sizeof(void *) * ngx_rtmp_max_module);
+    if (ctx->svi_conf == NULL) {
+        return NGX_CONF_ERROR;
+    }
+
+
+    /*
+     * the rtmp null app_conf context, it is used to merge
      * the server{}s' app_conf's
      */
 

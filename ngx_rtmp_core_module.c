@@ -405,6 +405,13 @@ ngx_rtmp_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     /* the server{}'s loc_conf */
 
+    ctx->svi_conf = ngx_pcalloc(cf->pool, sizeof(void *) * ngx_rtmp_max_module);
+    if (ctx->svi_conf == NULL) {
+        return NGX_CONF_ERROR;
+    }
+
+    /* the server{}'s loc_conf */
+
     ctx->app_conf = ngx_pcalloc(cf->pool, sizeof(void *) * ngx_rtmp_max_module);
     if (ctx->app_conf == NULL) {
         return NGX_CONF_ERROR;

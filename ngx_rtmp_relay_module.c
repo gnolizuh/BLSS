@@ -489,6 +489,7 @@ ngx_rtmp_relay_create_connection(ngx_rtmp_conf_ctx_t *cctx, ngx_str_t* name,
     addr_conf->ctx = addr_ctx;
     addr_ctx->main_conf = cctx->main_conf;
     addr_ctx->srv_conf  = cctx->srv_conf;
+    addr_ctx->svi_conf  = cctx->svi_conf;
     ngx_str_set(&addr_conf->addr_text, "ngx-relay");
 
     rs = ngx_rtmp_init_session(c, addr_conf);
@@ -525,6 +526,7 @@ ngx_rtmp_relay_create_remote_ctx(ngx_rtmp_session_t *s, ngx_str_t* name,
 
     cctx.app_conf = s->app_conf;
     cctx.srv_conf = s->srv_conf;
+    cctx.svi_conf = s->svi_conf;
     cctx.main_conf = s->main_conf;
 
     return ngx_rtmp_relay_create_connection(&cctx, name, target);
