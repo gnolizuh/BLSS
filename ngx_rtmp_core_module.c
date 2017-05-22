@@ -15,12 +15,17 @@ static void *ngx_rtmp_core_create_main_conf(ngx_conf_t *cf);
 static void *ngx_rtmp_core_create_srv_conf(ngx_conf_t *cf);
 static char *ngx_rtmp_core_merge_srv_conf(ngx_conf_t *cf, void *parent,
     void *child);
+static void *ngx_rtmp_core_create_svi_conf(ngx_conf_t *cf);
+static char *ngx_rtmp_core_merge_svi_conf(ngx_conf_t *cf, void *parent,
+    void *child);
 static void *ngx_rtmp_core_create_app_conf(ngx_conf_t *cf);
 static char *ngx_rtmp_core_merge_app_conf(ngx_conf_t *cf, void *parent,
     void *child);
 static char *ngx_rtmp_core_server(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf);
 static char *ngx_rtmp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd,
+    void *conf);
+static char *ngx_rtmp_core_service(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf);
 static char *ngx_rtmp_core_application(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf);
@@ -51,85 +56,92 @@ static ngx_command_t  ngx_rtmp_core_commands[] = {
       0,
       NULL },
 
-    { ngx_string("application"),
+    { ngx_string("service"),
       NGX_RTMP_SRV_CONF|NGX_CONF_BLOCK|NGX_CONF_TAKE1,
+      ngx_rtmp_core_service,
+      NGX_RTMP_SRV_CONF_OFFSET,
+      0,
+      NULL },
+
+    { ngx_string("application"),
+      NGX_RTMP_SVI_CONF|NGX_CONF_BLOCK|NGX_CONF_TAKE1,
       ngx_rtmp_core_application,
       NGX_RTMP_SRV_CONF_OFFSET,
       0,
       NULL },
 
     { ngx_string("so_keepalive"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_CONF_FLAG,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_CONF_FLAG,
       ngx_conf_set_flag_slot,
       NGX_RTMP_SRV_CONF_OFFSET,
       offsetof(ngx_rtmp_core_srv_conf_t, so_keepalive),
       &ngx_conf_deprecated_so_keepalive },
 
     { ngx_string("timeout"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_CONF_TAKE1,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_msec_slot,
       NGX_RTMP_SRV_CONF_OFFSET,
       offsetof(ngx_rtmp_core_srv_conf_t, timeout),
       NULL },
 
     { ngx_string("ping"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_CONF_TAKE1,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_msec_slot,
       NGX_RTMP_SRV_CONF_OFFSET,
       offsetof(ngx_rtmp_core_srv_conf_t, ping),
       NULL },
 
     { ngx_string("ping_timeout"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_CONF_TAKE1,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_msec_slot,
       NGX_RTMP_SRV_CONF_OFFSET,
       offsetof(ngx_rtmp_core_srv_conf_t, ping_timeout),
       NULL },
 
     { ngx_string("max_streams"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_CONF_TAKE1,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_num_slot,
       NGX_RTMP_SRV_CONF_OFFSET,
       offsetof(ngx_rtmp_core_srv_conf_t, max_streams),
       NULL },
 
     { ngx_string("ack_window"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_CONF_TAKE1,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_num_slot,
       NGX_RTMP_SRV_CONF_OFFSET,
       offsetof(ngx_rtmp_core_srv_conf_t, ack_window),
       NULL },
 
     { ngx_string("chunk_size"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_CONF_TAKE1,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_num_slot,
       NGX_RTMP_SRV_CONF_OFFSET,
       offsetof(ngx_rtmp_core_srv_conf_t, chunk_size),
       NULL },
 
     { ngx_string("max_message"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_CONF_TAKE1,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_size_slot,
       NGX_RTMP_SRV_CONF_OFFSET,
       offsetof(ngx_rtmp_core_srv_conf_t, max_message),
       NULL },
 
     { ngx_string("out_queue"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_CONF_TAKE1,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_size_slot,
       NGX_RTMP_SRV_CONF_OFFSET,
       offsetof(ngx_rtmp_core_srv_conf_t, out_queue),
       NULL },
 
     { ngx_string("out_cork"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_CONF_TAKE1,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_size_slot,
       NGX_RTMP_SRV_CONF_OFFSET,
       offsetof(ngx_rtmp_core_srv_conf_t, out_cork),
       NULL },
 
     { ngx_string("busy"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_CONF_TAKE1,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_flag_slot,
       NGX_RTMP_SRV_CONF_OFFSET,
       offsetof(ngx_rtmp_core_srv_conf_t, busy),
@@ -137,21 +149,21 @@ static ngx_command_t  ngx_rtmp_core_commands[] = {
 
     /* time fixes are needed for flash clients */
     { ngx_string("play_time_fix"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_flag_slot,
       NGX_RTMP_SRV_CONF_OFFSET,
       offsetof(ngx_rtmp_core_srv_conf_t, play_time_fix),
       NULL },
 
     { ngx_string("publish_time_fix"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_flag_slot,
       NGX_RTMP_SRV_CONF_OFFSET,
       offsetof(ngx_rtmp_core_srv_conf_t, publish_time_fix),
       NULL },
 
     { ngx_string("buflen"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_CONF_TAKE1,
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_msec_slot,
       NGX_RTMP_SRV_CONF_OFFSET,
       offsetof(ngx_rtmp_core_srv_conf_t, buflen),
@@ -168,6 +180,8 @@ static ngx_rtmp_module_t  ngx_rtmp_core_module_ctx = {
     NULL,                                   /* init main configuration */
     ngx_rtmp_core_create_srv_conf,          /* create server configuration */
     ngx_rtmp_core_merge_srv_conf,           /* merge server configuration */
+    ngx_rtmp_core_create_svi_conf,          /* create service configuration */
+    ngx_rtmp_core_merge_svi_conf,           /* merge service configuration */
     ngx_rtmp_core_create_app_conf,          /* create app configuration */
     ngx_rtmp_core_merge_app_conf            /* merge app configuration */
 };
@@ -228,8 +242,8 @@ ngx_rtmp_core_create_srv_conf(ngx_conf_t *cf)
         return NULL;
     }
 
-    if (ngx_array_init(&conf->applications, cf->pool, 4,
-                       sizeof(ngx_rtmp_core_app_conf_t *))
+    if (ngx_array_init(&conf->services, cf->pool, 4,
+                       sizeof(ngx_rtmp_core_svi_conf_t *))
         != NGX_OK)
     {
         return NULL;
@@ -286,6 +300,40 @@ ngx_rtmp_core_merge_srv_conf(ngx_conf_t *cf, void *parent, void *child)
     }
 
     conf->pool = prev->pool;
+
+    return NGX_CONF_OK;
+}
+
+
+static void *
+ngx_rtmp_core_create_svi_conf(ngx_conf_t *cf)
+{
+    ngx_rtmp_core_svi_conf_t   *conf;
+
+    conf = ngx_pcalloc(cf->pool, sizeof(ngx_rtmp_core_svi_conf_t));
+    if (conf == NULL) {
+        return NULL;
+    }
+
+    if (ngx_array_init(&conf->applications, cf->pool, 4,
+                       sizeof(ngx_rtmp_core_app_conf_t *))
+        != NGX_OK)
+    {
+        return NULL;
+    }
+
+    return conf;
+}
+
+
+static char *
+ngx_rtmp_core_merge_svi_conf(ngx_conf_t *cf, void *parent, void *child)
+{
+    ngx_rtmp_core_svi_conf_t *prev = parent;
+    ngx_rtmp_core_svi_conf_t *conf = child;
+
+    (void)prev;
+    (void)conf;
 
     return NGX_CONF_OK;
 }
@@ -357,6 +405,13 @@ ngx_rtmp_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     /* the server{}'s loc_conf */
 
+    ctx->svi_conf = ngx_pcalloc(cf->pool, sizeof(void *) * ngx_rtmp_max_module);
+    if (ctx->svi_conf == NULL) {
+        return NGX_CONF_ERROR;
+    }
+
+    /* the server{}'s loc_conf */
+
     ctx->app_conf = ngx_pcalloc(cf->pool, sizeof(void *) * ngx_rtmp_max_module);
     if (ctx->app_conf == NULL) {
         return NGX_CONF_ERROR;
@@ -382,6 +437,15 @@ ngx_rtmp_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
             }
 
             ctx->srv_conf[modules[m]->ctx_index] = mconf;
+        }
+
+        if (module->create_svi_conf) {
+            mconf = module->create_svi_conf(cf);
+            if (mconf == NULL) {
+                return NGX_CONF_ERROR;
+            }
+
+            ctx->svi_conf[modules[m]->ctx_index] = mconf;
         }
 
         if (module->create_app_conf) {
@@ -444,7 +508,7 @@ ngx_rtmp_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
 
 static char *
-ngx_rtmp_core_application(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
+ngx_rtmp_core_service(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
     char                       *rv;
     ngx_int_t                   i;
@@ -454,6 +518,94 @@ ngx_rtmp_core_application(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_rtmp_module_t          *module;
     ngx_rtmp_conf_ctx_t        *ctx, *pctx;
     ngx_rtmp_core_srv_conf_t   *cscf;
+    ngx_rtmp_core_svi_conf_t   *csicf, **csicfp;
+
+    ctx = ngx_pcalloc(cf->pool, sizeof(ngx_rtmp_conf_ctx_t));
+    if (ctx == NULL) {
+        return NGX_CONF_ERROR;
+    }
+
+    pctx = cf->ctx;
+    ctx->main_conf = pctx->main_conf;
+    ctx->srv_conf = pctx->srv_conf;
+
+    ctx->svi_conf = ngx_pcalloc(cf->pool, sizeof(void *) * ngx_rtmp_max_module);
+    if (ctx->svi_conf == NULL) {
+        return NGX_CONF_ERROR;
+    }
+
+    ctx->app_conf = ngx_pcalloc(cf->pool, sizeof(void *) * ngx_rtmp_max_module);
+    if (ctx->app_conf == NULL) {
+        return NGX_CONF_ERROR;
+    }
+
+#if (nginx_version >= 1009011)
+    modules = cf->cycle->modules;
+#else
+    modules = ngx_modules;
+#endif
+
+    for (i = 0; modules[i]; i++) {
+        if (modules[i]->type != NGX_RTMP_MODULE) {
+            continue;
+        }
+
+        module = modules[i]->ctx;
+
+        if (module->create_svi_conf) {
+            ctx->svi_conf[modules[i]->ctx_index] = module->create_svi_conf(cf);
+            if (ctx->svi_conf[modules[i]->ctx_index] == NULL) {
+                return NGX_CONF_ERROR;
+            }
+        }
+
+        if (module->create_app_conf) {
+            ctx->app_conf[modules[i]->ctx_index] = module->create_app_conf(cf);
+            if (ctx->app_conf[modules[i]->ctx_index] == NULL) {
+                return NGX_CONF_ERROR;
+            }
+        }
+    }
+
+    csicf = ctx->svi_conf[ngx_rtmp_core_module.ctx_index];
+    csicf->ctx = ctx;
+    csicf->svi_conf = ctx->svi_conf;
+
+    value = cf->args->elts;
+
+    csicf->name = value[1];
+    cscf = pctx->srv_conf[ngx_rtmp_core_module.ctx_index];
+
+    csicfp = ngx_array_push(&cscf->services);
+    if (csicfp == NULL) {
+        return NGX_CONF_ERROR;
+    }
+
+    *csicfp = csicf;
+
+    save = *cf;
+    cf->ctx = ctx;
+    cf->cmd_type = NGX_RTMP_SVI_CONF;
+
+    rv = ngx_conf_parse(cf, NULL);
+
+    *cf= save;
+
+    return rv;
+}
+
+
+static char *
+ngx_rtmp_core_application(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
+{
+    char                       *rv;
+    ngx_int_t                   i;
+    ngx_str_t                  *value;
+    ngx_conf_t                  save;
+    ngx_module_t              **modules;
+    ngx_rtmp_module_t          *module;
+    ngx_rtmp_conf_ctx_t        *ctx, *pctx;
+    ngx_rtmp_core_svi_conf_t   *csicf;
     ngx_rtmp_core_app_conf_t   *cacf, **cacfp;
 
     ctx = ngx_pcalloc(cf->pool, sizeof(ngx_rtmp_conf_ctx_t));
@@ -464,6 +616,7 @@ ngx_rtmp_core_application(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     pctx = cf->ctx;
     ctx->main_conf = pctx->main_conf;
     ctx->srv_conf = pctx->srv_conf;
+    ctx->svi_conf = pctx->svi_conf;
 
     ctx->app_conf = ngx_pcalloc(cf->pool, sizeof(void *) * ngx_rtmp_max_module);
     if (ctx->app_conf == NULL) {
@@ -497,9 +650,9 @@ ngx_rtmp_core_application(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     value = cf->args->elts;
 
     cacf->name = value[1];
-    cscf = pctx->srv_conf[ngx_rtmp_core_module.ctx_index];
+    csicf = pctx->svi_conf[ngx_rtmp_core_module.ctx_index];
 
-    cacfp = ngx_array_push(&cscf->applications);
+    cacfp = ngx_array_push(&csicf->applications);
     if (cacfp == NULL) {
         return NGX_CONF_ERROR;
     }

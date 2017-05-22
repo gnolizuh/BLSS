@@ -29,6 +29,7 @@ typedef struct ngx_rtmp_core_srv_conf_s ngx_rtmp_core_srv_conf_t;
 typedef struct {
     void                  **main_conf;
     void                  **srv_conf;
+    void                  **svi_conf;
     void                  **app_conf;
 } ngx_rtmp_conf_ctx_t;
 
@@ -267,6 +268,7 @@ typedef struct {
     void                  **ctx;
     void                  **main_conf;
     void                  **srv_conf;
+    void                  **svi_conf;
     void                  **app_conf;
 
     ngx_str_t              *addr_text;
@@ -384,7 +386,7 @@ extern ngx_rtmp_core_main_conf_t   *ngx_rtmp_core_main_conf;
 
 
 struct ngx_rtmp_core_srv_conf_s {
-    ngx_array_t             applications; /* ngx_rtmp_core_app_conf_t */
+    ngx_array_t             services; /* ngx_rtmp_core_svi_conf_t */
 
     ngx_msec_t              timeout;
     ngx_msec_t              ping;
@@ -415,6 +417,15 @@ struct ngx_rtmp_core_srv_conf_s {
 typedef struct {
     ngx_array_t             applications; /* ngx_rtmp_core_app_conf_t */
     ngx_str_t               name;
+    void                  **svi_conf;
+
+    ngx_rtmp_conf_ctx_t    *ctx;
+} ngx_rtmp_core_svi_conf_t;
+
+
+typedef struct {
+    ngx_array_t             applications; /* ngx_rtmp_core_app_conf_t */
+    ngx_str_t               name;
     void                  **app_conf;
 } ngx_rtmp_core_app_conf_t;
 
@@ -436,6 +447,10 @@ typedef struct {
     char                 *(*merge_srv_conf)(ngx_conf_t *cf, void *prev,
                                     void *conf);
 
+    void                 *(*create_svi_conf)(ngx_conf_t *cf);
+    char                 *(*merge_svi_conf)(ngx_conf_t *cf, void *prev,
+                                    void *conf);
+
     void                 *(*create_app_conf)(ngx_conf_t *cf);
     char                 *(*merge_app_conf)(ngx_conf_t *cf, void *prev,
                                     void *conf);
@@ -445,8 +460,9 @@ typedef struct {
 
 #define NGX_RTMP_MAIN_CONF              0x02000000
 #define NGX_RTMP_SRV_CONF               0x04000000
-#define NGX_RTMP_APP_CONF               0x08000000
-#define NGX_RTMP_REC_CONF               0x10000000
+#define NGX_RTMP_SVI_CONF               0x08000000
+#define NGX_RTMP_APP_CONF               0x10000000
+#define NGX_RTMP_REC_CONF               0x20000000
 
 
 #define NGX_RTMP_MAIN_CONF_OFFSET  offsetof(ngx_rtmp_conf_ctx_t, main_conf)
@@ -462,6 +478,8 @@ typedef struct {
 #define ngx_rtmp_get_module_main_conf(s, module)                             \
     (s)->main_conf[module.ctx_index]
 #define ngx_rtmp_get_module_srv_conf(s, module)  (s)->srv_conf[module.ctx_index]
+#define ngx_rtmp_get_module_svi_conf(s, module)  ((s)->svi_conf ? \
+    (s)->svi_conf[module.ctx_index] : NULL)
 #define ngx_rtmp_get_module_app_conf(s, module)  ((s)->app_conf ? \
     (s)->app_conf[module.ctx_index] : NULL)
 
@@ -469,6 +487,8 @@ typedef struct {
     ((ngx_rtmp_conf_ctx_t *) cf->ctx)->main_conf[module.ctx_index]
 #define ngx_rtmp_conf_get_module_srv_conf(cf, module)                        \
     ((ngx_rtmp_conf_ctx_t *) cf->ctx)->srv_conf[module.ctx_index]
+#define ngx_rtmp_conf_get_module_svi_conf(cf, module)                        \
+    ((ngx_rtmp_conf_ctx_t *) cf->ctx)->svi_conf[module.ctx_index]
 #define ngx_rtmp_conf_get_module_app_conf(cf, module)                        \
     ((ngx_rtmp_conf_ctx_t *) cf->ctx)->app_conf[module.ctx_index]
 
