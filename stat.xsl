@@ -86,6 +86,15 @@
 </xsl:template>
 
 <xsl:template match="server">
+    <xsl:apply-templates select="service"/>
+</xsl:template>
+
+<xsl:template match="service">
+    <tr bgcolor="#999999">
+        <td>
+            <b><xsl:value-of select="name"/></b>
+        </td>
+    </tr>
     <xsl:apply-templates select="application"/>
 </xsl:template>
 

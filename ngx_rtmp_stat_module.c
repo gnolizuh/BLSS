@@ -711,6 +711,9 @@ ngx_rtmp_stat_service(ngx_http_request_t *r, ngx_chain_t ***lll,
     size_t                          n;
 
     NGX_RTMP_STAT_L("<service>\r\n");
+    NGX_RTMP_STAT_L("<name>");
+    NGX_RTMP_STAT_ES(&csicf->name);
+    NGX_RTMP_STAT_L("</name>\r\n");
 
     cacf = csicf->applications.elts;
     for (n = 0; n < csicf->applications.nelts; ++n, ++cacf) {
