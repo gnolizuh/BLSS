@@ -62,8 +62,10 @@ name - interpreted by each application
         server {
 
             listen 1935 reuseport;
-
+            
             service cctv {
+
+                hostname pub rtmp httpflv hls *.pubhost.cctv;
 
                 application news {
 
@@ -85,6 +87,9 @@ name - interpreted by each application
             }
 
             service hunantv {
+
+                hostname pub rtmp hls *.pubhost.hunantv;
+                hostname sub rtmp hls *.subhost.hunantv;
 
                 application show {
 
