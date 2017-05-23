@@ -16,6 +16,8 @@ static ngx_int_t ngx_rtmp_add_server(ngx_conf_t *cf, ngx_rtmp_core_srv_conf_t *c
     ngx_rtmp_conf_addr_t *addr);
 static ngx_int_t ngx_rtmp_optimize_servers(ngx_conf_t *cf, ngx_rtmp_core_main_conf_t *cmcf,
     ngx_array_t *ports);
+static ngx_int_t ngx_rtmp_server_names(ngx_conf_t *cf,
+    ngx_rtmp_core_main_conf_t *cmcf, ngx_rtmp_conf_addr_t *addr);
 static ngx_int_t ngx_rtmp_add_addrs(ngx_conf_t *cf, ngx_rtmp_port_t *mport,
     ngx_rtmp_conf_addr_t *addr);
 #if (NGX_HAVE_INET6)
@@ -736,18 +738,14 @@ ngx_rtmp_optimize_servers(ngx_conf_t *cf, ngx_rtmp_core_main_conf_t *cmcf,
         addr = port[p].addrs.elts;
         for (a = 0; a < port[p].addrs.nelts; a++) {
 
-            if (addr[a].servers.nelts > 0) {
-
-                if (addr[a].servers.nelts > 1) {
-#ifdef NGX_DEBUG
-                    /*if (ngx_rtmp_hls_play_domains(cf, cmcf, &addr[a]) != NGX_OK ||
-                        ngx_rtmp_rtmp_play_domains(cf, cmcf, &addr[a]) != NGX_OK ||
-                        ngx_rtmp_hdl_play_domains(cf, cmcf, &addr[a]) != NGX_OK ||
-                        ngx_rtmp_rtmp_publish_domains(cf, cmcf, &addr[a]) != NGX_OK) {
-
-                        return NGX_ERROR;
-                    }*/
+            if (addr[a].servers.nelts > 1
+#if (NGX_PCRE)
+                || addr[a].default_server->captures
 #endif
+               )
+            {
+                if (ngx_rtmp_server_names(cf, cmcf, &addr[a]) != NGX_OK) {
+                    return NGX_ERROR;
                 }
             }
         }
@@ -758,6 +756,162 @@ ngx_rtmp_optimize_servers(ngx_conf_t *cf, ngx_rtmp_core_main_conf_t *cmcf,
     }
 
     return NGX_OK;
+}
+
+
+static ngx_int_t
+ngx_rtmp_server_names(ngx_conf_t *cf, ngx_rtmp_core_main_conf_t *cmcf,
+    ngx_rtmp_conf_addr_t *addr)
+{
+    ngx_int_t                   rc;
+    ngx_uint_t                  n, s;
+    ngx_hash_init_t             hash;
+    ngx_hash_keys_arrays_t      ha;
+    ngx_rtmp_server_name_t     *name;
+    ngx_rtmp_core_srv_conf_t  **cscfp;
+#if (NGX_PCRE)
+    ngx_uint_t                  regex, i;
+
+    regex = 0;
+#endif
+
+    ngx_memzero(&ha, sizeof(ngx_hash_keys_arrays_t));
+
+    ha.temp_pool = ngx_create_pool(NGX_DEFAULT_POOL_SIZE, cf->log);
+    if (ha.temp_pool == NULL) {
+        return NGX_ERROR;
+    }
+
+    ha.pool = cf->pool;
+
+    if (ngx_hash_keys_array_init(&ha, NGX_HASH_LARGE) != NGX_OK) {
+        goto failed;
+    }
+
+    cscfp = addr->servers.elts;
+
+    for (s = 0; s < addr->servers.nelts; s++) {
+
+        name = cscfp[s]->server_names.elts;
+
+        for (n = 0; n < cscfp[s]->server_names.nelts; n++) {
+
+#if (NGX_PCRE)
+            if (name[n].regex) {
+                regex++;
+                continue;
+            }
+#endif
+
+            rc = ngx_hash_add_key(&ha, &name[n].name, name[n].server,
+                                  NGX_HASH_WILDCARD_KEY);
+
+            if (rc == NGX_ERROR) {
+                return NGX_ERROR;
+            }
+
+            if (rc == NGX_DECLINED) {
+                ngx_log_error(NGX_LOG_EMERG, cf->log, 0,
+                              "invalid server name or wildcard \"%V\" on %s",
+                              &name[n].name, addr->opt.addr);
+                return NGX_ERROR;
+            }
+
+            if (rc == NGX_BUSY) {
+                ngx_log_error(NGX_LOG_WARN, cf->log, 0,
+                              "conflicting server name \"%V\" on %s, ignored",
+                              &name[n].name, addr->opt.addr);
+            }
+        }
+    }
+
+    hash.key = ngx_hash_key_lc;
+    hash.max_size = cmcf->server_names_hash_max_size;
+    hash.bucket_size = cmcf->server_names_hash_bucket_size;
+    hash.name = "server_names_hash";
+    hash.pool = cf->pool;
+
+    if (ha.keys.nelts) {
+        hash.hash = &addr->hash;
+        hash.temp_pool = NULL;
+
+        if (ngx_hash_init(&hash, ha.keys.elts, ha.keys.nelts) != NGX_OK) {
+            goto failed;
+        }
+    }
+
+    if (ha.dns_wc_head.nelts) {
+
+        ngx_qsort(ha.dns_wc_head.elts, (size_t) ha.dns_wc_head.nelts,
+                  sizeof(ngx_hash_key_t), ngx_http_cmp_dns_wildcards);
+
+        hash.hash = NULL;
+        hash.temp_pool = ha.temp_pool;
+
+        if (ngx_hash_wildcard_init(&hash, ha.dns_wc_head.elts,
+                                   ha.dns_wc_head.nelts)
+            != NGX_OK)
+        {
+            goto failed;
+        }
+
+        addr->wc_head = (ngx_hash_wildcard_t *) hash.hash;
+    }
+
+    if (ha.dns_wc_tail.nelts) {
+
+        ngx_qsort(ha.dns_wc_tail.elts, (size_t) ha.dns_wc_tail.nelts,
+                  sizeof(ngx_hash_key_t), ngx_http_cmp_dns_wildcards);
+
+        hash.hash = NULL;
+        hash.temp_pool = ha.temp_pool;
+
+        if (ngx_hash_wildcard_init(&hash, ha.dns_wc_tail.elts,
+                                   ha.dns_wc_tail.nelts)
+            != NGX_OK)
+        {
+            goto failed;
+        }
+
+        addr->wc_tail = (ngx_hash_wildcard_t *) hash.hash;
+    }
+
+    ngx_destroy_pool(ha.temp_pool);
+
+#if (NGX_PCRE)
+
+    if (regex == 0) {
+        return NGX_OK;
+    }
+
+    addr->nregex = regex;
+    addr->regex = ngx_palloc(cf->pool, regex * sizeof(ngx_rtmp_server_name_t));
+    if (addr->regex == NULL) {
+        return NGX_ERROR;
+    }
+
+    i = 0;
+
+    for (s = 0; s < addr->servers.nelts; s++) {
+
+        name = cscfp[s]->server_names.elts;
+
+        for (n = 0; n < cscfp[s]->server_names.nelts; n++) {
+            if (name[n].regex) {
+                addr->regex[i++] = name[n];
+            }
+        }
+    }
+
+#endif
+
+    return NGX_OK;
+
+failed:
+
+    ngx_destroy_pool(ha.temp_pool);
+
+    return NGX_ERROR;
 }
 
 

@@ -12,6 +12,7 @@
 #include <ngx_core.h>
 #include <ngx_event.h>
 #include <ngx_event_connect.h>
+#include <ngx_rtmp_core_module.h>
 #include <ngx_http.h>
 #include <nginx.h>
 
@@ -24,7 +25,6 @@ typedef __int8              int8_t;
 typedef unsigned __int8     uint8_t;
 #endif
 
-typedef struct ngx_rtmp_core_srv_conf_s ngx_rtmp_core_srv_conf_t;
 
 typedef struct {
     void                  **main_conf;
@@ -105,10 +105,26 @@ typedef struct {
     unsigned                   proxy_protocol:1;
 } ngx_rtmp_addr_conf_t;
 
+
 typedef struct {
     in_addr_t               addr;
     ngx_rtmp_addr_conf_t    conf;
 } ngx_rtmp_in_addr_t;
+
+
+typedef struct {
+    ngx_uint_t                 capture;
+    ngx_int_t                  index;
+} ngx_rtmp_regex_variable_t;
+
+
+typedef struct {
+    ngx_regex_t               *regex;
+    ngx_uint_t                 ncaptures;
+    ngx_http_regex_variable_t *variables;
+    ngx_uint_t                 nvariables;
+    ngx_str_t                  name;
+} ngx_rtmp_regex_t;
 
 
 #if (NGX_HAVE_INET6)
@@ -137,6 +153,15 @@ typedef struct {
 
 typedef struct {
     ngx_rtmp_listen_opt_t     opt;
+
+    ngx_hash_t                 hash;
+    ngx_hash_wildcard_t       *wc_head;
+    ngx_hash_wildcard_t       *wc_tail;
+
+#if (NGX_PCRE)
+    ngx_uint_t                 nregex;
+    ngx_http_server_name_t    *regex;
+#endif
 
     struct sockaddr          *sockaddr;
     socklen_t                 socklen;
@@ -378,40 +403,14 @@ typedef struct {
     ngx_array_t             amf_arrays;
     ngx_array_t             amf;
 	ngx_array_t            *ports;
+
+	ngx_uint_t              server_names_hash_max_size;
+    ngx_uint_t              server_names_hash_bucket_size;
 } ngx_rtmp_core_main_conf_t;
 
 
 /* global main conf for stats */
 extern ngx_rtmp_core_main_conf_t   *ngx_rtmp_core_main_conf;
-
-
-struct ngx_rtmp_core_srv_conf_s {
-    ngx_array_t             services; /* ngx_rtmp_core_svi_conf_t */
-
-    ngx_msec_t              timeout;
-    ngx_msec_t              ping;
-    ngx_msec_t              ping_timeout;
-    ngx_flag_t              so_keepalive;
-    ngx_int_t               max_streams;
-
-    ngx_uint_t              ack_window;
-
-    ngx_int_t               chunk_size;
-    ngx_pool_t             *pool;
-    ngx_chain_t            *free;
-    ngx_chain_t            *free_hs;
-    size_t                  max_message;
-    ngx_flag_t              play_time_fix;
-    ngx_flag_t              publish_time_fix;
-    ngx_flag_t              busy;
-    size_t                  out_queue;
-    size_t                  out_cork;
-    ngx_msec_t              buflen;
-
-    ngx_rtmp_conf_ctx_t    *ctx;
-
-    unsigned                listen:1;
-};
 
 
 typedef struct {
