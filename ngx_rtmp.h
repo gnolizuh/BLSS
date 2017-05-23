@@ -112,21 +112,6 @@ typedef struct {
 } ngx_rtmp_in_addr_t;
 
 
-typedef struct {
-    ngx_uint_t                 capture;
-    ngx_int_t                  index;
-} ngx_rtmp_regex_variable_t;
-
-
-typedef struct {
-    ngx_regex_t               *regex;
-    ngx_uint_t                 ncaptures;
-    ngx_http_regex_variable_t *variables;
-    ngx_uint_t                 nvariables;
-    ngx_str_t                  name;
-} ngx_rtmp_regex_t;
-
-
 #if (NGX_HAVE_INET6)
 
 typedef struct {
@@ -403,6 +388,8 @@ typedef struct {
     ngx_array_t             amf_arrays;
     ngx_array_t             amf;
 	ngx_array_t            *ports;
+
+	ngx_uint_t              ncaptures;
 
 	ngx_uint_t              server_names_hash_max_size;
     ngx_uint_t              server_names_hash_bucket_size;
