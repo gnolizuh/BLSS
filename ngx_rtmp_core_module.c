@@ -605,7 +605,7 @@ ngx_rtmp_core_service(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return NGX_CONF_ERROR;
     }
 
-    if (ngx_array_init(&csicfp->server_names, cf->pool, 4,
+    if (ngx_array_init(&csicf->server_names, cf->pool, 4,
                        sizeof(ngx_rtmp_server_name_t))
         != NGX_OK)
     {
