@@ -12,6 +12,7 @@
 #include <ngx_core.h>
 #include <ngx_event.h>
 #include <ngx_event_connect.h>
+#include <ngx_rtmp_core_module.h>
 #include <ngx_http.h>
 #include <nginx.h>
 
@@ -129,6 +130,9 @@ struct ngx_rtmp_core_srv_conf_s {
     ngx_rtmp_conf_ctx_t    *ctx;
 
     unsigned                listen:1;
+#if (NGX_PCRE)
+    unsigned                captures:1;
+#endif
 };
 
 
