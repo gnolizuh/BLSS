@@ -9,9 +9,6 @@
 
 
 typedef struct {
-    /* array of the ngx_rtmp_server_name_t, "server_name" directive */
-    ngx_array_t             server_names;
-
     ngx_array_t             services; /* ngx_rtmp_core_svi_conf_t */
 
     ngx_msec_t              timeout;
@@ -36,12 +33,7 @@ typedef struct {
 
     ngx_rtmp_conf_ctx_t    *ctx;
 
-    ngx_str_t               server_name;
-
     unsigned                listen:1;
-#if (NGX_PCRE)
-    unsigned                captures:1;
-#endif
 } ngx_rtmp_core_srv_conf_t;
 
 
@@ -49,7 +41,7 @@ typedef struct {
 #if (NGX_PCRE)
     ngx_rtmp_regex_t          *regex;
 #endif
-    ngx_rtmp_core_srv_conf_t  *server;   /* virtual name server conf */
+    ngx_rtmp_core_svi_conf_t  *service;   /* virtual name server conf */
     ngx_str_t                  name;
 } ngx_rtmp_server_name_t;
 

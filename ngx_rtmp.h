@@ -409,11 +409,20 @@ extern ngx_rtmp_core_main_conf_t   *ngx_rtmp_core_main_conf;
 
 
 typedef struct {
+    /* array of the ngx_rtmp_server_name_t, "server_name" directive */
+    ngx_array_t             server_names;
+
     ngx_array_t             applications; /* ngx_rtmp_core_app_conf_t */
     ngx_str_t               name;
     void                  **svi_conf;
 
     ngx_rtmp_conf_ctx_t    *ctx;
+
+    ngx_str_t               server_name;
+
+#if (NGX_PCRE)
+    unsigned                captures:1;
+#endif
 } ngx_rtmp_core_svi_conf_t;
 
 
@@ -461,6 +470,7 @@ typedef struct {
 
 #define NGX_RTMP_MAIN_CONF_OFFSET  offsetof(ngx_rtmp_conf_ctx_t, main_conf)
 #define NGX_RTMP_SRV_CONF_OFFSET   offsetof(ngx_rtmp_conf_ctx_t, srv_conf)
+#define NGX_RTMP_SVI_CONF_OFFSET   offsetof(ngx_rtmp_conf_ctx_t, svi_conf)
 #define NGX_RTMP_APP_CONF_OFFSET   offsetof(ngx_rtmp_conf_ctx_t, app_conf)
 
 

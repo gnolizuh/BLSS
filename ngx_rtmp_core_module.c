@@ -83,14 +83,14 @@ static ngx_command_t  ngx_rtmp_core_commands[] = {
     { ngx_string("application"),
       NGX_RTMP_SVI_CONF|NGX_CONF_BLOCK|NGX_CONF_TAKE1,
       ngx_rtmp_core_application,
-      NGX_RTMP_SRV_CONF_OFFSET,
+      NGX_RTMP_SVI_CONF_OFFSET,
       0,
       NULL },
 
     { ngx_string("server_name"),
       NGX_RTMP_SVI_CONF|NGX_CONF_TAKE1,
       ngx_rtmp_core_server_name,
-      NGX_RTMP_SRV_CONF_OFFSET,
+      NGX_RTMP_SVI_CONF_OFFSET,
       0,
       NULL },
 
@@ -1031,12 +1031,12 @@ invalid_so_keepalive:
 static char *
 ngx_rtmp_core_server_name(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
-    ngx_rtmp_core_srv_conf_t *cscf = conf;
+    ngx_rtmp_core_svi_conf_t *csicf = conf;
 
-    u_char                   ch;
-    ngx_str_t               *value;
-    ngx_uint_t               i;
-    ngx_rtmp_server_name_t  *sn;
+    u_char                    ch;
+    ngx_str_t                *value;
+    ngx_uint_t                i;
+    ngx_rtmp_server_name_t   *sn;
 
     value = cf->args->elts;
 
@@ -1058,7 +1058,7 @@ ngx_rtmp_core_server_name(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
                                &value[i]);
         }
 
-        sn = ngx_array_push(&cscf->server_names);
+        sn = ngx_array_push(&csicf->server_names);
         if (sn == NULL) {
              return NGX_CONF_ERROR;
         }
@@ -1066,7 +1066,7 @@ ngx_rtmp_core_server_name(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 #if (NGX_PCRE)
         sn->regex = NULL;
 #endif
-        sn->server = cscf;
+        sn->server = csicf;
 
         if (ngx_strcasecmp(value[i].data, (u_char *) "$hostname") == 0) {
             sn->name = cf->cycle->hostname;
@@ -1114,7 +1114,7 @@ ngx_rtmp_core_server_name(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         }
 
         sn->name = value[i];
-        cscf->captures = (rc.captures > 0);
+        csicf->captures = (rc.captures > 0);
         }
 #else
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
