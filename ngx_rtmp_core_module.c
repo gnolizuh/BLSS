@@ -298,9 +298,6 @@ ngx_rtmp_core_merge_srv_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_rtmp_core_srv_conf_t *prev = parent;
     ngx_rtmp_core_srv_conf_t *conf = child;
 
-    ngx_str_t                name;
-    ngx_rtmp_server_name_t  *sn;
-
     ngx_conf_merge_msec_value(conf->timeout, prev->timeout, 60000);
     ngx_conf_merge_msec_value(conf->ping, prev->ping, 60000);
     ngx_conf_merge_msec_value(conf->ping_timeout, prev->ping_timeout, 30000);
@@ -318,37 +315,6 @@ ngx_rtmp_core_merge_srv_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_conf_merge_value(conf->publish_time_fix, prev->publish_time_fix, 1);
     ngx_conf_merge_msec_value(conf->buflen, prev->buflen, 1000);
     ngx_conf_merge_value(conf->busy, prev->busy, 0);
-
-    if (conf->server_names.nelts == 0) {
-        /* the array has 4 empty preallocated elements, so push cannot fail */
-        sn = ngx_array_push(&conf->server_names);
-#if (NGX_PCRE)
-        sn->regex = NULL;
-#endif
-        sn->server = conf;
-        ngx_str_set(&sn->name, "");
-    }
-
-    sn = conf->server_names.elts;
-    name = sn[0].name;
-
-#if (NGX_PCRE)
-    if (sn->regex) {
-        name.len++;
-        name.data--;
-    } else
-#endif
-
-    if (name.data[0] == '.') {
-        name.len--;
-        name.data++;
-    }
-
-    conf->server_name.len = name.len;
-    conf->server_name.data = ngx_pstrdup(cf->pool, &name);
-    if (conf->server_name.data == NULL) {
-        return NGX_CONF_ERROR;
-    }
 
     if (prev->pool == NULL) {
         prev->pool = ngx_create_pool(4096, &cf->cycle->new_log);
