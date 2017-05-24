@@ -43,6 +43,7 @@ struct ngx_rtmp_variable_s {
 
 ngx_rtmp_variable_t *ngx_rtmp_add_variable(ngx_conf_t *cf, ngx_str_t *name,
     ngx_uint_t flags);
+ngx_int_t ngx_rtmp_get_variable_index(ngx_conf_t *cf, ngx_str_t *name);
 
 #if (NGX_PCRE)
 
