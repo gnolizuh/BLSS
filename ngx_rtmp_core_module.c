@@ -31,6 +31,8 @@ static char *ngx_rtmp_core_service(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf);
 static char *ngx_rtmp_core_application(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf);
+static char *ngx_conf_setsn_bitmask_slot(ngx_conf_t *cf, ngx_command_t *cmd,
+    void *conf);
 
 
 ngx_rtmp_core_main_conf_t      *ngx_rtmp_core_main_conf;
@@ -994,7 +996,7 @@ invalid_so_keepalive:
 }
 
 
-char *
+static char *
 ngx_conf_setsn_bitmask_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
     char  *p = conf;
