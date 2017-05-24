@@ -12,9 +12,16 @@
 #include <ngx_core.h>
 #include <ngx_event.h>
 #include <ngx_event_connect.h>
-#include <ngx_rtmp_core_module.h>
 #include <ngx_http.h>
 #include <nginx.h>
+
+
+typedef struct ngx_rtmp_session_s     ngx_rtmp_session_t;
+typedef struct ngx_rtmp_conf_ctx_s    ngx_rtmp_conf_ctx_t;
+
+#include <ngx_rtmp_variables.h>
+#include <ngx_rtmp_core_module.h>
+
 
 #include "ngx_rtmp_amf.h"
 #include "ngx_rtmp_bandwidth.h"
@@ -29,12 +36,12 @@ typedef unsigned __int8     uint8_t;
 #endif
 
 
-typedef struct {
+struct ngx_rtmp_conf_ctx_s {
     void                  **main_conf;
     void                  **srv_conf;
     void                  **svi_conf;
     void                  **app_conf;
-} ngx_rtmp_conf_ctx_t;
+};
 
 
 typedef struct {
@@ -99,41 +106,6 @@ typedef struct {
 
     u_char                     addr[NGX_SOCKADDR_STRLEN + 1];
 } ngx_rtmp_listen_opt_t;
-
-
-struct ngx_rtmp_core_srv_conf_s {
-    /* array of the ngx_rtmp_server_name_t, "server_name" directive */
-    ngx_array_t             server_names;
-
-    ngx_array_t             services; /* ngx_rtmp_core_svi_conf_t */
-
-    ngx_msec_t              timeout;
-    ngx_msec_t              ping;
-    ngx_msec_t              ping_timeout;
-    ngx_flag_t              so_keepalive;
-    ngx_int_t               max_streams;
-
-    ngx_uint_t              ack_window;
-
-    ngx_int_t               chunk_size;
-    ngx_pool_t             *pool;
-    ngx_chain_t            *free;
-    ngx_chain_t            *free_hs;
-    size_t                  max_message;
-    ngx_flag_t              play_time_fix;
-    ngx_flag_t              publish_time_fix;
-    ngx_flag_t              busy;
-    size_t                  out_queue;
-    size_t                  out_cork;
-    ngx_msec_t              buflen;
-
-    ngx_rtmp_conf_ctx_t    *ctx;
-
-    unsigned                listen:1;
-#if (NGX_PCRE)
-    unsigned                captures:1;
-#endif
-};
 
 
 typedef struct {
@@ -308,7 +280,7 @@ typedef struct {
 #endif
 
 
-typedef struct {
+struct ngx_rtmp_session_s {
     uint32_t                signature;  /* "RTMP" */ /* <-- FIXME wtf */
 
     ngx_event_t             close;
@@ -393,7 +365,7 @@ typedef struct {
     size_t                  out_queue;
     size_t                  out_cork;
     ngx_chain_t            *out[0];
-} ngx_rtmp_session_t;
+};
 
 
 #if (NGX_WIN32)
