@@ -34,11 +34,13 @@ RTMP_HTTP_MODULES="ngx_http_flv_httpmodule                  \
 
 RTMP_DEPS="                                                 \
                 $ngx_addon_dir/ngx_rtmp_amf.h               \
+                $ngx_addon_dir/ngx_rtmp_variables.h         \
                 $ngx_addon_dir/ngx_rtmp_bandwidth.h         \
                 $ngx_addon_dir/ngx_rtmp_cmd_module.h        \
                 $ngx_addon_dir/ngx_rtmp_codec_module.h      \
                 $ngx_addon_dir/ngx_rtmp_eval.h              \
                 $ngx_addon_dir/ngx_rtmp.h                   \
+                $ngx_addon_dir/ngx_rtmp_core_module.h       \
                 $ngx_addon_dir/ngx_rtmp_version.h           \
                 $ngx_addon_dir/ngx_rtmp_live_module.h       \
                 $ngx_addon_dir/ngx_rtmp_gop_cache_module.h  \
@@ -59,6 +61,7 @@ RTMP_DEPS="                                                 \
 RTMP_CORE_SRCS="                                            \
                 $ngx_addon_dir/ngx_rtmp.c                   \
                 $ngx_addon_dir/ngx_rtmp_init.c              \
+                $ngx_addon_dir/ngx_rtmp_variables.c         \
                 $ngx_addon_dir/ngx_rtmp_handshake.c         \
                 $ngx_addon_dir/ngx_rtmp_handler.c           \
                 $ngx_addon_dir/ngx_rtmp_amf.c               \
