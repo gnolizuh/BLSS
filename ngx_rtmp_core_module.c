@@ -88,11 +88,11 @@ static ngx_command_t  ngx_rtmp_core_commands[] = {
       NULL },
 
     { ngx_string("server_name"),
-      NGX_RTMP_SVI_CONF|NGX_CONF_TAKE1,
-      ngx_rtmp_core_server_name,
+      NGX_RTMP_SVI_CONF|NGX_CONF_1MORE,
+      ngx_conf_setsn_bitmask_slot,
       NGX_RTMP_SVI_CONF_OFFSET,
       0,
-      NULL },
+      ngx_rtmp_hostname_mask },
 
     { ngx_string("so_keepalive"),
       NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_CONF_FLAG,
@@ -994,6 +994,58 @@ invalid_so_keepalive:
 }
 
 
+char *
+ngx_conf_setsn_bitmask_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
+{
+    char  *p = conf;
+
+    ngx_uint_t          *np, i, m;
+    ngx_str_t           *value;
+    ngx_conf_bitmask_t  *mask;
+
+
+    np = (ngx_uint_t *) (p + cmd->offset);
+    value = cf->args->elts;
+    mask = cmd->post;
+
+    if (cf->args->nelts < 3) {
+        ngx_conf_log_error(NGX_LOG_WARN, cf, 0,
+                           "invalid syntax");
+        return NGX_CONF_ERROR;
+    }
+
+    for (i = 1; i < cf->args->nelts - 1; i++) {
+        for (m = 0; mask[m].name.len != 0; m++) {
+
+            if (mask[m].name.len != value[i].len
+                || ngx_strcasecmp(mask[m].name.data, value[i].data) != 0)
+            {
+                continue;
+            }
+
+            if (*np & mask[m].mask) {
+                ngx_conf_log_error(NGX_LOG_WARN, cf, 0,
+                                   "duplicate value \"%s\"", value[i].data);
+
+            } else {
+                *np |= mask[m].mask;
+            }
+
+            break;
+        }
+
+        if (mask[m].name.len == 0) {
+            ngx_conf_log_error(NGX_LOG_WARN, cf, 0,
+                               "invalid value \"%s\"", value[i].data);
+
+            return NGX_CONF_ERROR;
+        }
+    }
+
+    return ngx_rtmp_core_server_name(cf, cmd, conf);
+}
+
+
 static char *
 ngx_rtmp_core_server_name(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -1032,7 +1084,7 @@ ngx_rtmp_core_server_name(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 #if (NGX_PCRE)
         sn->regex = NULL;
 #endif
-        sn->server = csicf;
+        sn->service = csicf;
 
         if (ngx_strcasecmp(value[i].data, (u_char *) "$hostname") == 0) {
             sn->name = cf->cycle->hostname;
