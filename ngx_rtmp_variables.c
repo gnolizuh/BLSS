@@ -137,6 +137,17 @@ ngx_rtmp_get_variable_index(ngx_conf_t *cf, ngx_str_t *name)
 }
 
 
+#if (NGX_PCRE)
+
+static ngx_int_t
+ngx_rtmp_variable_not_found(ngx_rtmp_session_t *s, ngx_rtmp_variable_value_t *v,
+    uintptr_t data)
+{
+    v->not_found = 1;
+    return NGX_OK;
+}
+
+
 ngx_rtmp_regex_t *
 ngx_rtmp_regex_compile(ngx_conf_t *cf, ngx_regex_compile_t *rc)
 {
@@ -208,3 +219,5 @@ ngx_rtmp_regex_compile(ngx_conf_t *cf, ngx_regex_compile_t *rc)
 
     return re;
 }
+
+#endif
