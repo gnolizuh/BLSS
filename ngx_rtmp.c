@@ -740,12 +740,7 @@ ngx_rtmp_optimize_servers(ngx_conf_t *cf, ngx_rtmp_core_main_conf_t *cmcf,
         addr = port[p].addrs.elts;
         for (a = 0; a < port[p].addrs.nelts; a++) {
 
-            if (addr[a].servers.nelts > 1
-#if (NGX_PCRE)
-                || addr[a].default_server->captures
-#endif
-               )
-            {
+            if (addr[a].servers.nelts > 1) {
                 if (ngx_rtmp_server_names(cf, cmcf, &addr[a]) != NGX_OK) {
                     return NGX_ERROR;
                 }
