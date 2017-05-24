@@ -19,6 +19,9 @@
 #include "ngx_rtmp_bandwidth.h"
 
 
+typedef struct ngx_rtmp_core_srv_conf_s ngx_rtmp_core_srv_conf_t;
+
+
 #if (NGX_WIN32)
 typedef __int8              int8_t;
 typedef unsigned __int8     uint8_t;
