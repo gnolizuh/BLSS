@@ -36,6 +36,8 @@ typedef struct {
 
     ngx_rtmp_conf_ctx_t    *ctx;
 
+    ngx_str_t               server_name;
+
     unsigned                listen:1;
 #if (NGX_PCRE)
     unsigned                captures:1;
