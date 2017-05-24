@@ -8,9 +8,6 @@
 #define _NGX_RTMP_CORE_H_INCLUDED_
 
 
-#include <ngx_rtmp.h>
-
-
 typedef struct {
     /* array of the ngx_rtmp_server_name_t, "server_name" directive */
     ngx_array_t             server_names;
