@@ -42,6 +42,21 @@ static ngx_conf_deprecated_t  ngx_conf_deprecated_so_keepalive = {
 };
 
 
+static ngx_conf_bitmask_t  ngx_rtmp_hostname_mask[] = {
+    { ngx_string("all"),                NGX_RTMP_HOSTNAME_SUB       |
+                                        NGX_RTMP_HOSTNAME_PUB       |
+                                        NGX_RTMP_HOSTNAME_RTMP      |
+                                        NGX_RTMP_HOSTNAME_HTTP_FLV  |
+                                        NGX_RTMP_HOSTNAME_HLS       },
+    { ngx_string("sub"),                NGX_RTMP_HOSTNAME_SUB       },
+    { ngx_string("pub"),                NGX_RTMP_HOSTNAME_PUB       },
+    { ngx_string("rtmp"),               NGX_RTMP_HOSTNAME_RTMP      },
+    { ngx_string("http_flv"),           NGX_RTMP_HOSTNAME_HTTP_FLV  },
+    { ngx_string("hls"),                NGX_RTMP_HOSTNAME_HLS       },
+    { ngx_null_string,                  0                           }
+};
+
+
 static ngx_command_t  ngx_rtmp_core_commands[] = {
 
     { ngx_string("server"),
