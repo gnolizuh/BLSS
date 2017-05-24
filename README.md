@@ -40,7 +40,7 @@ cd to NGINX source directory & run this:
 ## Push/Pull URL format
 
     rtmp://rtmp.example.com/app/name
-    http://rtmp.example.com/app/name.flv
+    http://flv.example.com/app/name.flv
 
 app -  should match one of application {}
          blocks in config
