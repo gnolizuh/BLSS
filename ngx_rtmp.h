@@ -16,8 +16,9 @@
 #include <nginx.h>
 
 
-typedef struct ngx_rtmp_session_s     ngx_rtmp_session_t;
-typedef struct ngx_rtmp_conf_ctx_s    ngx_rtmp_conf_ctx_t;
+typedef struct ngx_rtmp_session_s       ngx_rtmp_session_t;
+typedef struct ngx_rtmp_conf_ctx_s      ngx_rtmp_conf_ctx_t;
+typedef struct ngx_rtmp_core_svi_conf_s ngx_rtmp_core_svi_conf_t;
 
 #include <ngx_rtmp_variables.h>
 #include <ngx_rtmp_core_module.h>
@@ -408,7 +409,7 @@ typedef struct {
 extern ngx_rtmp_core_main_conf_t   *ngx_rtmp_core_main_conf;
 
 
-typedef struct {
+struct ngx_rtmp_core_svi_conf_s {
     /* array of the ngx_rtmp_server_name_t, "server_name" directive */
     ngx_array_t             server_names;
 
@@ -423,7 +424,7 @@ typedef struct {
 #if (NGX_PCRE)
     unsigned                captures:1;
 #endif
-} ngx_rtmp_core_svi_conf_t;
+};
 
 
 typedef struct {

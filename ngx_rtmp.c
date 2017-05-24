@@ -801,7 +801,7 @@ ngx_rtmp_server_names(ngx_conf_t *cf, ngx_rtmp_core_main_conf_t *cmcf,
 
             name = csicfp[t]->server_names.elts;
 
-            for (n = 0; n < cscfp[s]->server_names.nelts; n++) {
+            for (n = 0; n < csicfp[t]->server_names.nelts; n++) {
 
 #if (NGX_PCRE)
                 if (name[n].regex) {
