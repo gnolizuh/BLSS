@@ -12,6 +12,7 @@
 #include <ngx_core.h>
 #include <ngx_event.h>
 #include <ngx_event_connect.h>
+#include <ngx_rtmp_variables.h>
 #include <ngx_rtmp_core_module.h>
 #include <ngx_http.h>
 #include <nginx.h>
@@ -26,14 +27,12 @@ typedef unsigned __int8     uint8_t;
 #endif
 
 
-typedef struct ngx_rtmp_conf_ctx_s ngx_rtmp_conf_ctx_t;
-
-struct ngx_rtmp_conf_ctx_s {
+typedef struct {
     void                  **main_conf;
     void                  **srv_conf;
     void                  **svi_conf;
     void                  **app_conf;
-};
+} ngx_rtmp_conf_ctx_t;
 
 
 typedef struct {
