@@ -8,6 +8,7 @@
 #define _NGX_RTMP_CORE_H_INCLUDED_
 
 
+#include <ngx_rtmp_variables.h>
 #include <ngx_rtmp.h>
 
 
