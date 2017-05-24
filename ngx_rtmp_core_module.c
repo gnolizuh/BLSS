@@ -273,13 +273,6 @@ ngx_rtmp_core_create_srv_conf(ngx_conf_t *cf)
         return NULL;
     }
 
-    if (ngx_array_init(&cscf->server_names, cf->temp_pool, 4,
-                       sizeof(ngx_rtmp_server_name_t))
-        != NGX_OK)
-    {
-        return NULL;
-    }
-
     cscf->timeout = NGX_CONF_UNSET_MSEC;
     cscf->ping = NGX_CONF_UNSET_MSEC;
     cscf->ping_timeout = NGX_CONF_UNSET_MSEC;
@@ -643,6 +636,13 @@ ngx_rtmp_core_service(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     csicfp = ngx_array_push(&cscf->services);
     if (csicfp == NULL) {
+        return NGX_CONF_ERROR;
+    }
+
+    if (ngx_array_init(&csicfp->server_names, cf->pool, 4,
+                       sizeof(ngx_rtmp_server_name_t))
+        != NGX_OK)
+    {
         return NGX_CONF_ERROR;
     }
 
