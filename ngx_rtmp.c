@@ -36,6 +36,8 @@ static ngx_int_t ngx_rtmp_add_addresses(ngx_conf_t *cf, ngx_rtmp_core_srv_conf_t
     ngx_rtmp_conf_port_t *port, ngx_rtmp_listen_opt_t *lsopt);
 static ngx_int_t ngx_rtmp_add_address(ngx_conf_t *cf, ngx_rtmp_core_srv_conf_t *cscf,
     ngx_rtmp_conf_port_t *port, ngx_rtmp_listen_opt_t *lsopt);
+static int ngx_libc_cdecl ngx_rtmp_cmp_dns_wildcards(const void *one,
+    const void *two);
 static ngx_int_t ngx_rtmp_init_listening(ngx_conf_t *cf, ngx_rtmp_conf_port_t *port);
 static ngx_listening_t * ngx_rtmp_add_listening(ngx_conf_t *cf, ngx_rtmp_conf_addr_t *addr);
 static ngx_int_t ngx_rtmp_init_process(ngx_cycle_t *cycle);
@@ -843,7 +845,7 @@ ngx_rtmp_server_names(ngx_conf_t *cf, ngx_rtmp_core_main_conf_t *cmcf,
     if (ha.dns_wc_head.nelts) {
 
         ngx_qsort(ha.dns_wc_head.elts, (size_t) ha.dns_wc_head.nelts,
-                  sizeof(ngx_hash_key_t), ngx_http_cmp_dns_wildcards);
+                  sizeof(ngx_hash_key_t), ngx_rtmp_cmp_dns_wildcards);
 
         hash.hash = NULL;
         hash.temp_pool = ha.temp_pool;
@@ -861,7 +863,7 @@ ngx_rtmp_server_names(ngx_conf_t *cf, ngx_rtmp_core_main_conf_t *cmcf,
     if (ha.dns_wc_tail.nelts) {
 
         ngx_qsort(ha.dns_wc_tail.elts, (size_t) ha.dns_wc_tail.nelts,
-                  sizeof(ngx_hash_key_t), ngx_http_cmp_dns_wildcards);
+                  sizeof(ngx_hash_key_t), ngx_rtmp_cmp_dns_wildcards);
 
         hash.hash = NULL;
         hash.temp_pool = ha.temp_pool;
@@ -1080,6 +1082,18 @@ ngx_rtmp_rmemcpy(void *dst, const void* src, size_t n)
     }
 
     return dst;
+}
+
+
+static int ngx_libc_cdecl
+ngx_rtmp_cmp_dns_wildcards(const void *one, const void *two)
+{
+    ngx_hash_key_t  *first, *second;
+
+    first = (ngx_hash_key_t *) one;
+    second = (ngx_hash_key_t *) two;
+
+    return ngx_dns_strcmp(first->key.data, second->key.data);
 }
 
 
