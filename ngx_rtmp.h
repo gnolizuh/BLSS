@@ -21,13 +21,8 @@ typedef struct ngx_rtmp_conf_ctx_s    ngx_rtmp_conf_ctx_t;
 
 #include <ngx_rtmp_variables.h>
 #include <ngx_rtmp_core_module.h>
-
-
 #include "ngx_rtmp_amf.h"
 #include "ngx_rtmp_bandwidth.h"
-
-
-typedef struct ngx_rtmp_core_srv_conf_s ngx_rtmp_core_srv_conf_t;
 
 
 #if (NGX_WIN32)
