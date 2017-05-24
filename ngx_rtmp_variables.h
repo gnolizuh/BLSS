@@ -10,7 +10,6 @@
 
 #include <ngx_config.h>
 #include <ngx_core.h>
-#include <ngx_rtmp.h>
 
 
 typedef ngx_variable_value_t  ngx_rtmp_variable_value_t;
