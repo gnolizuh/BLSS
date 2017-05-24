@@ -8,6 +8,13 @@
 #define _NGX_RTMP_CORE_H_INCLUDED_
 
 
+#define NGX_RTMP_HOSTNAME_SUB      0x01
+#define NGX_RTMP_HOSTNAME_PUB      0x02
+#define NGX_RTMP_HOSTNAME_RTMP     0x04
+#define NGX_RTMP_HOSTNAME_HTTP_FLV 0x08
+#define NGX_RTMP_HOSTNAME_HLS      0x10
+
+
 typedef struct {
     ngx_array_t             services; /* ngx_rtmp_core_svi_conf_t */
 
