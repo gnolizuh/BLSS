@@ -26,12 +26,14 @@ typedef unsigned __int8     uint8_t;
 #endif
 
 
-typedef struct {
+typedef struct ngx_rtmp_conf_ctx_s ngx_rtmp_conf_ctx_t;
+
+struct ngx_rtmp_conf_ctx_s {
     void                  **main_conf;
     void                  **srv_conf;
     void                  **svi_conf;
     void                  **app_conf;
-} ngx_rtmp_conf_ctx_t;
+};
 
 
 typedef struct {
