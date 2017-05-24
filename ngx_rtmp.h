@@ -150,7 +150,7 @@ typedef struct {
 
 #if (NGX_PCRE)
     ngx_uint_t                 nregex;
-    ngx_http_server_name_t    *regex;
+    ngx_rtmp_server_name_t    *regex;
 #endif
 
     struct sockaddr          *sockaddr;
