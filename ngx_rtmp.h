@@ -12,6 +12,7 @@
 #include <ngx_core.h>
 #include <ngx_event.h>
 #include <ngx_event_connect.h>
+#include <ngx_rtmp_variables.h>
 #include <ngx_rtmp_core_module.h>
 #include <ngx_http.h>
 #include <nginx.h>

@@ -7,6 +7,9 @@
 #ifndef _NGX_RTMP_CORE_H_INCLUDED_
 #define _NGX_RTMP_CORE_H_INCLUDED_
 
+
+#include <ngx_rtmp.h>
+
 typedef struct ngx_rtmp_core_srv_conf_s ngx_rtmp_core_srv_conf_t;
 
 struct ngx_rtmp_core_srv_conf_s {
