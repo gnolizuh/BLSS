@@ -394,6 +394,7 @@ typedef struct {
     ngx_array_t                amf;
 	ngx_array_t               *ports;
 
+    ngx_array_t                variables;       /* ngx_rtmp_variable_t */
 	ngx_uint_t                 ncaptures;
 
 	ngx_uint_t                 server_names_hash_max_size;
