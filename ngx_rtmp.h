@@ -379,20 +379,22 @@ typedef struct {
 
 
 typedef struct {
-    ngx_array_t             servers;    /* ngx_rtmp_core_srv_conf_t */
-    ngx_array_t             listen;     /* ngx_rtmp_listen_opt_t */
+    ngx_array_t                servers;    /* ngx_rtmp_core_srv_conf_t */
+    ngx_array_t                listen;     /* ngx_rtmp_listen_opt_t */
 
-    ngx_array_t             events[NGX_RTMP_MAX_EVENT];
+    ngx_array_t                events[NGX_RTMP_MAX_EVENT];
 
-    ngx_hash_t              amf_hash;
-    ngx_array_t             amf_arrays;
-    ngx_array_t             amf;
-	ngx_array_t            *ports;
+    ngx_hash_t                 amf_hash;
+    ngx_array_t                amf_arrays;
+    ngx_array_t                amf;
+	ngx_array_t               *ports;
 
-	ngx_uint_t              ncaptures;
+	ngx_uint_t                 ncaptures;
 
-	ngx_uint_t              server_names_hash_max_size;
-    ngx_uint_t              server_names_hash_bucket_size;
+	ngx_uint_t                 server_names_hash_max_size;
+    ngx_uint_t                 server_names_hash_bucket_size;
+
+    ngx_hash_keys_arrays_t    *variables_keys;
 } ngx_rtmp_core_main_conf_t;
 
 

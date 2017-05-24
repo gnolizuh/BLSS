@@ -3,178 +3,148 @@
  * Copyright (C) Gnolizuh
  */
 
- #include <ngx_rtmp_variables.h>
+#include <ngx_rtmp_variables.h>
 
 
- ngx_rtmp_regex_t *
- ngx_rtmp_regex_compile(ngx_conf_t *cf, ngx_regex_compile_t *rc)
- {
-     u_char                     *p;
-     size_t                      size;
-     ngx_str_t                   name;
-     ngx_uint_t                  i, n;
-     ngx_rtmp_variable_t        *v;
-     ngx_rtmp_regex_t           *re;
-     ngx_rtmp_regex_variable_t  *rv;
-     ngx_rtmp_core_main_conf_t  *cmcf;
+ngx_rtmp_variable_t *
+ngx_rtmp_add_variable(ngx_conf_t *cf, ngx_str_t *name, ngx_uint_t flags)
+{
+    ngx_int_t                   rc;
+    ngx_uint_t                  i;
+    ngx_hash_key_t             *key;
+    ngx_rtmp_variable_t        *v;
+    ngx_rtmp_core_main_conf_t  *cmcf;
 
-     rc->pool = cf->pool;
+    if (name->len == 0) {
+        ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                           "invalid variable name \"$\"");
+        return NULL;
+    }
 
-     if (ngx_regex_compile(rc) != NGX_OK) {
-         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0, "%V", &rc->err);
-         return NULL;
-     }
+    cmcf = ngx_rtmp_conf_get_module_main_conf(cf, ngx_rtmp_core_module);
 
-     re = ngx_pcalloc(cf->pool, sizeof(ngx_rtmp_regex_t));
-     if (re == NULL) {
-         return NULL;
-     }
+    key = cmcf->variables_keys->keys.elts;
+    for (i = 0; i < cmcf->variables_keys->keys.nelts; i++) {
+        if (name->len != key[i].key.len
+            || ngx_strncasecmp(name->data, key[i].key.data, name->len) != 0)
+        {
+            continue;
+        }
 
-     re->regex = rc->regex;
-     re->ncaptures = rc->captures;
-     re->name = rc->pattern;
+        v = key[i].value;
 
-     cmcf = ngx_rtmp_conf_get_module_main_conf(cf, ngx_rtmp_core_module);
-     cmcf->ncaptures = ngx_max(cmcf->ncaptures, re->ncaptures);
+        if (!(v->flags & NGX_RTMP_VAR_CHANGEABLE)) {
+            ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                               "the duplicate \"%V\" variable", name);
+            return NULL;
+        }
 
-     n = (ngx_uint_t) rc->named_captures;
+        return v;
+    }
 
-     if (n == 0) {
-         return re;
-     }
+    v = ngx_palloc(cf->pool, sizeof(ngx_rtmp_variable_t));
+    if (v == NULL) {
+        return NULL;
+    }
 
-     rv = ngx_palloc(rc->pool, n * sizeof(ngx_rtmp_regex_variable_t));
-     if (rv == NULL) {
-         return NULL;
-     }
+    v->name.len = name->len;
+    v->name.data = ngx_pnalloc(cf->pool, name->len);
+    if (v->name.data == NULL) {
+        return NULL;
+    }
 
-     re->variables = rv;
-     re->nvariables = n;
+    ngx_strlow(v->name.data, name->data, name->len);
 
-     size = rc->name_size;
-     p = rc->names;
+    v->set_handler = NULL;
+    v->get_handler = NULL;
+    v->data = 0;
+    v->flags = flags;
+    v->index = 0;
 
-     for (i = 0; i < n; i++) {
-         rv[i].capture = 2 * ((p[0] << 8) + p[1]);
+    rc = ngx_hash_add_key(cmcf->variables_keys, &v->name, v, 0);
 
-         name.data = &p[2];
-         name.len = ngx_strlen(name.data);
+    if (rc == NGX_ERROR) {
+        return NULL;
+    }
 
-         v = ngx_rtmp_add_variable(cf, &name, NGX_RTMP_VAR_CHANGEABLE);
-         if (v == NULL) {
-             return NULL;
-         }
+    if (rc == NGX_BUSY) {
+        ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                           "conflicting variable name \"%V\"", name);
+        return NULL;
+    }
 
-         rv[i].index = ngx_rtmp_get_variable_index(cf, &name);
-         if (rv[i].index == NGX_ERROR) {
-             return NULL;
-         }
-
-         v->get_handler = ngx_rtmp_variable_not_found;
-
-         p += size;
-     }
-
-     return re;
- }
+    return v;
+}
 
 
- static char *
- ngx_rtmp_core_server_name(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
- {
-     ngx_rtmp_core_srv_conf_t *cscf = conf;
+ngx_rtmp_regex_t *
+ngx_rtmp_regex_compile(ngx_conf_t *cf, ngx_regex_compile_t *rc)
+{
+    u_char                     *p;
+    size_t                      size;
+    ngx_str_t                   name;
+    ngx_uint_t                  i, n;
+    ngx_rtmp_variable_t        *v;
+    ngx_rtmp_regex_t           *re;
+    ngx_rtmp_regex_variable_t  *rv;
+    ngx_rtmp_core_main_conf_t  *cmcf;
 
-     u_char                   ch;
-     ngx_str_t               *value;
-     ngx_uint_t               i;
-     ngx_rtmp_server_name_t  *sn;
+    rc->pool = cf->pool;
 
-     value = cf->args->elts;
+    if (ngx_regex_compile(rc) != NGX_OK) {
+        ngx_conf_log_error(NGX_LOG_EMERG, cf, 0, "%V", &rc->err);
+        return NULL;
+    }
 
-     for (i = 1; i < cf->args->nelts; i++) {
+    re = ngx_pcalloc(cf->pool, sizeof(ngx_rtmp_regex_t));
+    if (re == NULL) {
+        return NULL;
+    }
 
-         ch = value[i].data[0];
+    re->regex = rc->regex;
+    re->ncaptures = rc->captures;
+    re->name = rc->pattern;
 
-         if ((ch == '*' && (value[i].len < 3 || value[i].data[1] != '.'))
-             || (ch == '.' && value[i].len < 2))
-         {
-             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                                "server name \"%V\" is invalid", &value[i]);
-             return NGX_CONF_ERROR;
-         }
+    cmcf = ngx_rtmp_conf_get_module_main_conf(cf, ngx_rtmp_core_module);
+    cmcf->ncaptures = ngx_max(cmcf->ncaptures, re->ncaptures);
 
-         if (ngx_strchr(value[i].data, '/')) {
-             ngx_conf_log_error(NGX_LOG_WARN, cf, 0,
-                                "server name \"%V\" has suspicious symbols",
-                                &value[i]);
-         }
+    n = (ngx_uint_t) rc->named_captures;
 
-         sn = ngx_array_push(&cscf->server_names);
-         if (sn == NULL) {
-             return NGX_CONF_ERROR;
-         }
+    if (n == 0) {
+        return re;
+    }
 
- #if (NGX_PCRE)
-         sn->regex = NULL;
- #endif
-         sn->server = cscf;
+    rv = ngx_palloc(rc->pool, n * sizeof(ngx_rtmp_regex_variable_t));
+    if (rv == NULL) {
+        return NULL;
+    }
 
-         if (ngx_strcasecmp(value[i].data, (u_char *) "$hostname") == 0) {
-             sn->name = cf->cycle->hostname;
+    re->variables = rv;
+    re->nvariables = n;
 
-         } else {
-             sn->name = value[i];
-         }
+    size = rc->name_size;
+    p = rc->names;
 
-         if (value[i].data[0] != '~') {
-             ngx_strlow(sn->name.data, sn->name.data, sn->name.len);
-             continue;
-         }
+    for (i = 0; i < n; i++) {
+        rv[i].capture = 2 * ((p[0] << 8) + p[1]);
 
- #if (NGX_PCRE)
-         {
-         u_char               *p;
-         ngx_regex_compile_t   rc;
-         u_char                errstr[NGX_MAX_CONF_ERRSTR];
+        name.data = &p[2];
+        name.len = ngx_strlen(name.data);
 
-         if (value[i].len == 1) {
-             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                                "empty regex in server name \"%V\"", &value[i]);
-             return NGX_CONF_ERROR;
-         }
+        v = ngx_rtmp_add_variable(cf, &name, NGX_RTMP_VAR_CHANGEABLE);
+        if (v == NULL) {
+            return NULL;
+        }
 
-         value[i].len--;
-         value[i].data++;
+        rv[i].index = ngx_rtmp_get_variable_index(cf, &name);
+        if (rv[i].index == NGX_ERROR) {
+            return NULL;
+        }
 
-         ngx_memzero(&rc, sizeof(ngx_regex_compile_t));
+        v->get_handler = ngx_rtmp_variable_not_found;
 
-         rc.pattern = value[i];
-         rc.err.len = NGX_MAX_CONF_ERRSTR;
-         rc.err.data = errstr;
+        p += size;
+    }
 
-         for (p = value[i].data; p < value[i].data + value[i].len; p++) {
-             if (*p >= 'A' && *p <= 'Z') {
-                 rc.options = NGX_REGEX_CASELESS;
-                 break;
-             }
-         }
-
-         sn->regex = ngx_rtmp_regex_compile(cf, &rc);
-         if (sn->regex == NULL) {
-             return NGX_CONF_ERROR;
-         }
-
-         sn->name = value[i];
-         cscf->captures = (rc.captures > 0);
-         }
- #else
-         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                            "using regex \"%V\" "
-                            "requires PCRE library", &value[i]);
-
-         return NGX_CONF_ERROR;
- #endif
-     }
-
-     return NGX_CONF_OK;
- }
+    return re;
+}
