@@ -93,7 +93,7 @@ static ngx_command_t  ngx_rtmp_core_commands[] = {
       NGX_RTMP_SVI_CONF|NGX_CONF_1MORE,
       ngx_rtmp_core_hostname,
       NGX_RTMP_SVI_CONF_OFFSET,
-      offsetof(ngx_rtmp_core_svi_conf_t, range),
+      offsetof(ngx_rtmp_core_svi_conf_t, host_range),
       ngx_rtmp_hostname_mask },
 
     { ngx_string("so_keepalive"),

@@ -417,6 +417,8 @@ struct ngx_rtmp_core_svi_conf_s {
     ngx_str_t               name;
     void                  **svi_conf;
 
+    ngx_uint_t              host_range;
+
     ngx_rtmp_conf_ctx_t    *ctx;
 
     ngx_str_t               server_name;

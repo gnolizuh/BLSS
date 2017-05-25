@@ -40,8 +40,6 @@ typedef struct {
 
     ngx_rtmp_conf_ctx_t    *ctx;
 
-    ngx_uint_t              range;
-
     unsigned                listen:1;
 } ngx_rtmp_core_srv_conf_t;
 
