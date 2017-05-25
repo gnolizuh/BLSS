@@ -25,8 +25,6 @@ static char *ngx_rtmp_core_server(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf);
 static char *ngx_rtmp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf);
-static char *ngx_rtmp_core_server_name(ngx_conf_t *cf, ngx_command_t *cmd,
-    void *conf);
 static char *ngx_rtmp_core_service(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf);
 static char *ngx_rtmp_core_application(ngx_conf_t *cf, ngx_command_t *cmd,
