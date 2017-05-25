@@ -182,8 +182,6 @@ ngx_rtmp_cmd_connect_init(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
     ngx_rtmp_cmd_fill_args(v.app, v.args);
 
-    ngx_rtmp_parse_tcurl(v.tc_url, &s->host);
-
     ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
             "connect: app='%s' args='%s' flashver='%s' swf_url='%s' "
             "tc_url='%s' page_url='%s' acodecs=%uD vcodecs=%uD "
@@ -291,6 +289,8 @@ ngx_rtmp_cmd_connect(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
     NGX_RTMP_SET_STRPAR(page_url);
 
 #undef NGX_RTMP_SET_STRPAR
+
+    ngx_rtmp_parse_tcurl(s->tc_url, &s->host);
 
     p = ngx_strlchr(s->app.data, s->app.data + s->app.len, '?');
     if (p) {
