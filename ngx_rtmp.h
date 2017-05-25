@@ -298,6 +298,7 @@ struct ngx_rtmp_session_s {
     void                  **svi_conf;
     void                  **app_conf;
 
+    ngx_rtmp_addr_conf_t   *addr_conf;
     ngx_str_t              *addr_text;
     int                     connected;
 
