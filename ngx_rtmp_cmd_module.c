@@ -182,6 +182,8 @@ ngx_rtmp_cmd_connect_init(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
     ngx_rtmp_cmd_fill_args(v.app, v.args);
 
+    ngx_rtmp_parse_tcurl(v.tc_url, &s->host);
+
     ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
             "connect: app='%s' args='%s' flashver='%s' swf_url='%s' "
             "tc_url='%s' page_url='%s' acodecs=%uD vcodecs=%uD "
@@ -301,8 +303,8 @@ ngx_rtmp_cmd_connect(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
     hash = &s->addr_conf->virtual_hosts->names;
 
     /* match host to find out service conf */
-    csicf = ngx_hash_find_combined(hash, ngx_hash_key(s->host->data, s->host->len),
-                s->host->data, s->host->len);
+    csicf = ngx_hash_find_combined(hash, ngx_hash_key(s->host.data, s->host.len),
+                s->host.data, s->host.len);
     if (csicf == NULL) {
         ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
                       "connect: host not matched: '%V'", &s->host);

@@ -517,6 +517,8 @@ char* ngx_rtmp_message_type(uint8_t type);
 char* ngx_rtmp_user_message_type(uint16_t evt);
 #endif
 
+ngx_int_t ngx_rtmp_parse_tcurl(ngx_str_t tcurl, ngx_str_t *host);
+
 ngx_int_t ngx_rtmp_add_listen(ngx_conf_t *cf, ngx_rtmp_core_srv_conf_t *cscf,
      ngx_rtmp_listen_opt_t *lsopt);
 
