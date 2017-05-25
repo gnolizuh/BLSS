@@ -344,7 +344,8 @@ struct ngx_rtmp_session_s {
     unsigned                relay:1;
     unsigned                static_relay:1;
 
-    ngx_uint_t              protocol;
+    ngx_uint_t              proto;
+    ngx_uint_t              proto_mask;
     ngx_pool_t             *pool;
 
     /* input stream 0 (reserved by RTMP spec)
@@ -521,7 +522,7 @@ void ngx_rtmp_init_connection(ngx_connection_t *c);
 ngx_rtmp_session_t * ngx_rtmp_init_session(ngx_connection_t *c,
      ngx_rtmp_addr_conf_t *addr_conf);
 
-void ngx_http_flv_init_connection(ngx_http_request_t *r, ngx_uint_t protocol);
+void ngx_http_flv_init_connection(ngx_http_request_t *r);
 ngx_rtmp_session_t * ngx_http_flv_init_session(ngx_http_request_t *r,
      ngx_rtmp_addr_conf_t *addr_conf);
 void ngx_http_flv_send(ngx_event_t *wev);

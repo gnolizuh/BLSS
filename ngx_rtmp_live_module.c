@@ -627,8 +627,8 @@ ngx_rtmp_live_close_stream(ngx_rtmp_session_t *s, ngx_rtmp_close_stream_t *v)
     ngx_rtmp_live_app_conf_t       *lacf;
     ngx_uint_t                      n;
 
-    if (s->protocol != NGX_PROTO_TYPE_RTMP_PUSH &&
-        s->protocol != NGX_PROTO_TYPE_RTMP_PULL) {
+    if (s->proto != NGX_PROTO_TYPE_RTMP_PUSH &&
+        s->proto != NGX_PROTO_TYPE_RTMP_PULL) {
         goto next;
     }
 
@@ -1159,7 +1159,7 @@ ngx_rtmp_live_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
     ngx_rtmp_live_app_conf_t       *lacf;
     ngx_rtmp_live_ctx_t            *ctx;
 
-    if (s->protocol != NGX_PROTO_TYPE_RTMP_PUSH) {
+    if (s->proto != NGX_PROTO_TYPE_RTMP_PUSH) {
         goto next;
     }
 
@@ -1200,7 +1200,7 @@ ngx_rtmp_live_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
     ngx_rtmp_live_app_conf_t       *lacf;
     ngx_rtmp_live_ctx_t            *ctx;
 
-    if (s->protocol != NGX_PROTO_TYPE_RTMP_PULL) {
+    if (s->proto != NGX_PROTO_TYPE_RTMP_PULL) {
         goto next;
     }
 

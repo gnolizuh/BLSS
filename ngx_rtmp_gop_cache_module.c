@@ -664,11 +664,11 @@ ngx_rtmp_gop_cache_send(ngx_rtmp_session_t *ss)
 
     pctx = ctx->stream->pctx;
 
-    handler = ngx_rtmp_send_handlers[ss->protocol == NGX_PROTO_TYPE_HTTP_FLV_PULL ? 1 : 0];
+    handler = ngx_rtmp_send_handlers[ss->proto == NGX_PROTO_TYPE_HTTP_FLV_PULL ? 1 : 0];
 
     for (cache = gctx->head; cache; cache = cache->next) {
 
-        meta = (ss->protocol == NGX_PROTO_TYPE_HTTP_FLV_PULL ? cache->meta_data_flv : cache->meta_data);
+        meta = (ss->proto == NGX_PROTO_TYPE_HTTP_FLV_PULL ? cache->meta_data_flv : cache->meta_data);
         if (meta) {
             meta_version = cache->meta_version;
         }

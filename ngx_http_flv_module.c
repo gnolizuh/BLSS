@@ -329,7 +329,7 @@ ngx_http_flv_http_handler(ngx_http_request_t *r)
 {
     ngx_http_flv_httploc_conf_t         *hlcf;
     ngx_http_cleanup_t                  *cln;
-    ngx_int_t                            protocol, rc = 0;
+    ngx_int_t                            proto, rc = 0;
     ngx_str_t                            app, name;
     ngx_int_t                            nslash;
     size_t                               i;
@@ -370,7 +370,7 @@ ngx_http_flv_http_handler(ngx_http_request_t *r)
 		r->uri.data[r->uri.len - 2] == 'l' &&
 		r->uri.data[r->uri.len - 3] == 'f' &&
 		r->uri.data[r->uri.len - 4] == '.') {
-		protocol = NGX_PROTO_TYPE_HTTP_FLV_PULL;
+		proto = NGX_PROTO_TYPE_HTTP_FLV_PULL;
 	} else {
 		return NGX_DECLINED;
 	}
@@ -391,7 +391,7 @@ ngx_http_flv_http_handler(ngx_http_request_t *r)
     ngx_log_error(NGX_LOG_INFO, r->connection->log, 0,
               "http_flv handle app: '%V' name: '%V'", &app, &name);
 
-    ngx_http_flv_init_connection(r, protocol);
+    ngx_http_flv_init_connection(r);
 
     if (ngx_http_flv_connect_local(r, &app, &name) != NGX_OK) {
 
@@ -489,7 +489,7 @@ static ngx_int_t
 ngx_http_flv_connect_end(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     ngx_chain_t *in)
 {
-    if (s->protocol != NGX_PROTO_TYPE_HTTP_FLV_PULL) {
+    if (s->proto != NGX_PROTO_TYPE_HTTP_FLV_PULL) {
         return NGX_OK;
     }
 
@@ -834,7 +834,7 @@ ngx_http_flv_close_stream(ngx_rtmp_session_t *s, ngx_rtmp_close_stream_t *v)
     ngx_rtmp_live_stream_t        **stream;
     ngx_rtmp_live_app_conf_t       *lacf;
 
-    if (s->protocol != NGX_PROTO_TYPE_HTTP_FLV_PULL) {
+    if (s->proto != NGX_PROTO_TYPE_HTTP_FLV_PULL) {
         goto next;
     }
 
@@ -898,7 +898,7 @@ ngx_http_flv_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
     ngx_http_flv_rtmp_app_conf_t        *hacf;
     ngx_http_flv_rtmp_ctx_t             *ctx;
 
-    if (s->protocol != NGX_PROTO_TYPE_HTTP_FLV_PULL) {
+    if (s->proto != NGX_PROTO_TYPE_HTTP_FLV_PULL) {
         goto next;
     }
 
