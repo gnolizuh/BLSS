@@ -200,6 +200,7 @@ ngx_rtmp_cmd_connect(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
     ngx_rtmp_core_srv_conf_t   *cscf;
     ngx_rtmp_core_svi_conf_t  **csicfp;
     ngx_rtmp_core_app_conf_t  **cacfp;
+    ngx_hash_combined_t        *hash;
     ngx_uint_t                  n, i;
     ngx_rtmp_header_t           h;
     u_char                     *p;
@@ -297,18 +298,35 @@ ngx_rtmp_cmd_connect(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
     s->acodecs = (uint32_t) v->acodecs;
     s->vcodecs = (uint32_t) v->vcodecs;
 
-    /* find application & set app_conf */
-    csicfp = cscf->services.elts;
-    for(i = 0; i < cscf->services.nelts; ++i, ++csicfp) { // TODO: find service by hostname.
-        cacfp = csicfp[i]->applications.elts;
-        for(n = 0; n < csicfp[i]->applications.nelts; ++n, ++cacfp) {
-            if ((*cacfp)->name.len == s->app.len &&
-                ngx_strncmp((*cacfp)->name.data, s->app.data, s->app.len) == 0)
-            {
-                /* found app! */
-                s->app_conf = (*cacfp)->app_conf;
-                break;
-            }
+    hash = &s->addr_conf->virtual_names->names;
+
+    /* match host to find out service conf */
+    csicf = ngx_hash_find_combined(hash, ngx_hash_key(s->host->data, s->host->len),
+                s->host->data, s->host->len);
+    if (csicf == NULL) {
+        ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+                      "connect: host not matched: '%V'", &s->host);
+        return NGX_ERROR;
+    }
+
+    if (!(csicf->host_range & s->host_type)) {
+        ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+                      "connect: host type not matched: '%ui'", s->host_type);
+        return NGX_ERROR;
+    }
+
+    /* found service */
+    s->svi_conf = csicf->svi_conf;
+
+    /* match application to find out app conf */
+    cacfp = csicf->applications.elts;
+    for(n = 0; n < csicf->applications.nelts; ++n, ++cacfp) {
+        if (cacfp[n]->name.len == s->app.len &&
+            ngx_strncmp(cacfp[n]->name.data, s->app.data, s->app.len) == 0)
+        {
+            /* found app! */
+            s->app_conf = cacfp[n]->app_conf;
+            break;
         }
     }
 

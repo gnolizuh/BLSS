@@ -105,7 +105,18 @@ typedef struct {
 
 
 typedef struct {
+    ngx_hash_combined_t        names;
+
+    ngx_uint_t                 nregex;
+    ngx_rtmp_host_name_t      *regex;
+} ngx_rtmp_virtual_hosts_t;
+
+
+typedef struct {
     ngx_rtmp_core_srv_conf_t  *default_server;
+
+    ngx_rtmp_virtual_hosts_t  *virtual_hosts;
+
     ngx_rtmp_conf_ctx_t       *ctx;
     ngx_str_t                  addr_text;
     unsigned                   proxy_protocol:1;
@@ -420,8 +431,6 @@ struct ngx_rtmp_core_svi_conf_s {
     ngx_uint_t              host_range;
 
     ngx_rtmp_conf_ctx_t    *ctx;
-
-    ngx_str_t               server_name;
 
 #if (NGX_PCRE)
     unsigned                captures:1;
