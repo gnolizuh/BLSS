@@ -198,10 +198,10 @@ static ngx_int_t
 ngx_rtmp_cmd_connect(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
 {
     ngx_rtmp_core_srv_conf_t   *cscf;
-    ngx_rtmp_core_svi_conf_t  **csicfp;
+    ngx_rtmp_core_svi_conf_t   *csicf;
     ngx_rtmp_core_app_conf_t  **cacfp;
     ngx_hash_combined_t        *hash;
-    ngx_uint_t                  n, i;
+    ngx_uint_t                  n;
     ngx_rtmp_header_t           h;
     u_char                     *p;
 
