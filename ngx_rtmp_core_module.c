@@ -31,7 +31,7 @@ static char *ngx_rtmp_core_service(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf);
 static char *ngx_rtmp_core_application(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf);
-static char *ngx_conf_setsn_bitmask_slot(ngx_conf_t *cf, ngx_command_t *cmd,
+static char *ngx_rtmp_core_hostname(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf);
 
 
@@ -45,13 +45,13 @@ static ngx_conf_deprecated_t  ngx_conf_deprecated_so_keepalive = {
 
 
 static ngx_conf_bitmask_t  ngx_rtmp_hostname_mask[] = {
-    { ngx_string("all"),                NGX_RTMP_HOSTNAME_SUB       |
-                                        NGX_RTMP_HOSTNAME_PUB       |
-                                        NGX_RTMP_HOSTNAME_RTMP      |
-                                        NGX_RTMP_HOSTNAME_HTTP_FLV  |
-                                        NGX_RTMP_HOSTNAME_HLS       },
+    { ngx_string("direct"),             NGX_RTMP_HOSTNAME_SUB       |
+                                        NGX_RTMP_HOSTNAME_PUB       },
     { ngx_string("sub"),                NGX_RTMP_HOSTNAME_SUB       },
     { ngx_string("pub"),                NGX_RTMP_HOSTNAME_PUB       },
+    { ngx_string("proto"),              NGX_RTMP_HOSTNAME_RTMP      |
+                                        NGX_RTMP_HOSTNAME_HTTP_FLV  |
+                                        NGX_RTMP_HOSTNAME_HLS       },
     { ngx_string("rtmp"),               NGX_RTMP_HOSTNAME_RTMP      },
     { ngx_string("http_flv"),           NGX_RTMP_HOSTNAME_HTTP_FLV  },
     { ngx_string("hls"),                NGX_RTMP_HOSTNAME_HLS       },
@@ -89,11 +89,11 @@ static ngx_command_t  ngx_rtmp_core_commands[] = {
       0,
       NULL },
 
-    { ngx_string("server_name"),
+    { ngx_string("hostname"),
       NGX_RTMP_SVI_CONF|NGX_CONF_1MORE,
-      ngx_conf_setsn_bitmask_slot,
+      ngx_rtmp_core_hostname,
       NGX_RTMP_SVI_CONF_OFFSET,
-      0,
+      offsetof(ngx_rtmp_core_svi_conf_t, range),,
       ngx_rtmp_hostname_mask },
 
     { ngx_string("so_keepalive"),
@@ -607,8 +607,8 @@ ngx_rtmp_core_service(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return NGX_CONF_ERROR;
     }
 
-    if (ngx_array_init(&csicf->server_names, cf->pool, 4,
-                       sizeof(ngx_rtmp_server_name_t))
+    if (ngx_array_init(&csicf->host_names, cf->pool, 4,
+                       sizeof(ngx_rtmp_host_name_t))
         != NGX_OK)
     {
         return NGX_CONF_ERROR;
@@ -997,26 +997,31 @@ invalid_so_keepalive:
 
 
 static char *
-ngx_conf_setsn_bitmask_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
+ngx_rtmp_core_hostname(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
-    char  *p = conf;
+    ngx_uint_t               *np, i, m;
+    ngx_str_t                *value;
+    u_char                    ch;
+    ngx_rtmp_host_name_t     *hn;
+    ngx_conf_bitmask_t       *mask;
 
-    ngx_uint_t          *np, i, m;
-    ngx_str_t           *value;
-    ngx_conf_bitmask_t  *mask;
+    ngx_rtmp_core_svi_conf_t *csicf = conf;
+    char                     *p = conf;
 
 
     np = (ngx_uint_t *) (p + cmd->offset);
     value = cf->args->elts;
     mask = cmd->post;
 
-    if (cf->args->nelts < 3) {
+    if (cf->args->nelts < 4) {
         ngx_conf_log_error(NGX_LOG_WARN, cf, 0,
-                           "invalid syntax");
+                           "invalid syntax, usage: hostname direct proto $hostname");
         return NGX_CONF_ERROR;
     }
 
-    for (i = 1; i < cf->args->nelts - 1; i++) {
+#define NGX_RTMP_CORE_HOSTNAME_MIN_NETLS 3
+
+    for (i = 1; i < NGX_RTMP_CORE_HOSTNAME_MIN_NETLS; i++) {
         for (m = 0; mask[m].name.len != 0; m++) {
 
             if (mask[m].name.len != value[i].len
@@ -1044,23 +1049,7 @@ ngx_conf_setsn_bitmask_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         }
     }
 
-    return ngx_rtmp_core_server_name(cf, cmd, conf);
-}
-
-
-static char *
-ngx_rtmp_core_server_name(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
-{
-    ngx_rtmp_core_svi_conf_t *csicf = conf;
-
-    u_char                    ch;
-    ngx_str_t                *value;
-    ngx_uint_t                i;
-    ngx_rtmp_server_name_t   *sn;
-
-    value = cf->args->elts;
-
-    for (i = 1; i < cf->args->nelts; i++) {
+    for (; i < cf->args->nelts; i++) {
 
         ch = value[i].data[0];
 
@@ -1068,35 +1057,35 @@ ngx_rtmp_core_server_name(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
             || (ch == '.' && value[i].len < 2))
         {
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                               "server name \"%V\" is invalid", &value[i]);
+                               "host name \"%V\" is invalid", &value[i]);
             return NGX_CONF_ERROR;
         }
 
         if (ngx_strchr(value[i].data, '/')) {
             ngx_conf_log_error(NGX_LOG_WARN, cf, 0,
-                               "server name \"%V\" has suspicious symbols",
+                               "host name \"%V\" has suspicious symbols",
                                &value[i]);
         }
 
-        sn = ngx_array_push(&csicf->server_names);
-        if (sn == NULL) {
+        hn = ngx_array_push(&csicf->host_names);
+        if (hn == NULL) {
              return NGX_CONF_ERROR;
         }
 
 #if (NGX_PCRE)
-        sn->regex = NULL;
+        hn->regex = NULL;
 #endif
-        sn->service = csicf;
+        hn->service = csicf;
 
         if (ngx_strcasecmp(value[i].data, (u_char *) "$hostname") == 0) {
-            sn->name = cf->cycle->hostname;
+            hn->name = cf->cycle->hostname;
 
         } else {
-            sn->name = value[i];
+            hn->name = value[i];
         }
 
         if (value[i].data[0] != '~') {
-            ngx_strlow(sn->name.data, sn->name.data, sn->name.len);
+            ngx_strlow(hn->name.data, hn->name.data, hn->name.len);
             continue;
         }
 
@@ -1108,7 +1097,7 @@ ngx_rtmp_core_server_name(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
         if (value[i].len == 1) {
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                               "empty regex in server name \"%V\"", &value[i]);
+                               "empty regex in host name \"%V\"", &value[i]);
             return NGX_CONF_ERROR;
         }
 
@@ -1128,12 +1117,12 @@ ngx_rtmp_core_server_name(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
             }
         }
 
-        sn->regex = ngx_rtmp_regex_compile(cf, &rc);
-        if (sn->regex == NULL) {
+        hn->regex = ngx_rtmp_regex_compile(cf, &rc);
+        if (hn->regex == NULL) {
             return NGX_CONF_ERROR;
         }
 
-        sn->name = value[i];
+        hn->name = value[i];
         csicf->captures = (rc.captures > 0);
         }
 #else

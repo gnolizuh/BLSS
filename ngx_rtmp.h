@@ -151,7 +151,7 @@ typedef struct {
 
 #if (NGX_PCRE)
     ngx_uint_t                 nregex;
-    ngx_rtmp_server_name_t    *regex;
+    ngx_rtmp_host_name_t      *regex;
 #endif
 
     struct sockaddr          *sockaddr;
@@ -410,8 +410,8 @@ extern ngx_rtmp_core_main_conf_t   *ngx_rtmp_core_main_conf;
 
 
 struct ngx_rtmp_core_svi_conf_s {
-    /* array of the ngx_rtmp_server_name_t, "server_name" directive */
-    ngx_array_t             server_names;
+    /* array of the ngx_rtmp_host_name_t, "server_name" directive */
+    ngx_array_t             host_names;
 
     ngx_array_t             applications; /* ngx_rtmp_core_app_conf_t */
     ngx_str_t               name;

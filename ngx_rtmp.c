@@ -764,7 +764,7 @@ ngx_rtmp_server_names(ngx_conf_t *cf, ngx_rtmp_core_main_conf_t *cmcf,
     ngx_uint_t                  n, s, t;
     ngx_hash_init_t             hash;
     ngx_hash_keys_arrays_t      ha;
-    ngx_rtmp_server_name_t     *name;
+    ngx_rtmp_host_name_t       *name;
     ngx_rtmp_core_srv_conf_t  **cscfp;
     ngx_rtmp_core_svi_conf_t  **csicfp;
 #if (NGX_PCRE)
@@ -794,9 +794,9 @@ ngx_rtmp_server_names(ngx_conf_t *cf, ngx_rtmp_core_main_conf_t *cmcf,
 
         for (t = 0; t < cscfp[s]->services.nelts; t++) {
 
-            name = csicfp[t]->server_names.elts;
+            name = csicfp[t]->host_names.elts;
 
-            for (n = 0; n < csicfp[t]->server_names.nelts; n++) {
+            for (n = 0; n < csicfp[t]->host_names.nelts; n++) {
 
 #if (NGX_PCRE)
                 if (name[n].regex) {
@@ -814,14 +814,14 @@ ngx_rtmp_server_names(ngx_conf_t *cf, ngx_rtmp_core_main_conf_t *cmcf,
 
                 if (rc == NGX_DECLINED) {
                     ngx_log_error(NGX_LOG_EMERG, cf->log, 0,
-                                  "invalid server name or wildcard \"%V\" on %s",
+                                  "invalid host name or wildcard \"%V\" on %s",
                                   &name[n].name, addr->opt.addr);
                     return NGX_ERROR;
                 }
 
                 if (rc == NGX_BUSY) {
                     ngx_log_error(NGX_LOG_WARN, cf->log, 0,
-                                  "conflicting server name \"%V\" on %s, ignored",
+                                  "conflicting host name \"%V\" on %s, ignored",
                                   &name[n].name, addr->opt.addr);
                 }
             }
@@ -888,7 +888,7 @@ ngx_rtmp_server_names(ngx_conf_t *cf, ngx_rtmp_core_main_conf_t *cmcf,
     }
 
     addr->nregex = regex;
-    addr->regex = ngx_palloc(cf->pool, regex * sizeof(ngx_rtmp_server_name_t));
+    addr->regex = ngx_palloc(cf->pool, regex * sizeof(ngx_rtmp_host_name_t));
     if (addr->regex == NULL) {
         return NGX_ERROR;
     }
@@ -901,9 +901,9 @@ ngx_rtmp_server_names(ngx_conf_t *cf, ngx_rtmp_core_main_conf_t *cmcf,
 
         for (t = 0; t < cscfp[s]->services.nelts; t++) {
 
-            name = csicfp[t]->server_names.elts;
+            name = csicfp[t]->host_names.elts;
 
-            for (n = 0; n < csicfp[t]->server_names.nelts; n++) {
+            for (n = 0; n < csicfp[t]->host_names.nelts; n++) {
 
                 if (name[n].regex) {
                     addr->regex[i++] = name[n];

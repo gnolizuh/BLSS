@@ -40,6 +40,8 @@ typedef struct {
 
     ngx_rtmp_conf_ctx_t    *ctx;
 
+    ngx_uint_t              range;
+
     unsigned                listen:1;
 } ngx_rtmp_core_srv_conf_t;
 
@@ -50,7 +52,7 @@ typedef struct {
 #endif
     ngx_rtmp_core_svi_conf_t  *service;   /* virtual name server conf */
     ngx_str_t                  name;
-} ngx_rtmp_server_name_t;
+} ngx_rtmp_host_name_t;
 
 
 #endif /* _NGX_RTMP_CORE_H_INCLUDED_ */
