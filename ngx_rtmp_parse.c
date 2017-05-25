@@ -3,6 +3,8 @@
  * Copyright (C) Gnolizuh
  */
 
+#include <ngx_core.h>
+
 ngx_int_t
 ngx_rtmp_parse_tcurl(ngx_str_t tcurl, ngx_str_t *host)
 {
