@@ -298,7 +298,7 @@ ngx_rtmp_cmd_connect(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
     s->acodecs = (uint32_t) v->acodecs;
     s->vcodecs = (uint32_t) v->vcodecs;
 
-    hash = &s->addr_conf->virtual_names->names;
+    hash = &s->addr_conf->virtual_hosts->names;
 
     /* match host to find out service conf */
     csicf = ngx_hash_find_combined(hash, ngx_hash_key(s->host->data, s->host->len),
