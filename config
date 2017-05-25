@@ -61,6 +61,7 @@ RTMP_DEPS="                                                 \
 RTMP_CORE_SRCS="                                            \
                 $ngx_addon_dir/ngx_rtmp.c                   \
                 $ngx_addon_dir/ngx_rtmp_init.c              \
+                $ngx_addon_dir/ngx_rtmp_parse.c             \
                 $ngx_addon_dir/ngx_rtmp_variables.c         \
                 $ngx_addon_dir/ngx_rtmp_handshake.c         \
                 $ngx_addon_dir/ngx_rtmp_handler.c           \
