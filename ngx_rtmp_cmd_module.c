@@ -309,9 +309,9 @@ ngx_rtmp_cmd_connect(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
         return NGX_ERROR;
     }
 
-    if ((csicf->host_range & s->host_type) != s->host_type) {
+    if ((csicf->host_range & s->host_mask) != s->host_mask) {
         ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
-                      "connect: host type not matched: '%ui'", s->host_type);
+                      "connect: host type not supported: '%ui'", s->host_mask);
         return NGX_ERROR;
     }
 
@@ -534,7 +534,7 @@ ngx_rtmp_cmd_publish_init(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
                   v.name, v.args, v.type, v.silent);
 
     s->proto = NGX_PROTO_TYPE_RTMP_PUSH;
-    s->host_type = NGX_RTMP_HOSTNAME_PUB | NGX_RTMP_HOSTNAME_RTMP;
+    s->host_mask = NGX_RTMP_HOSTNAME_PUB | NGX_RTMP_HOSTNAME_RTMP;
 
     return ngx_rtmp_publish(s, &v);
 }
@@ -656,7 +656,7 @@ ngx_rtmp_cmd_play_init(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
                   (ngx_int_t) v.silent);
 
     s->proto = NGX_PROTO_TYPE_RTMP_PULL;
-    s->host_type = NGX_RTMP_HOSTNAME_SUB | NGX_RTMP_HOSTNAME_RTMP;
+    s->host_mask = NGX_RTMP_HOSTNAME_SUB | NGX_RTMP_HOSTNAME_RTMP;
 
     return ngx_rtmp_play(s, &v);
 }

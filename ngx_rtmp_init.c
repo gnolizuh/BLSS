@@ -213,7 +213,7 @@ ngx_http_flv_init_session(ngx_http_request_t *r, ngx_rtmp_addr_conf_t *addr_conf
 #endif
 
     s->proto = NGX_PROTO_TYPE_HTTP_FLV_PULL;
-    s->host_type = NGX_RTMP_HOSTNAME_SUB | NGX_RTMP_HOSTNAME_HTTP_FLV;
+    s->host_mask = NGX_RTMP_HOSTNAME_SUB | NGX_RTMP_HOSTNAME_HTTP_FLV;
     s->epoch = ngx_current_msec;
     s->timeout = cscf->timeout;
     s->buflen = cscf->buflen;
@@ -431,7 +431,7 @@ ngx_rtmp_init_session(ngx_connection_t *c, ngx_rtmp_addr_conf_t *addr_conf)
 #endif
 
     s->proto = NGX_PROTO_TYPE_RTMP;
-    s->host_type = NGX_RTMP_HOSTNAME_RTMP;
+    s->host_mask = NGX_RTMP_HOSTNAME_RTMP;
     s->epoch = ngx_current_msec;
     s->timeout = cscf->timeout;
     s->buflen = cscf->buflen;

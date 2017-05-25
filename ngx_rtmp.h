@@ -345,7 +345,7 @@ struct ngx_rtmp_session_s {
     unsigned                static_relay:1;
 
     ngx_uint_t              proto;
-    ngx_uint_t              proto_mask;
+    ngx_uint_t              host_mask;
     ngx_pool_t             *pool;
 
     /* input stream 0 (reserved by RTMP spec)
