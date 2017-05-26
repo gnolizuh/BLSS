@@ -539,7 +539,7 @@ ngx_rtmp_cmd_publish_init(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
                   v.name, v.args, v.type, v.silent);
 
     s->proto = NGX_PROTO_TYPE_RTMP_PUSH;
-    s->host_mask = NGX_RTMP_HOSTNAME_PUB;
+    s->host_mask |= NGX_RTMP_HOSTNAME_PUB;
 
     if (ngx_rtmp_cmd_get_conf(s, "publish") != NGX_OK) {
 
