@@ -65,7 +65,10 @@ name - interpreted by each application
             
             service cctv {
 
-                hostname pub rtmp httpflv hls *.pubhost.cctv;
+                # supported wildcards: "*.example.com", ".example.com", and "www.example.*"
+                hostname pub rtmp *.pub.rtmp.cctv;
+                hostname sub rtmp *.sub.rtmp.cctv;
+                hostname sub http_flv *.sub.httpflv.cctv;
 
                 application news {
 
@@ -88,8 +91,8 @@ name - interpreted by each application
 
             service hunantv {
 
-                hostname pub rtmp hls *.pubhost.hunantv;
-                hostname sub rtmp hls *.subhost.hunantv;
+                hostname pub rtmp *.pub.rtmp.hunantv;
+                hostname sub rtmp *.sub.rtmp.hunantv;
 
                 application show {
 
