@@ -1042,7 +1042,6 @@ ngx_rtmp_core_hostname(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_conf_bitmask_t       *mask;
 
     ngx_rtmp_core_svi_conf_t *csicf = conf;
-    char                     *p = conf;
 
     value = cf->args->elts;
     mask = cmd->post;
