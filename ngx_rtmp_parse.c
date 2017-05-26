@@ -10,8 +10,7 @@ ngx_rtmp_parse_tcurl(ngx_str_t tcurl, ngx_str_t *host)
 {
     u_char                     *port, *last;
 
-    if (tcurl.len == 7 &&
-        ngx_strncmp(tcurl.data, "rtmp://", 7) == 0) {
+    if (ngx_strncmp(tcurl.data, "rtmp://", 7) == 0) {
         tcurl.data += 7;
         tcurl.len  -= 7;
     } else {
