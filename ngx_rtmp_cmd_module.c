@@ -536,7 +536,7 @@ ngx_rtmp_cmd_publish_init(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
                   v.name, v.args, v.type, v.silent);
 
     s->proto = NGX_PROTO_TYPE_RTMP_PUSH;
-    s->host_mask = NGX_RTMP_HOSTNAME_PUB | NGX_RTMP_HOSTNAME_RTMP;
+    s->host_mask = NGX_RTMP_HOSTNAME_PUB;
 
     return ngx_rtmp_publish(s, &v);
 }
@@ -658,7 +658,7 @@ ngx_rtmp_cmd_play_init(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
                   (ngx_int_t) v.silent);
 
     s->proto = NGX_PROTO_TYPE_RTMP_PULL;
-    s->host_mask = NGX_RTMP_HOSTNAME_SUB | NGX_RTMP_HOSTNAME_RTMP;
+    s->host_mask |= NGX_RTMP_HOSTNAME_SUB;
 
     return ngx_rtmp_play(s, &v);
 }
