@@ -329,7 +329,7 @@ ngx_http_flv_http_handler(ngx_http_request_t *r)
 {
     ngx_http_flv_httploc_conf_t         *hlcf;
     ngx_http_cleanup_t                  *cln;
-    ngx_int_t                            proto, rc = 0;
+    ngx_int_t                            rc = 0;
     ngx_str_t                            app, name;
     ngx_int_t                            nslash;
     size_t                               i;
@@ -366,12 +366,10 @@ ngx_http_flv_http_handler(ngx_http_request_t *r)
         return NGX_DECLINED;
     }
 
-	if (r->uri.data[r->uri.len - 1] == 'v' &&
-		r->uri.data[r->uri.len - 2] == 'l' &&
-		r->uri.data[r->uri.len - 3] == 'f' &&
-		r->uri.data[r->uri.len - 4] == '.') {
-		proto = NGX_PROTO_TYPE_HTTP_FLV_PULL;
-	} else {
+	if (!(r->uri.data[r->uri.len - 1] == 'v' &&
+		  r->uri.data[r->uri.len - 2] == 'l' &&
+		  r->uri.data[r->uri.len - 3] == 'f' &&
+		  r->uri.data[r->uri.len - 4] == '.')) {
 		return NGX_DECLINED;
 	}
 
