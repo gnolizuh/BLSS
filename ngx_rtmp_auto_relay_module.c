@@ -385,6 +385,7 @@ ngx_rtmp_auto_relay_all_push(ngx_event_t *ev)
     ngx_memzero(&at, sizeof(at));
     ngx_str_set(&at.page_url, "nginx-auto-all-push");
     at.tag = &ngx_rtmp_auto_relay_module;
+    at.tc_url = s->tc_url;
 
     if (ctx->args[0]) {
         at.play_path.data = play_path;
@@ -541,6 +542,7 @@ ngx_rtmp_auto_relay_hash_push(ngx_event_t *ev)
     ngx_memzero(&at, sizeof(at));
     ngx_str_set(&at.page_url, "nginx-auto-hash-push");
     at.tag = &ngx_rtmp_auto_relay_module;
+    at.tc_url = s->tc_url;
 
     if (ctx->args[0]) {
         at.play_path.data = play_path;
@@ -707,6 +709,7 @@ ngx_rtmp_auto_relay_hash_pull(ngx_rtmp_session_t *s)
     ngx_memzero(&at, sizeof(at));
     ngx_str_set(&at.page_url, "nginx-auto-hash-pull");
     at.tag = &ngx_rtmp_auto_relay_module;
+    at.tc_url = s->tc_url;
 
     if (ctx->args[0]) {
         at.play_path.data = play_path;
