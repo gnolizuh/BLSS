@@ -113,6 +113,50 @@ ngx_rtmp_cmd_fill_args(u_char name[NGX_RTMP_MAX_NAME],
 
 
 static ngx_int_t
+ngx_rtmp_cmd_get_conf(ngx_rtmp_session_t *s, const char *func)
+{
+    ngx_rtmp_core_app_conf_t  **cacfp;
+    ngx_rtmp_host_name_t       *hn;
+    ngx_hash_combined_t        *hash;
+    ngx_uint_t                  n;
+
+    hash = &s->addr_conf->virtual_hosts->names;
+
+    /* match host to find out service conf */
+    hn = ngx_hash_find_combined(hash, ngx_hash_key(s->host.data, s->host.len),
+             s->host.data, s->host.len);
+    if (hn == NULL || (hn->mask & s->host_mask) != s->host_mask) {
+        ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+                      "%s: service not found: '%V'", func, &s->host);
+        return NGX_ERROR;
+    }
+
+    /* found service */
+    s->svi_conf = hn->service->svi_conf;
+
+    /* match application to find out app conf */
+    cacfp = hn->service->applications.elts;
+    for(n = 0; n < hn->service->applications.nelts; ++n, ++cacfp) {
+        if (cacfp[n]->name.len == s->app.len &&
+            ngx_strncmp(cacfp[n]->name.data, s->app.data, s->app.len) == 0)
+        {
+            /* found app! */
+            s->app_conf = cacfp[n]->app_conf;
+            break;
+        }
+    }
+
+    if (s->app_conf == NULL) {
+        ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+                      "%s: application not found: '%V'", func, &s->app);
+        return NGX_ERROR;
+    }
+
+    return NGX_OK;
+}
+
+
+static ngx_int_t
 ngx_rtmp_cmd_connect_init(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
         ngx_chain_t *in)
 {
@@ -198,9 +242,6 @@ static ngx_int_t
 ngx_rtmp_cmd_connect(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
 {
     ngx_rtmp_core_srv_conf_t   *cscf;
-    ngx_rtmp_core_svi_conf_t  **csicfp;
-    ngx_rtmp_core_app_conf_t  **cacfp;
-    ngx_uint_t                  n, i;
     ngx_rtmp_header_t           h;
     u_char                     *p;
 
@@ -289,6 +330,8 @@ ngx_rtmp_cmd_connect(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
 
 #undef NGX_RTMP_SET_STRPAR
 
+    ngx_rtmp_parse_tcurl(s->tc_url, &s->host);
+
     p = ngx_strlchr(s->app.data, s->app.data + s->app.len, '?');
     if (p) {
         s->app.len = (p - s->app.data);
@@ -296,27 +339,6 @@ ngx_rtmp_cmd_connect(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
 
     s->acodecs = (uint32_t) v->acodecs;
     s->vcodecs = (uint32_t) v->vcodecs;
-
-    /* find application & set app_conf */
-    csicfp = cscf->services.elts;
-    for(i = 0; i < cscf->services.nelts; ++i, ++csicfp) { // TODO: find service by hostname.
-        cacfp = csicfp[i]->applications.elts;
-        for(n = 0; n < csicfp[i]->applications.nelts; ++n, ++cacfp) {
-            if ((*cacfp)->name.len == s->app.len &&
-                ngx_strncmp((*cacfp)->name.data, s->app.data, s->app.len) == 0)
-            {
-                /* found app! */
-                s->app_conf = (*cacfp)->app_conf;
-                break;
-            }
-        }
-    }
-
-    if (s->app_conf == NULL) {
-        ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
-                      "connect: application not found: '%V'", &s->app);
-        return NGX_ERROR;
-    }
 
     object_encoding = v->object_encoding;
 
@@ -515,7 +537,13 @@ ngx_rtmp_cmd_publish_init(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
                   "publish: name='%s' args='%s' type=%s silent=%d",
                   v.name, v.args, v.type, v.silent);
 
-    s->protocol = NGX_PROTO_TYPE_RTMP_PUSH;
+    s->proto = NGX_PROTO_TYPE_RTMP_PUSH;
+    s->host_mask |= NGX_RTMP_HOSTNAME_PUB;
+
+    if (ngx_rtmp_cmd_get_conf(s, "publish") != NGX_OK) {
+
+        return NGX_ERROR;
+    }
 
     return ngx_rtmp_publish(s, &v);
 }
@@ -531,34 +559,6 @@ ngx_rtmp_cmd_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
 ngx_int_t
 ngx_rtmp_cmd_connect_local(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
 {
-    ngx_rtmp_core_srv_conf_t   *cscf;
-    ngx_rtmp_core_svi_conf_t  **csicfp;
-    ngx_rtmp_core_app_conf_t  **cacfp;
-    ngx_uint_t                  n, i;
-
-    cscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_core_module);
-
-    /* find application & set app_conf */
-    csicfp = cscf->services.elts;
-    for(i = 0; i < cscf->services.nelts; ++i, ++csicfp) { // TODO: find service by hostname.
-        cacfp = csicfp[i]->applications.elts;
-        for(n = 0; n < csicfp[i]->applications.nelts; ++n, ++cacfp) {
-            if ((*cacfp)->name.len == s->app.len &&
-                ngx_strncmp((*cacfp)->name.data, s->app.data, s->app.len) == 0)
-            {
-                /* found app! */
-                s->app_conf = (*cacfp)->app_conf;
-                break;
-            }
-        }
-    }
-
-    if (s->app_conf == NULL) {
-        ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
-                      "connect: application not found: '%V'", &s->app);
-        return NGX_ERROR;
-    }
-
     ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
             "local connect: app='%s' args='%s' flashver='%s' swf_url='%s' "
             "tc_url='%s' page_url='%s' acodecs=%uD vcodecs=%uD "
@@ -574,6 +574,11 @@ ngx_rtmp_cmd_connect_local(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
 ngx_int_t
 ngx_rtmp_cmd_play_local(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
 {
+    if (ngx_rtmp_cmd_get_conf(s, "play local") != NGX_OK) {
+
+        return NGX_ERROR;
+    }
+
     ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
                    "local play: name='%s' args='%s' start=%i duration=%i "
                    "reset=%i silent=%i",
@@ -636,7 +641,13 @@ ngx_rtmp_cmd_play_init(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
                   (ngx_int_t) v.duration, (ngx_int_t) v.reset,
                   (ngx_int_t) v.silent);
 
-    s->protocol = NGX_PROTO_TYPE_RTMP_PULL;
+    s->proto = NGX_PROTO_TYPE_RTMP_PULL;
+    s->host_mask |= NGX_RTMP_HOSTNAME_SUB;
+
+    if (ngx_rtmp_cmd_get_conf(s, "play") != NGX_OK) {
+
+        return NGX_ERROR;
+    }
 
     return ngx_rtmp_play(s, &v);
 }

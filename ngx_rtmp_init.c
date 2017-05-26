@@ -17,7 +17,7 @@ static u_char * ngx_rtmp_log_error(ngx_log_t *log, u_char *buf, size_t len);
 extern ngx_module_t ngx_http_flv_httpmodule;
 
 void
-ngx_http_flv_init_connection(ngx_http_request_t *r, ngx_uint_t protocol)
+ngx_http_flv_init_connection(ngx_http_request_t *r)
 {
     ngx_rtmp_core_main_conf_t *cmcf = ngx_rtmp_core_main_conf;
 	ngx_uint_t             i;
@@ -30,6 +30,7 @@ ngx_http_flv_init_connection(ngx_http_request_t *r, ngx_uint_t protocol)
 	struct sockaddr_in    *sin;
     ngx_rtmp_in_addr_t    *addr;
 	ngx_int_t              unix_socket;
+	u_char                *p;
 #if (NGX_HAVE_INET6)
     struct sockaddr_in6   *sin6;
     ngx_rtmp_in6_addr_t   *addr6;
@@ -136,6 +137,12 @@ ngx_http_flv_init_connection(ngx_http_request_t *r, ngx_uint_t protocol)
         return;
     }
 
+    s->host = r->headers_in.host->value;
+    p = ngx_strlchr(s->host.data, s->host.data + s->host.len, ':');
+    if (p != NULL) {
+        s->host.len = p - s->host.data;
+    }
+
     r->read_event_handler = ngx_http_test_reading;
     r->blocked = 1;
 
@@ -143,8 +150,6 @@ ngx_http_flv_init_connection(ngx_http_request_t *r, ngx_uint_t protocol)
 	c->read->handler = ngx_http_flv_recv;
 
 	s->auto_relayed = unix_socket;
-
-	s->protocol = protocol;
 }
 
 
@@ -172,6 +177,7 @@ ngx_http_flv_init_session(ngx_http_request_t *r, ngx_rtmp_addr_conf_t *addr_conf
     s->srv_conf = addr_conf->ctx->srv_conf;
     s->svi_conf = addr_conf->ctx->svi_conf;
 
+    s->addr_conf = addr_conf;
     s->addr_text = &addr_conf->addr_text;
 
     // c->data = s;
@@ -214,6 +220,8 @@ ngx_http_flv_init_session(ngx_http_request_t *r, ngx_rtmp_addr_conf_t *addr_conf
     ngx_queue_init(&s->posted_dry_events);
 #endif
 
+    s->proto = NGX_PROTO_TYPE_HTTP_FLV_PULL;
+    s->host_mask = NGX_RTMP_HOSTNAME_SUB | NGX_RTMP_HOSTNAME_HTTP_FLV;
     s->epoch = ngx_current_msec;
     s->timeout = cscf->timeout;
     s->buflen = cscf->buflen;
@@ -388,6 +396,7 @@ ngx_rtmp_init_session(ngx_connection_t *c, ngx_rtmp_addr_conf_t *addr_conf)
     s->srv_conf = addr_conf->ctx->srv_conf;
     s->svi_conf = addr_conf->ctx->svi_conf;
 
+    s->addr_conf = addr_conf;
     s->addr_text = &addr_conf->addr_text;
 
     c->data = s;
@@ -430,7 +439,8 @@ ngx_rtmp_init_session(ngx_connection_t *c, ngx_rtmp_addr_conf_t *addr_conf)
     ngx_queue_init(&s->posted_dry_events);
 #endif
 
-    s->protocol = NGX_PROTO_TYPE_RTMP;
+    s->proto = NGX_PROTO_TYPE_RTMP;
+    s->host_mask = NGX_RTMP_HOSTNAME_RTMP;
     s->epoch = ngx_current_msec;
     s->timeout = cscf->timeout;
     s->buflen = cscf->buflen;
