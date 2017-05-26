@@ -106,7 +106,7 @@ static ngx_command_t  ngx_rtmp_core_commands[] = {
       NGX_RTMP_SVI_CONF|NGX_CONF_1MORE,
       ngx_rtmp_core_hostname,
       NGX_RTMP_SVI_CONF_OFFSET,
-      offsetof(ngx_rtmp_core_svi_conf_t, host_range),
+      0,
       ngx_rtmp_hostname_mask },
 
     { ngx_string("so_keepalive"),
@@ -1035,7 +1035,7 @@ invalid_so_keepalive:
 static char *
 ngx_rtmp_core_hostname(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
-    ngx_uint_t               *np, i, m;
+    ngx_uint_t                i, m, ma = 0;
     ngx_str_t                *value;
     u_char                    ch;
     ngx_rtmp_host_name_t     *hn;
@@ -1044,8 +1044,6 @@ ngx_rtmp_core_hostname(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_rtmp_core_svi_conf_t *csicf = conf;
     char                     *p = conf;
 
-
-    np = (ngx_uint_t *) (p + cmd->offset);
     value = cf->args->elts;
     mask = cmd->post;
 
@@ -1066,12 +1064,12 @@ ngx_rtmp_core_hostname(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
                 continue;
             }
 
-            if (*np & mask[m].mask) {
+            if (ma & mask[m].mask) {
                 ngx_conf_log_error(NGX_LOG_WARN, cf, 0,
                                    "duplicate value \"%s\"", value[i].data);
 
             } else {
-                *np |= mask[m].mask;
+                ma |= mask[m].mask;
             }
 
             break;
@@ -1112,6 +1110,7 @@ ngx_rtmp_core_hostname(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         hn->regex = NULL;
 #endif
         hn->service = csicf;
+        hn->mask = ma;
 
         if (ngx_strcasecmp(value[i].data, (u_char *) "$hostname") == 0) {
             hn->name = cf->cycle->hostname;

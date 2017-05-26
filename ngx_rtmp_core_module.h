@@ -49,6 +49,7 @@ typedef struct {
     ngx_rtmp_regex_t          *regex;
 #endif
     ngx_rtmp_core_svi_conf_t  *service;   /* virtual name server conf */
+    ngx_uint_t                 mask;
     ngx_str_t                  name;
 } ngx_rtmp_host_name_t;
 

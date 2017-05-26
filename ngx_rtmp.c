@@ -805,7 +805,7 @@ ngx_rtmp_host_names(ngx_conf_t *cf, ngx_rtmp_core_main_conf_t *cmcf,
                 }
 #endif
 
-                rc = ngx_hash_add_key(&ha, &name[n].name, name[n].service,
+                rc = ngx_hash_add_key(&ha, &name[n].name, &name[n],
                                       NGX_HASH_WILDCARD_KEY);
 
                 if (rc == NGX_ERROR) {

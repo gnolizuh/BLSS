@@ -115,29 +115,28 @@ ngx_rtmp_cmd_fill_args(u_char name[NGX_RTMP_MAX_NAME],
 static ngx_int_t
 ngx_rtmp_cmd_get_conf(ngx_rtmp_session_t *s, const char *func)
 {
-    ngx_rtmp_core_svi_conf_t   *csicf;
     ngx_rtmp_core_app_conf_t  **cacfp;
+    ngx_rtmp_host_name_t       *hn;
     ngx_hash_combined_t        *hash;
     ngx_uint_t                  n;
 
     hash = &s->addr_conf->virtual_hosts->names;
 
     /* match host to find out service conf */
-    csicf = ngx_hash_find_combined(hash, ngx_hash_key(s->host.data, s->host.len),
-                s->host.data, s->host.len);
-    if (csicf == NULL || csicf->svi_conf == NULL ||
-        (csicf->host_range & s->host_mask) != s->host_mask) {
+    hn = ngx_hash_find_combined(hash, ngx_hash_key(s->host.data, s->host.len),
+             s->host.data, s->host.len);
+    if (hn == NULL || (hn->mask & s->host_mask) != s->host_mask) {
         ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
                       "%s: service not found: '%V'", func, &s->host);
         return NGX_ERROR;
     }
 
     /* found service */
-    s->svi_conf = csicf->svi_conf;
+    s->svi_conf = hn->service->svi_conf;
 
     /* match application to find out app conf */
-    cacfp = csicf->applications.elts;
-    for(n = 0; n < csicf->applications.nelts; ++n, ++cacfp) {
+    cacfp = hn->service->applications.elts;
+    for(n = 0; n < hn->service->applications.nelts; ++n, ++cacfp) {
         if (cacfp[n]->name.len == s->app.len &&
             ngx_strncmp(cacfp[n]->name.data, s->app.data, s->app.len) == 0)
         {
