@@ -412,8 +412,8 @@ typedef struct {
     ngx_array_t                variables;       /* ngx_rtmp_variable_t */
 	ngx_uint_t                 ncaptures;
 
-	ngx_uint_t                 server_names_hash_max_size;
-    ngx_uint_t                 server_names_hash_bucket_size;
+	ngx_uint_t                 host_names_hash_max_size;
+    ngx_uint_t                 host_names_hash_bucket_size;
 
     ngx_hash_keys_arrays_t    *variables_keys;
 } ngx_rtmp_core_main_conf_t;

@@ -66,6 +66,20 @@ static ngx_command_t  ngx_rtmp_core_commands[] = {
       0,
       NULL },
 
+    { ngx_string("host_names_hash_max_size"),
+      NGX_RTMP_MAIN_CONF|NGX_CONF_TAKE1,
+      ngx_conf_set_num_slot,
+      NGX_RTMP_MAIN_CONF_OFFSET,
+      offsetof(ngx_rtmp_core_main_conf_t, host_names_hash_max_size),
+      NULL },
+
+    { ngx_string("host_names_hash_bucket_size"),
+      NGX_RTMP_MAIN_CONF|NGX_CONF_TAKE1,
+      ngx_conf_set_num_slot,
+      NGX_RTMP_MAIN_CONF_OFFSET,
+      offsetof(ngx_rtmp_core_main_conf_t, host_names_hash_bucket_size),
+      NULL },
+
     { ngx_string("listen"),
       NGX_RTMP_SRV_CONF|NGX_CONF_TAKE12,
       ngx_rtmp_core_listen,
@@ -201,7 +215,7 @@ static ngx_rtmp_module_t  ngx_rtmp_core_module_ctx = {
     NULL,                                   /* preconfiguration */
     NULL,                                   /* postconfiguration */
     ngx_rtmp_core_create_main_conf,         /* create main configuration */
-    NULL,                                   /* init main configuration */
+    ngx_rtmp_core_init_main_conf,           /* init main configuration */
     ngx_rtmp_core_create_srv_conf,          /* create server configuration */
     ngx_rtmp_core_merge_srv_conf,           /* merge server configuration */
     ngx_rtmp_core_create_svi_conf,          /* create service configuration */
@@ -252,7 +266,30 @@ ngx_rtmp_core_create_main_conf(ngx_conf_t *cf)
         return NULL;
     }
 
+    cmcf->host_names_hash_max_size = NGX_CONF_UNSET_UINT;
+    cmcf->host_names_hash_bucket_size = NGX_CONF_UNSET_UINT;
+
     return cmcf;
+}
+
+
+static char *
+ngx_rtmp_core_init_main_conf(ngx_conf_t *cf, void *conf)
+{
+    ngx_rtmp_core_main_conf_t *cmcf = conf;
+
+    ngx_conf_init_uint_value(cmcf->host_names_hash_max_size, 512);
+    ngx_conf_init_uint_value(cmcf->host_names_hash_bucket_size,
+                             ngx_cacheline_size);
+
+    cmcf->host_names_hash_max_size =
+            ngx_align(cmcf->host_names_hash_max_size, ngx_cacheline_size);
+
+    if (cmcf->ncaptures) {
+        cmcf->ncaptures = (cmcf->ncaptures + 1) * 3;
+    }
+
+    return NGX_CONF_OK;
 }
 
 

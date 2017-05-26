@@ -829,8 +829,8 @@ ngx_rtmp_host_names(ngx_conf_t *cf, ngx_rtmp_core_main_conf_t *cmcf,
     }
 
     hash.key = ngx_hash_key_lc;
-    hash.max_size = cmcf->server_names_hash_max_size;
-    hash.bucket_size = cmcf->server_names_hash_bucket_size;
+    hash.max_size = cmcf->host_names_hash_max_size;
+    hash.bucket_size = cmcf->host_names_hash_bucket_size;
     hash.name = "server_names_hash";
     hash.pool = cf->pool;
 
