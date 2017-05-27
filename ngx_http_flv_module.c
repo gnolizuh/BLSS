@@ -275,11 +275,12 @@ ngx_http_flv_connect_local(ngx_http_request_t *r, ngx_str_t *app, ngx_str_t *nam
     ngx_memcpy(v.args, r->args.data, ngx_min(r->args.len, sizeof(v.args) - 1));
     ngx_memcpy(v.flashver, "HTTP FLV flashver", ngx_strlen("HTTP FLV flashver"));
     ngx_memcpy(v.swf_url, "HTTP FLV swf_url", ngx_strlen("HTTP FLV swf_url"));
-    ngx_memcpy(v.tc_url, "HTTP FLV tc_url", ngx_strlen("HTTP FLV tc_url"));
     ngx_memcpy(v.page_url, "HTTP FLV page_url", ngx_strlen("HTTP FLV page_url"));
 
+    *ngx_snprintf(v.tc_url, NGX_RTMP_MAX_URL, "http://%V/%V", &s->host, app) = 0;
+
 #define NGX_RTMP_SET_STRPAR(name)                                             \
-    s->name.len = ngx_strlen(v.name);                                        \
+    s->name.len = ngx_strlen(v.name);                                         \
     s->name.data = ngx_palloc(s->connection->pool, s->name.len);              \
     ngx_memcpy(s->name.data, v.name, s->name.len)
 

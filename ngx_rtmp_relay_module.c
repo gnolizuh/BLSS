@@ -773,7 +773,6 @@ ngx_rtmp_relay_play_local(ngx_rtmp_session_t *s)
             ngx_min(sizeof(v.name) - 1, ctx->name.len))) = 0;
 
     s->proto = NGX_PROTO_TYPE_RTMP_PULL;
-    s->host_mask = NGX_RTMP_HOSTNAME_SUB | NGX_RTMP_HOSTNAME_RTMP;
 
     return ngx_rtmp_play(s, &v);
 }
@@ -796,7 +795,6 @@ ngx_rtmp_relay_publish_local(ngx_rtmp_session_t *s)
             ngx_min(sizeof(v.name) - 1, ctx->name.len))) = 0;
 
     s->proto = NGX_PROTO_TYPE_RTMP_PUSH;
-    s->host_mask = NGX_RTMP_HOSTNAME_PUB | NGX_RTMP_HOSTNAME_RTMP;
 
     return ngx_rtmp_publish(s, &v);
 }
