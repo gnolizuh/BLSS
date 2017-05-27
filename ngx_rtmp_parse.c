@@ -4,6 +4,8 @@
  */
 
 #include <ngx_core.h>
+#include <ngx_rtmp.h>
+
 
 ngx_int_t
 ngx_rtmp_parse_tcurl(ngx_str_t tcurl, ngx_str_t *host, ngx_uint_t *host_mask)
