@@ -330,7 +330,7 @@ ngx_rtmp_cmd_connect(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
 
 #undef NGX_RTMP_SET_STRPAR
 
-    ngx_rtmp_parse_tcurl(s->tc_url, &s->host);
+    ngx_rtmp_parse_tcurl(s->tc_url, &s->host, &s->host_mask);
 
     p = ngx_strlchr(s->app.data, s->app.data + s->app.len, '?');
     if (p) {
