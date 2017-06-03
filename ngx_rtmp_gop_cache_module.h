@@ -63,7 +63,7 @@ typedef struct {
     ngx_rtmp_gop_cache_t               *tail;
     ngx_rtmp_gop_cache_t               *free_cache;
     ngx_rtmp_gop_frame_t               *free_frame;
-    ngx_uint_t                          cache_cnt;
+    ngx_uint_t                          cache_count;
     ngx_uint_t                          video_frame_cnt;
     ngx_uint_t                          audio_frame_cnt;
     ngx_uint_t                          audio_after_last_video_cnt;
@@ -72,6 +72,7 @@ typedef struct {
 
 typedef struct {
     ngx_flag_t                          gop_cache;
+    ngx_int_t                           gop_cache_size;
     ngx_msec_t                          gop_cache_mintime;
     ngx_msec_t                          gop_cache_maxtime;
 } ngx_rtmp_gop_cache_app_conf_t;
