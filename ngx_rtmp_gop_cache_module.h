@@ -87,7 +87,7 @@ ngx_int_t ngx_rtmp_gop_link_frame(ngx_rtmp_session_t *s, ngx_rtmp_gop_frame_t *f
 ngx_int_t ngx_rtmp_gop_alloc_cache(ngx_rtmp_session_t *s);
 ngx_rtmp_gop_cache_t *ngx_rtmp_gop_free_cache(ngx_rtmp_session_t *s, ngx_rtmp_gop_cache_t *cache);
 void ngx_rtmp_gop_cleanup(ngx_rtmp_session_t *s);
-void ngx_rtmp_gop_update(ngx_rtmp_session_t *s);
+void ngx_rtmp_gop_cache_update(ngx_rtmp_session_t *s);
 void ngx_rtmp_gop_cache_frame(ngx_rtmp_session_t *s, ngx_uint_t prio, ngx_rtmp_header_t *ch, ngx_chain_t *frame);
 
 #endif /* _NGX_RTMP_LIVE_H_INCLUDED_ */

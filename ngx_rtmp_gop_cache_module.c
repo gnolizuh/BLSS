@@ -436,7 +436,7 @@ ngx_rtmp_gop_cleanup(ngx_rtmp_session_t *s)
 
 
 void
-ngx_rtmp_gop_update(ngx_rtmp_session_t *s)
+ngx_rtmp_gop_cache_update(ngx_rtmp_session_t *s)
 {
     ngx_rtmp_gop_cache_app_conf_t *gacf;
     ngx_rtmp_gop_cache_ctx_t      *ctx;
@@ -556,7 +556,7 @@ ngx_rtmp_gop_cache_frame(ngx_rtmp_session_t *s, ngx_uint_t prio, ngx_rtmp_header
         return;
     }
 
-    ngx_rtmp_gop_update(s);
+    ngx_rtmp_gop_cache_update(s);
 
     ngx_log_debug2(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
                "gop cache: cache packet type='%s' timestamp='%uD'",
