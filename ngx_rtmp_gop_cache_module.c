@@ -44,13 +44,6 @@ static ngx_command_t  ngx_rtmp_gop_cache_commands[] = {
       offsetof(ngx_rtmp_gop_cache_app_conf_t, gop_cache_count),
       NULL },
 
-    { ngx_string("gop_cache_mintime"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
-      ngx_conf_set_msec_slot,
-      NGX_RTMP_APP_CONF_OFFSET,
-      offsetof(ngx_rtmp_gop_cache_app_conf_t, gop_cache_mintime),
-      NULL },
-
       ngx_null_command
 };
 
@@ -97,7 +90,6 @@ ngx_rtmp_gop_cache_create_app_conf(ngx_conf_t *cf)
 
     gacf->gop_cache = NGX_CONF_UNSET;
     gacf->gop_cache_count = NGX_CONF_UNSET;
-    gacf->gop_cache_mintime = NGX_CONF_UNSET_MSEC;
 
     return gacf;
 }
@@ -111,41 +103,8 @@ ngx_rtmp_gop_cache_merge_app_conf(ngx_conf_t *cf, void *parent, void *child)
 
     ngx_conf_merge_value(conf->gop_cache, prev->gop_cache, 1);
     ngx_conf_merge_value(conf->gop_cache_count, prev->gop_cache_count, 1);
-    ngx_conf_merge_msec_value(conf->gop_cache_mintime, prev->gop_cache_mintime, 0);
-    ngx_conf_merge_msec_value(conf->gop_cache_maxtime, prev->gop_cache_maxtime, NGX_RTMP_LIVE_PER_GOP_MAX_TIME);
 
     return NGX_CONF_OK;
-}
-
-
-static ngx_msec_t
-ngx_rtmp_gop_cache_audio_duration(ngx_uint_t audio_cnt,
-                                  ngx_uint_t audio_codec_id,
-                                  ngx_uint_t sample_rate)
-{
-    ngx_msec_t interval;
-
-    interval = audio_cnt * (audio_codec_id == NGX_RTMP_AUDIO_AAC
-                ? NGX_RTMP_AUDIO_FRAME_SIZE_AAC
-                : NGX_RTMP_AUDIO_FRAME_SIZE_MP3) * 1000 / ( sample_rate > 0
-                ? sample_rate
-                : 44100);
-
-    return interval;
-}
-
-
-static ngx_msec_t
-ngx_rtmp_gop_cache_video_duration(ngx_uint_t video_cnt,
-                                  ngx_rtmp_live_frame_rate_t video_frame_rate)
-{
-    ngx_msec_t interval;
-
-    interval = video_frame_rate.fps > 0
-                ? video_cnt * 1000 * 1000 / video_frame_rate.fps
-                : 0;
-
-    return interval;
 }
 
 
