@@ -58,11 +58,11 @@ name - interpreted by each application
         log_format bw_in  '[$time_local] pid:$pid sid:$sid slot:$slot service:$service vhost:$vhost app:$app name:$name remote_addr:$remote_addr proto:$proto rtype:$rtype event:$event bw_in_video_kb:$bw_in_video_kb bw_in_audio_kb:$bw_in_audio_kb bw_in_real_kb:$bw_in_real_kb bw_in_exp_kb:$bw_in_exp_kb bw_in_diff_kb:$bw_in_diff_kb last_audio_ts:$last_audio_ts last_video_ts:$last_video_ts last_av_ts_diff:$last_av_ts_diff audio_ts_min:$audio_ts_min audio_ts_max:$audio_ts_max audio_ts_diff:$audio_ts_diff video_ts_min:$video_ts_min video_ts_max:$video_ts_max video_ts_diff:$video_ts_diff last_video_cts:$last_video_cts bw_in_total_diff_kb:$bw_in_total_diff_kb bw_in_video_exp_kb:$bw_in_video_exp_kb bw_in_audio_exp_kb:$bw_in_audio_exp_kb';
         log_format bw_out '[$time_local] pid:$pid sid:$sid slot:$slot service:$service vhost:$vhost app:$app name:$name remote_addr:$remote_addr proto:$proto rtype:$rtype event:$event bw_out_kb:$bw_out_kb bw_out_buf_kb:$bw_out_buf_kb last_audio_ts:$last_audio_ts last_video_ts:$last_video_ts last_av_ts_diff:$last_av_ts_diff audio_ts_min:$audio_ts_min audio_ts_max:$audio_ts_max audio_ts_diff:$audio_ts_diff video_ts_min:$video_ts_min video_ts_max:$video_ts_max video_ts_diff:$video_ts_diff';
         access_log /data/logs/blss/rtmp_sla.log bw_in bw_out;
-    
+
         server {
 
             listen 1935 reuseport;
-            
+
             service cctv {
 
                 # supported wildcards: "*.example.com", ".example.com", and "www.example.*"
@@ -75,6 +75,7 @@ name - interpreted by each application
                     live on;
                     http_flv on;
                     gop_cache on;
+                    gop_cache_count 5;  # cache 5 GOPs
 
                     hls on;
                     hls_fragment 10s;
