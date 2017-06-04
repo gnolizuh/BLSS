@@ -18,7 +18,6 @@ static ngx_int_t ngx_rtmp_gop_cache_postconfiguration(ngx_conf_t *cf);
 static void * ngx_rtmp_gop_cache_create_app_conf(ngx_conf_t *cf);
 static char * ngx_rtmp_gop_cache_merge_app_conf(ngx_conf_t *cf, void *parent, void *child);
 
-
 extern ngx_rtmp_send_handler_t ngx_rtmp_live_send_handler;
 extern ngx_rtmp_send_handler_t ngx_http_flv_send_handler;
 
@@ -108,7 +107,7 @@ ngx_rtmp_gop_cache_merge_app_conf(ngx_conf_t *cf, void *parent, void *child)
 }
 
 
-ngx_rtmp_gop_frame_t *
+static ngx_rtmp_gop_frame_t *
 ngx_rtmp_gop_alloc_frame(ngx_rtmp_session_t *s)
 {
     ngx_rtmp_gop_cache_ctx_t       *ctx;
@@ -135,7 +134,7 @@ ngx_rtmp_gop_alloc_frame(ngx_rtmp_session_t *s)
 }
 
 
-ngx_rtmp_gop_frame_t *
+static ngx_rtmp_gop_frame_t *
 ngx_rtmp_gop_free_frame(ngx_rtmp_session_t *s, ngx_rtmp_gop_frame_t *frame)
 {
     ngx_rtmp_core_srv_conf_t       *cscf;
@@ -171,7 +170,7 @@ ngx_rtmp_gop_free_frame(ngx_rtmp_session_t *s, ngx_rtmp_gop_frame_t *frame)
 }
 
 
-ngx_int_t
+static ngx_int_t
 ngx_rtmp_gop_link_frame(ngx_rtmp_session_t *s, ngx_rtmp_gop_frame_t *frame)
 {
     ngx_rtmp_gop_cache_ctx_t       *ctx;
@@ -218,7 +217,7 @@ ngx_rtmp_gop_link_frame(ngx_rtmp_session_t *s, ngx_rtmp_gop_frame_t *frame)
 }
 
 
-ngx_int_t
+static ngx_int_t
 ngx_rtmp_gop_alloc_cache(ngx_rtmp_session_t *s)
 {
     ngx_rtmp_codec_ctx_t           *codec_ctx;
@@ -292,7 +291,7 @@ ngx_rtmp_gop_alloc_cache(ngx_rtmp_session_t *s)
 }
 
 
-ngx_rtmp_gop_cache_t *
+static ngx_rtmp_gop_cache_t *
 ngx_rtmp_gop_free_cache(ngx_rtmp_session_t *s, ngx_rtmp_gop_cache_t *cache)
 {
     ngx_rtmp_core_srv_conf_t       *cscf;
@@ -350,7 +349,7 @@ ngx_rtmp_gop_free_cache(ngx_rtmp_session_t *s, ngx_rtmp_gop_cache_t *cache)
 }
 
 
-void
+static void
 ngx_rtmp_gop_cleanup(ngx_rtmp_session_t *s)
 {
     ngx_rtmp_core_srv_conf_t       *cscf;
@@ -386,7 +385,7 @@ ngx_rtmp_gop_cleanup(ngx_rtmp_session_t *s)
 }
 
 
-void
+static void
 ngx_rtmp_gop_cache_update(ngx_rtmp_session_t *s)
 {
     ngx_rtmp_gop_cache_app_conf_t *gacf;
@@ -422,7 +421,7 @@ ngx_rtmp_gop_cache_update(ngx_rtmp_session_t *s)
 }
 
 
-void
+static void
 ngx_rtmp_gop_cache_frame(ngx_rtmp_session_t *s, ngx_uint_t prio, ngx_rtmp_header_t *ch, ngx_chain_t *frame)
 {
     ngx_rtmp_gop_cache_ctx_t       *ctx;
