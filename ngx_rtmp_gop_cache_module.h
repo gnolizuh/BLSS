@@ -11,16 +11,6 @@
 #include "ngx_rtmp.h"
 
 #define NGX_RTMP_LIVE_PURE_AUDIO_GUESS_CNT 115   /* pure audio */
-#define NGX_RTMP_LIVE_GOP_SIZE             100   /* gop cache */
-#define NGX_RTMP_LIVE_PER_GOP_MAX_TIME     30000 /* per gop cache`s max time */
-
-
-typedef enum {
-    NGX_RTMP_GOP_CLEAN_NO,
-    NGX_RTMP_GOP_CLEAN_UNIQUE,
-    NGX_RTMP_GOP_CLEAN_MIN,
-    NGX_RTMP_GOP_CLEAN_MAX
-} ngx_rtmp_gop_clean_t;
 
 
 typedef struct ngx_rtmp_gop_frame_s ngx_rtmp_gop_frame_t;
@@ -74,7 +64,6 @@ typedef struct {
     ngx_flag_t                          gop_cache;
     ngx_int_t                           gop_cache_size;
     ngx_msec_t                          gop_cache_mintime;
-    ngx_msec_t                          gop_cache_maxtime;
 } ngx_rtmp_gop_cache_app_conf_t;
 
 
