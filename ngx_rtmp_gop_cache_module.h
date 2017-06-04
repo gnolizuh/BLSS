@@ -62,7 +62,7 @@ typedef struct {
 
 typedef struct {
     ngx_flag_t                          gop_cache;
-    ngx_uint_t                          gop_cache_count;
+    ngx_int_t                           gop_cache_count;
 } ngx_rtmp_gop_cache_app_conf_t;
 
 
