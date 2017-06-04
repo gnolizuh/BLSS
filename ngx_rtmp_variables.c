@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) Gnolizuh
+ * Copyright (C) 2017 Gnolizuh
  */
 
 #include <ngx_rtmp_variables.h>
