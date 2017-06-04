@@ -406,6 +406,7 @@ ngx_rtmp_gop_cache_update(ngx_rtmp_session_t *s)
     while (ctx->cache_count > (ngx_uint_t) gacf->gop_cache_count) {
 
         if (ctx->head) {
+
             /* remove 1'st gop of link list. */
             next = ngx_rtmp_gop_free_cache(s, ctx->head);
 
