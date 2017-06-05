@@ -2,7 +2,8 @@
 
 
 <!--
-   Copyright (C) Roman Arutyunyan
+   Original work Copyright (C) Roman Arutyunyan
+   Modified work Copyright (C) 2017 Gnolizuh
 -->
 
 
