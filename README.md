@@ -118,8 +118,7 @@ name - interpreted by each application
         keepalive_timeout 60;
 
         server {
-            listen 8080 reuseport;
-            listen 80   reuseport;
+            listen 80 reuseport;
 
             location / {
 
