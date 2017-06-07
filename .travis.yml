@@ -3,7 +3,7 @@ language: c
 install:
   - cd -
   - wget http://nginx.org/download/nginx-1.12.0.tar.gz
-  - tar zxvf nginx-1.12.0.tar.gz -C gnolizuh/nginx-1.12.0/
+  - tar zxvf nginx-1.12.0.tar.gz -C ./gnolizuh/
   - cd gnolizuh/nginx-1.12.0/
 
 script:
