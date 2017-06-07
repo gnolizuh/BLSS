@@ -1,1 +1,6 @@
 language: c
+
+install:
+  - mkdir buildpath && cd buildpath
+  - wget http://nginx.org/download/nginx-1.12.0.tar.gz
+  - tar -zxvf nginx-1.12.0.tar.gz
