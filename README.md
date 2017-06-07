@@ -120,19 +120,10 @@ name - interpreted by each application
         server {
             listen 8080 reuseport;
             listen 80   reuseport;
-    
-            location / {
-                http_flv on;
-                hls  on;
-    
-                root /dev/shm;
 
-                types {
-                    application/vnd.apple.mpegurl m3u8;
-                    video/mp2t ts;
-                }
-    
-                add_header Access-Control-Allow-Origin *;
+            location / {
+
+                http_flv on;
             }
         }
     }
