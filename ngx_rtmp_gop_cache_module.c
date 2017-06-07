@@ -533,9 +533,9 @@ ngx_rtmp_gop_cache_frame(ngx_rtmp_session_t *s, ngx_uint_t prio, ngx_rtmp_header
         return;
     }
 
-    if (ctx->video_frame_cnt > gacf->gop_max_vcount ||
-        ctx->audio_frame_cnt > gacf->gop_max_acount ||
-        (ctx->video_frame_cnt + ctx->audio_frame_cnt) > gacf->gop_max_count)) {
+    if (ctx->video_frame_cnt > (ngx_uint_t) gacf->gop_max_vcount ||
+        ctx->audio_frame_cnt > (ngx_uint_t) gacf->gop_max_acount ||
+        (ctx->video_frame_cnt + ctx->audio_frame_cnt) > (ngx_uint_t) gacf->gop_max_count) {
         ngx_rtmp_gop_cleanup(s);
         return;
     }
