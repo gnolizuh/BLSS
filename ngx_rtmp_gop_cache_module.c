@@ -43,6 +43,27 @@ static ngx_command_t  ngx_rtmp_gop_cache_commands[] = {
       offsetof(ngx_rtmp_gop_cache_app_conf_t, gop_cache_count),
       NULL },
 
+    { ngx_string("gop_max_count"),
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
+      ngx_conf_set_num_slot,
+      NGX_RTMP_APP_CONF_OFFSET,
+      offsetof(ngx_rtmp_gop_cache_app_conf_t, gop_max_count),
+      NULL },
+
+    { ngx_string("gop_max_acount"),
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
+      ngx_conf_set_num_slot,
+      NGX_RTMP_APP_CONF_OFFSET,
+      offsetof(ngx_rtmp_gop_cache_app_conf_t, gop_max_acount),
+      NULL },
+
+    { ngx_string("gop_max_vcount"),
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
+      ngx_conf_set_num_slot,
+      NGX_RTMP_APP_CONF_OFFSET,
+      offsetof(ngx_rtmp_gop_cache_app_conf_t, gop_max_vcount),
+      NULL },
+
       ngx_null_command
 };
 
@@ -89,6 +110,9 @@ ngx_rtmp_gop_cache_create_app_conf(ngx_conf_t *cf)
 
     gacf->gop_cache = NGX_CONF_UNSET;
     gacf->gop_cache_count = NGX_CONF_UNSET;
+    gacf->gop_max_count = NGX_CONF_UNSET;
+    gacf->gop_max_acount = NGX_CONF_UNSET;
+    gacf->gop_max_vcount = NGX_CONF_UNSET;
 
     return gacf;
 }
@@ -102,6 +126,9 @@ ngx_rtmp_gop_cache_merge_app_conf(ngx_conf_t *cf, void *parent, void *child)
 
     ngx_conf_merge_value(conf->gop_cache, prev->gop_cache, 1);
     ngx_conf_merge_value(conf->gop_cache_count, prev->gop_cache_count, 1);
+    ngx_conf_merge_value(conf->gop_max_count, prev->gop_max_count, 2048);
+    ngx_conf_merge_value(conf->gop_max_acount, prev->gop_max_acount, 1024);
+    ngx_conf_merge_value(conf->gop_max_vcount, prev->gop_max_vcount, 1024);
 
     return NGX_CONF_OK;
 }
@@ -503,6 +530,13 @@ ngx_rtmp_gop_cache_frame(ngx_rtmp_session_t *s, ngx_uint_t prio, ngx_rtmp_header
 
     if (ngx_rtmp_gop_link_frame(s, gop_frame) != NGX_OK) {
         ngx_rtmp_free_shared_chain(cscf, gop_frame->frame);
+        return;
+    }
+
+    if (ctx->video_frame_cnt > (ngx_uint_t) gacf->gop_max_vcount ||
+        ctx->audio_frame_cnt > (ngx_uint_t) gacf->gop_max_acount ||
+        (ctx->video_frame_cnt + ctx->audio_frame_cnt) > (ngx_uint_t) gacf->gop_max_count) {
+        ngx_rtmp_gop_cleanup(s);
         return;
     }
 
