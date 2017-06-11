@@ -10,7 +10,9 @@
 [5]: https://img.shields.io/github/downloads/atom/atom/total.svg
 [6]: https://github.com/gnolizuh/BLSS/releases
 
-A bravo live streaming service powered by [nginx-rtmp-module](https://github.com/arut/nginx-rtmp-module).
+## What is BLSS?
+
+BLSS is a NGINX-based live streaming server which is powered by [nginx-rtmp-module](https://github.com/arut/nginx-rtmp-module).
 
 ## Resources
 

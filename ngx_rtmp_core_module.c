@@ -45,11 +45,11 @@ static ngx_conf_deprecated_t  ngx_conf_deprecated_so_keepalive = {
 
 
 static ngx_conf_bitmask_t  ngx_rtmp_hostname_mask[] = {
-    { ngx_string("direct"),             NGX_RTMP_HOSTNAME_SUB       |
+    { ngx_string("direct-bi"),          NGX_RTMP_HOSTNAME_SUB       |
                                         NGX_RTMP_HOSTNAME_PUB       },
     { ngx_string("sub"),                NGX_RTMP_HOSTNAME_SUB       },
     { ngx_string("pub"),                NGX_RTMP_HOSTNAME_PUB       },
-    { ngx_string("proto"),              NGX_RTMP_HOSTNAME_RTMP      |
+    { ngx_string("proto-all"),          NGX_RTMP_HOSTNAME_RTMP      |
                                         NGX_RTMP_HOSTNAME_HTTP_FLV  |
                                         NGX_RTMP_HOSTNAME_HLS       },
     { ngx_string("rtmp"),               NGX_RTMP_HOSTNAME_RTMP      },
@@ -1049,7 +1049,7 @@ ngx_rtmp_core_hostname(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     if (cf->args->nelts < 4) {
         ngx_conf_log_error(NGX_LOG_WARN, cf, 0,
-                           "invalid syntax, usage: hostname direct proto $hostname");
+                           "invalid syntax, usage: hostname direct-bi proto-all $hostname");
         return NGX_CONF_ERROR;
     }
 
