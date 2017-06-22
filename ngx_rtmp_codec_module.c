@@ -237,7 +237,7 @@ ngx_rtmp_codec_video_is_combined_nals(ngx_chain_t *in, ngx_rtmp_session_t *s)
         if (ctx->video_codec_id == NGX_RTMP_VIDEO_H264) {
             nal_type = src_nal_type & 0x1f;
 
-            return (nal_type >= 7 && nal_type <= 8) ? NGX_OK : NGX_ERROR;
+            return (nal_type >= 7 && nal_type <= 9) ? NGX_OK : NGX_ERROR;
         } else if (ctx->video_codec_id == NGX_RTMP_VIDEO_H265){
             nal_type = (src_nal_type >> 1) & 0x3f;
 
@@ -373,8 +373,10 @@ ngx_rtmp_codec_parse_avc_header_compat(ngx_uint_t type, ngx_rtmp_session_t *s,
         return;
     }
 
-    if (type == NGX_RTMP_CODEC_COMBO_SEQ_HEADER &&
-        ngx_rtmp_codec_parse_avc_header_in_keyframe(s, *in, sps->buf) == NGX_OK) {
+    if (type == NGX_RTMP_CODEC_COMBO_SEQ_HEADER) {
+        if (ngx_rtmp_codec_parse_avc_header_in_keyframe(s, *in, sps->buf) != NGX_OK) {
+            return;
+        }
         *in = sps;
     }
 
