@@ -31,6 +31,10 @@ BLSS is a NGINX-based live streaming server which is powered by [nginx-rtmp-modu
 
 * Linux/FreeBSD/MacOS/Windows
 
+## Requirements
+
+- [nginx](https://nginx.org/)
+
 ## Build
 
 cd to NGINX source directory & run this:
