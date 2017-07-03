@@ -11,52 +11,52 @@ BLSS: Bravo Live Streaming Service
 [5]: https://img.shields.io/github/downloads/atom/atom/total.svg
 [6]: https://github.com/gnolizuh/BLSS/releases
 
-[中文说明](https://github.com/gnolizuh/BLSS/blob/readme/README.zh.md) 
+[README in english](https://github.com/gnolizuh/BLSS/blob/readme/README.md) 
 
-# Introduction
+# 简介
 
-BLSS is a NGINX third-party module, which is based on the secondary development of open source projects [nginx-rtmp-module](https://github.com/arut/nginx-rtmp-module) to achieve, based on the original features to retain some of the key features,
-Such as HTTP-FLV protocol distribution, GOP cache, regular match push-pull domain name, virtual host and so on.
+BLSS是一个NGINX第三方模块，它基于开源项目[nginx-rtmp-module](https://github.com/arut/nginx-rtmp-module)二次开发实现，保留了原有特性的基础上提供一些关键功能，
+如**HTTP-FLV协议的分发、GOP缓存、正则匹配推拉流域名、vhost**等。
 
-# Installation
+# 安装方法
 
-Download [nginx](https://nginx.org/)：
+下载[nginx](https://nginx.org/)：
 
     wget https://nginx.org/download/nginx-$VERSION.tar.gz
     tar zxvf nginx-$VERSION.tar.gz
 
-Download [BLSS](https://github.com/gnolizuh/BLSS/releases)：
+下载[BLSS](https://github.com/gnolizuh/BLSS/releases)：
 
     wget https://github.com/gnolizuh/BLSS/archive/v1.1.4.tar.gz
     tar zxvf v1.1.4.tar.gz
 
-Compile and install：
+编译安装：
 
     cd NGINX-SRC-DIR
     ./configure --add-module=/path/to/BLSS
     make
     make install
 
-Compile with debug mode：
+编译DEBUG模式(输出DEBUG日志)：
 
     ./configure --add-module=/path/to/BLSS --with-debug
 
-# Configuration
+# 配置步骤
 
-A nginx.conf example：
+修改配置文件如下：
 
-    worker_processes 8;   # multi-worker process mode
-    relay_stream hash;    # stream relay mode
+    worker_processes 8;   # 开启多进程模式
+    relay_stream hash;    # 选择多进程级联工作模式
 
-    # rtmp block
+    # rtmp 相关配置
     rtmp {
         server {
             listen 1935 reuseport;
 
             service cctv {
-                hostname pub rtmp *.pub.rtmp.cctv;         # match rtmp push domain
-                hostname sub rtmp *.sub.rtmp.cctv;         # match rtmp pull domain
-                hostname sub http_flv *.sub.httpflv.cctv;  # match http-flv pull domain
+                hostname pub rtmp *.pub.rtmp.cctv;         # 正则匹配RTMP推流域名
+                hostname sub rtmp *.sub.rtmp.cctv;         # 正则匹配RTMP拉流域名
+                hostname sub http_flv *.sub.httpflv.cctv;  # 正则匹配HTTP-FLVP拉流域名
 
                 application news {
                     live on;
@@ -94,11 +94,43 @@ A nginx.conf example：
             listen 80 reuseport;
 
             location / {
-                http_flv on;    # delivery http-flv
+                http_flv on;    # 开启http-flv分发模式
             }
         }
     }
 
-run nginx:
+启动nginx
 
     ./obj/nginx -p /path/to/nginx
+
+# 测试
+
+## 测试工具
+
+- [OBS](https://obsproject.com/) [**推流**]
+- [FFMPEG](https://ffmpeg.org/) [**推流/播放**]
+- [VLC](http://www.videolan.org/vlc/) [**播放**]
+
+## 测试方法
+
+### 推流
+
+客户端需要绑定HOST：
+
+    192.168.1.100 test.pub.rtmp.cctv     # RTMP推流地址
+
+下面以FFMPEG进行RTMP推流：
+
+    ffmpeg -re -i movie.flv -vcodec copy -a codec copy -f flv rtmp://test.pub.rtmp.cctv/live/test
+
+### 播放
+
+客户端需要绑定HOST：
+
+    192.168.1.100 test.sub.rtmp.cctv     # RTMP播放地址
+    192.168.1.100 test.sub.httpflv.cctv  # HTTP-FLV播放地址
+
+使用播放器进行RTMP/HTTP-FLV播放：
+
+    rtmp://test.sub.rtmp.cctv/live/test
+    http://test.sub.httpflv.cctv/live/test.flv
