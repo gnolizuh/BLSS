@@ -1,5 +1,5 @@
 
-# BLSS: Bravo Live Streaming Service 
+BLSS: Bravo Live Streaming Service 
 
 [![Powered][1]][2] [![Build Status][3]][4] [![Downloads][5]][6]
 
@@ -10,28 +10,24 @@
 [5]: https://img.shields.io/github/downloads/atom/atom/total.svg
 [6]: https://github.com/gnolizuh/BLSS/releases
 
-## 简介
+# 简介
 
-BLSS是在NGINX框架下实现的一个第三方模块，它在[nginx-rtmp-module](https://github.com/arut/nginx-rtmp-module)基础上二次开发实现，在保留原有特性的基础上，
-新增部分功能：HTTP-FLV协议的分发、GOP缓存、正则匹配推拉流域名、vhost概念、灵活的日志输出等，使用BLSS可以轻松的完成一个大规模分布式流媒体集群的搭建。
+BLSS是一个NGINX第三方模块，它基于开源项目[nginx-rtmp-module](https://github.com/arut/nginx-rtmp-module)二次开发实现，保留了原有特性的基础上提供一些关键功能，
+如**HTTP-FLV协议的分发、GOP缓存、正则匹配推拉流域名、vhost**等。
 
-## 安装依赖
+# 安装方法
 
-- [nginx](https://nginx.org/)
-
-## 安装方法
-
-下载[nginx](https://nginx.org/)源码并解压：
+下载[nginx](https://nginx.org/)并解压：
 
     wget https://nginx.org/download/nginx-$VERSION.tar.gz
     tar zxvf nginx-$VERSION.tar.gz
 
-下载[BLSS](https://github.com/gnolizuh/BLSS/releases)源码并解压：
+下载[BLSS](https://github.com/gnolizuh/BLSS/releases)并解压：
 
     wget https://github.com/gnolizuh/BLSS/archive/v1.1.4.tar.gz
     tar zxvf v1.1.4.tar.gz
 
-编译[BLSS](https://github.com/gnolizuh/BLSS/releases)：
+编译：
 
     cd NGINX-SRC-DIR
     ./configure --add-module=/path/to/BLSS
@@ -42,16 +38,17 @@ BLSS是在NGINX框架下实现的一个第三方模块，它在[nginx-rtmp-modul
 
     ./configure --add-module=/path/to/BLSS --with-debug
 
-## 配置步骤
+# 配置步骤
 
 修改配置文件如下：
 
     worker_processes 8;   # 开启多进程模式
     relay_stream hash;    # 选择多进程级联工作模式
 
+    # rtmp 相关配置
     rtmp {
         server {
-            listen 1935 reuseport;    # 惊群模式
+            listen 1935 reuseport;
 
             service cctv {
                 hostname pub rtmp *.pub.rtmp.cctv;         # 正则匹配RTMP推流域名
@@ -103,32 +100,34 @@ BLSS是在NGINX框架下实现的一个第三方模块，它在[nginx-rtmp-modul
 
     ./obj/nginx -p /path/to/nginx
 
-## 测试
+# 测试
 
-### 测试工具
+## 测试工具
 
 - [OBS](https://obsproject.com/) [**推流**]
 - [FFMPEG](https://ffmpeg.org/) [**推流/播放**]
 - [VLC](http://www.videolan.org/vlc/) [**播放**]
 
-### 测试方法
+## 测试方法
 
-#### 推流
+### 推流
 
-客户端绑定host，192.168.1.100为nginx服务器IP：
+客户端需要绑定HOST进行推流：
 
-    192.168.1.100 test.pub.rtmp.cctv  # RTMP推流地址
-    192.168.1.100 test.sub.rtmp.cctv  # RTMP播放地址
-    192.168.1.100 test.sub.httpflv.cctv  # HTTP-FLV播放地址
+    192.168.1.100 test.pub.rtmp.cctv     # RTMP推流地址
 
 下面以FFMPEG进行RTMP推流，绑定test.pub.rtmp.cctv为nginx服务器IP，然后推流：
 
     ffmpeg -re -i movie.flv -vcodec copy -a codec copy -f flv rtmp://test.pub.rtmp.cctv/live/test
 
-播放RTMP地址：
+### 播放
+
+客户端需要绑定HOST进行播放：
+
+    192.168.1.100 test.sub.rtmp.cctv     # RTMP播放地址
+    192.168.1.100 test.sub.httpflv.cctv  # HTTP-FLV播放地址
+
+使用播放器进行RTMP/HTTP-FLV播放：
 
     rtmp://test.sub.rtmp.cctv/live/test
-
-播放HTTP-FLV地址
-
     http://test.sub.httpflv.cctv/live/test.flv
