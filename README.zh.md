@@ -17,17 +17,17 @@ BLSS是一个NGINX第三方模块，它基于开源项目[nginx-rtmp-module](htt
 
 # 安装方法
 
-下载[nginx](https://nginx.org/)并解压：
+下载[nginx](https://nginx.org/)：
 
     wget https://nginx.org/download/nginx-$VERSION.tar.gz
     tar zxvf nginx-$VERSION.tar.gz
 
-下载[BLSS](https://github.com/gnolizuh/BLSS/releases)并解压：
+下载[BLSS](https://github.com/gnolizuh/BLSS/releases)：
 
     wget https://github.com/gnolizuh/BLSS/archive/v1.1.4.tar.gz
     tar zxvf v1.1.4.tar.gz
 
-编译：
+编译安装：
 
     cd NGINX-SRC-DIR
     ./configure --add-module=/path/to/BLSS
@@ -91,7 +91,7 @@ BLSS是一个NGINX第三方模块，它基于开源项目[nginx-rtmp-module](htt
             listen 80 reuseport;
 
             location / {
-                http_flv on;
+                http_flv on;    # 开启http-flv分发模式
             }
         }
     }
@@ -112,17 +112,17 @@ BLSS是一个NGINX第三方模块，它基于开源项目[nginx-rtmp-module](htt
 
 ### 推流
 
-客户端需要绑定HOST进行推流：
+客户端需要绑定HOST：
 
     192.168.1.100 test.pub.rtmp.cctv     # RTMP推流地址
 
-下面以FFMPEG进行RTMP推流，绑定test.pub.rtmp.cctv为nginx服务器IP，然后推流：
+下面以FFMPEG进行RTMP推流：
 
     ffmpeg -re -i movie.flv -vcodec copy -a codec copy -f flv rtmp://test.pub.rtmp.cctv/live/test
 
 ### 播放
 
-客户端需要绑定HOST进行播放：
+客户端需要绑定HOST：
 
     192.168.1.100 test.sub.rtmp.cctv     # RTMP播放地址
     192.168.1.100 test.sub.httpflv.cctv  # HTTP-FLV播放地址

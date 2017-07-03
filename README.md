@@ -1,5 +1,5 @@
 
-# BLSS: Bravo Live Streaming Service 
+BLSS: Bravo Live Streaming Service 
 
 [![Powered][1]][2] [![Build Status][3]][4] [![Downloads][5]][6]
 
@@ -10,74 +10,54 @@
 [5]: https://img.shields.io/github/downloads/atom/atom/total.svg
 [6]: https://github.com/gnolizuh/BLSS/releases
 
-## What is BLSS?
+[中文说明](https://github.com/gnolizuh/BLSS/blob/readme/README.zh.md) 
 
-BLSS is a NGINX-based live streaming server which is powered by [nginx-rtmp-module](https://github.com/arut/nginx-rtmp-module).
+# Introduction
 
-## Resources
+BLSS is a NGINX third-party module, which is based on the secondary development of open source projects [nginx-rtmp-module](https://github.com/arut/nginx-rtmp-module) to achieve, based on the original features to retain some of the key features,
+Such as HTTP-FLV protocol distribution, GOP cache, regular match push-pull domain name, virtual host and so on.
 
-* [Release Notes](https://github.com/gnolizuh/BLSS/wiki/releasenote)
-* [Directives](https://github.com/gnolizuh/BLSS/wiki/directives)
+# Install
 
-## Features
+Download [nginx](https://nginx.org/)：
 
-* RTMP/HTTP+FLV/HLS/MPEG-DASH live streaming
+    wget https://nginx.org/download/nginx-$VERSION.tar.gz
+    tar zxvf nginx-$VERSION.tar.gz
 
-* H264/AAC support, H265 is on the road.
+Download [BLSS](https://github.com/gnolizuh/BLSS/releases)：
 
-* GOP Cache/HLS VOD features
+    wget https://github.com/gnolizuh/BLSS/archive/v1.1.4.tar.gz
+    tar zxvf v1.1.4.tar.gz
 
-* Support Socket Sharding feature that to improve load balance (RTMP reuseport)
+Compile and install：
 
-* Linux/FreeBSD/MacOS/Windows
-
-## Requirements
-
-- [nginx](https://nginx.org/)
-
-## Build
-
-cd to NGINX source directory & run this:
-
+    cd NGINX-SRC-DIR
     ./configure --add-module=/path/to/BLSS
     make
     make install
 
-## Push/Pull URL format
+Compile with debug mode：
 
-    rtmp://rtmp.example.com/app/name
-    http://flv.example.com/app/name.flv
+    ./configure --add-module=/path/to/BLSS --with-debug
 
-app -  should match one of application {}
-         blocks in config
+# Configuration
 
-name - interpreted by each application
-         can be empty
+A nginx.conf example：
 
-## Example(blss.conf)
+    worker_processes 8;   # multi-worker process mode
+    relay_stream hash;    # stream relay mode
 
-    # for multi-worker streaming, we support off|hash|all option, default is off.
-    worker_processes 8;
-    relay_stream hash;
-
+    # rtmp 相关配置
     rtmp {
-        log_format bw_in  '[$time_local] pid:$pid sid:$sid slot:$slot service:$service vhost:$vhost app:$app name:$name remote_addr:$remote_addr proto:$proto rtype:$rtype event:$event bw_in_video_kb:$bw_in_video_kb bw_in_audio_kb:$bw_in_audio_kb bw_in_real_kb:$bw_in_real_kb bw_in_exp_kb:$bw_in_exp_kb bw_in_diff_kb:$bw_in_diff_kb last_audio_ts:$last_audio_ts last_video_ts:$last_video_ts last_av_ts_diff:$last_av_ts_diff audio_ts_min:$audio_ts_min audio_ts_max:$audio_ts_max audio_ts_diff:$audio_ts_diff video_ts_min:$video_ts_min video_ts_max:$video_ts_max video_ts_diff:$video_ts_diff last_video_cts:$last_video_cts bw_in_total_diff_kb:$bw_in_total_diff_kb bw_in_video_exp_kb:$bw_in_video_exp_kb bw_in_audio_exp_kb:$bw_in_audio_exp_kb';
-        log_format bw_out '[$time_local] pid:$pid sid:$sid slot:$slot service:$service vhost:$vhost app:$app name:$name remote_addr:$remote_addr proto:$proto rtype:$rtype event:$event bw_out_kb:$bw_out_kb bw_out_buf_kb:$bw_out_buf_kb last_audio_ts:$last_audio_ts last_video_ts:$last_video_ts last_av_ts_diff:$last_av_ts_diff audio_ts_min:$audio_ts_min audio_ts_max:$audio_ts_max audio_ts_diff:$audio_ts_diff video_ts_min:$video_ts_min video_ts_max:$video_ts_max video_ts_diff:$video_ts_diff';
-        access_log /data/logs/blss/rtmp_sla.log bw_in bw_out;
-
         server {
-
             listen 1935 reuseport;
 
             service cctv {
-
-                # supported wildcards: "*.example.com", ".example.com", and "www.example.*"
-                hostname pub rtmp *.pub.rtmp.cctv;
-                hostname sub rtmp *.sub.rtmp.cctv;
-                hostname sub http_flv *.sub.httpflv.cctv;
+                hostname pub rtmp *.pub.rtmp.cctv;         # match rtmp push domain
+                hostname sub rtmp *.sub.rtmp.cctv;         # match rtmp pull domain
+                hostname sub http_flv *.sub.httpflv.cctv;  # match http-flv pull domain
 
                 application news {
-
                     live on;
                     http_flv on;
                     gop_cache on;
@@ -89,23 +69,9 @@ name - interpreted by each application
                 }
 
                 application sports {
-
                     hls on;
                     hls_fragment 1m;
                     hls_playlist_length 3m;
-                }
-            }
-
-            service hunantv {
-
-                hostname pub rtmp *.pub.rtmp.hunantv;
-                hostname sub rtmp *.sub.rtmp.hunantv;
-
-                application show {
-
-                    live on;
-                    http_flv on;
-                    gop_cache on;
                 }
             }
         }
@@ -127,8 +93,11 @@ name - interpreted by each application
             listen 80 reuseport;
 
             location / {
-
-                http_flv on;
+                http_flv on;    # delivery http-flv
             }
         }
     }
+
+run nginx:
+
+    ./obj/nginx -p /path/to/nginx
