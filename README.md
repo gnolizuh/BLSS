@@ -18,7 +18,7 @@ BLSS: Bravo Live Streaming Service
 BLSS is a NGINX third-party module, which is based on the secondary development of open source projects [nginx-rtmp-module](https://github.com/arut/nginx-rtmp-module) to achieve, based on the original features to retain some of the key features,
 Such as HTTP-FLV protocol distribution, GOP cache, regular match push-pull domain name, virtual host and so on.
 
-# Install
+# Installation
 
 Download [nginx](https://nginx.org/)：
 
@@ -48,7 +48,7 @@ A nginx.conf example：
     worker_processes 8;   # multi-worker process mode
     relay_stream hash;    # stream relay mode
 
-    # rtmp 相关配置
+    # rtmp block
     rtmp {
         server {
             listen 1935 reuseport;
