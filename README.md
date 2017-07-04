@@ -11,7 +11,7 @@ BLSS: Bravo Live Streaming Service
 [5]: https://img.shields.io/github/downloads/atom/atom/total.svg
 [6]: https://github.com/gnolizuh/BLSS/releases
 
-[中文说明](https://github.com/gnolizuh/BLSS/blob/readme/README.zh.md) 
+[中文说明](https://github.com/gnolizuh/BLSS/blob/master/README.zh.md) 
 
 # Introduction
 
