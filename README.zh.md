@@ -121,7 +121,7 @@ BLSS是一个NGINX第三方模块，它基于开源项目[nginx-rtmp-module](htt
 
 下面以FFMPEG进行RTMP推流：
 
-    ffmpeg -re -i movie.flv -vcodec copy -a codec copy -f flv rtmp://test.pub.rtmp.cctv/live/test
+    ffmpeg -re -i movie.flv -vcodec copy -acodec copy -f flv rtmp://test.pub.rtmp.cctv/live/test
 
 ### 播放
 
