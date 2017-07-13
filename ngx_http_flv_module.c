@@ -212,12 +212,12 @@ ngx_http_flv_play_local(ngx_rtmp_session_t *s)
 {
     static ngx_rtmp_play_t      v;
 
-	ngx_memzero(&v, sizeof(ngx_rtmp_play_t));
+    ngx_memzero(&v, sizeof(ngx_rtmp_play_t));
 
     ngx_memcpy(v.name, s->name.data, ngx_min(s->name.len, sizeof(v.name) - 1));
     ngx_memcpy(v.args, s->args.data, ngx_min(s->args.len, sizeof(v.args) - 1));
 
-	return ngx_rtmp_cmd_play_local(s, &v);
+    return ngx_rtmp_cmd_play_local(s, &v);
 }
 
 
@@ -367,12 +367,12 @@ ngx_http_flv_http_handler(ngx_http_request_t *r)
         return NGX_DECLINED;
     }
 
-	if (!(r->uri.data[r->uri.len - 1] == 'v' &&
-		  r->uri.data[r->uri.len - 2] == 'l' &&
-		  r->uri.data[r->uri.len - 3] == 'f' &&
-		  r->uri.data[r->uri.len - 4] == '.')) {
-		return NGX_DECLINED;
-	}
+    if (!(r->uri.data[r->uri.len - 1] == 'v' &&
+          r->uri.data[r->uri.len - 2] == 'l' &&
+          r->uri.data[r->uri.len - 3] == 'f' &&
+          r->uri.data[r->uri.len - 4] == '.')) {
+        return NGX_DECLINED;
+    }
 
     rc = ngx_http_discard_request_body(r);
     if (rc != NGX_OK) {
