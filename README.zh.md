@@ -56,7 +56,7 @@ BLSS是一个NGINX第三方模块，它基于开源项目[nginx-rtmp-module](htt
             service cctv {
                 hostname pub rtmp *.pub.rtmp.cctv;         # 正则匹配RTMP推流域名
                 hostname sub rtmp *.sub.rtmp.cctv;         # 正则匹配RTMP拉流域名
-                hostname sub http_flv *.sub.httpflv.cctv;  # 正则匹配HTTP-FLVP拉流域名
+                hostname sub http_flv *.sub.httpflv.cctv;  # 正则匹配HTTP-FLV拉流域名
 
                 application news {
                     live on;
@@ -121,7 +121,7 @@ BLSS是一个NGINX第三方模块，它基于开源项目[nginx-rtmp-module](htt
 
 下面以FFMPEG进行RTMP推流：
 
-    ffmpeg -re -i movie.flv -vcodec copy -acodec copy -f flv rtmp://test.pub.rtmp.cctv/live/test
+    ffmpeg -re -i movie.flv -vcodec copy -acodec copy -f flv rtmp://test.pub.rtmp.cctv/news/test
 
 ### 播放
 
@@ -132,5 +132,5 @@ BLSS是一个NGINX第三方模块，它基于开源项目[nginx-rtmp-module](htt
 
 使用播放器进行RTMP/HTTP-FLV播放：
 
-    rtmp://test.sub.rtmp.cctv/live/test
-    http://test.sub.httpflv.cctv/live/test.flv
+    rtmp://test.sub.rtmp.cctv/news/test
+    http://test.sub.httpflv.cctv/news/test.flv
