@@ -15,9 +15,7 @@
 #include "ngx_rtmp.h"
 
 
-typedef struct {
-    unsigned                            initialized:1;
-} ngx_http_flv_rtmp_ctx_t;
+typedef struct {} ngx_http_flv_rtmp_ctx_t;
 
 
 typedef struct {
