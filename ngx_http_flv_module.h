@@ -21,11 +21,6 @@ typedef struct {
 
 
 typedef struct {
-    ngx_flag_t                          http_flv;
-} ngx_http_flv_rtmp_app_conf_t;
-
-
-typedef struct {
     ngx_rtmp_session_t                 *rs;
 } ngx_http_flv_http_ctx_t;
 

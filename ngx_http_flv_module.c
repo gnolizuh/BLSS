@@ -89,19 +89,6 @@ ngx_module_t ngx_http_flv_httpmodule = {
 };
 
 
-static ngx_command_t ngx_http_flv_rtmpcommands[] = {
-
-    { ngx_string("http_flv"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
-      ngx_conf_set_flag_slot,
-      NGX_RTMP_APP_CONF_OFFSET,
-      offsetof(ngx_http_flv_rtmp_app_conf_t, http_flv),
-      NULL },
-
-    ngx_null_command
-};
-
-
 static ngx_rtmp_module_t ngx_http_flv_rtmpmodule_ctx = {
     NULL,                                   /* preconfiguration */
     ngx_http_flv_rtmp_init,                 /* postconfiguration */
@@ -111,15 +98,15 @@ static ngx_rtmp_module_t ngx_http_flv_rtmpmodule_ctx = {
     NULL,                                   /* merge server configuration */
     NULL,                                   /* create service configuration */
     NULL,                                   /* merge service configuration */
-    ngx_http_flv_rtmp_create_app_conf,      /* create application configuration */
-    ngx_http_flv_rtmp_merge_app_conf,       /* merge application configuration */
+    NULL,                                   /* create application configuration */
+    NULL,                                   /* merge application configuration */
 };
 
 
 ngx_module_t ngx_http_flv_rtmpmodule = {
     NGX_MODULE_V1,
     &ngx_http_flv_rtmpmodule_ctx,           /* module context */
-    ngx_http_flv_rtmpcommands,              /* module directives */
+    NULL,                                   /* module directives */
     NGX_RTMP_MODULE,                        /* module type */
     NULL,                                   /* init master */
     NULL,                                   /* init module */
@@ -449,34 +436,6 @@ ngx_http_flv_http_merge_conf(ngx_conf_t *cf, void *parent, void *child)
 {
     ngx_http_flv_httploc_conf_t *prev = parent;
     ngx_http_flv_httploc_conf_t *conf = child;
-
-    ngx_conf_merge_value(conf->http_flv, prev->http_flv, 0);
-
-    return NGX_CONF_OK;
-}
-
-
-static void *
-ngx_http_flv_rtmp_create_app_conf(ngx_conf_t *cf)
-{
-    ngx_http_flv_rtmp_app_conf_t      *hacf;
-
-    hacf = ngx_pcalloc(cf->pool, sizeof(ngx_http_flv_rtmp_app_conf_t));
-    if (hacf == NULL) {
-        return NULL;
-    }
-
-    hacf->http_flv = NGX_CONF_UNSET;
-
-    return hacf;
-}
-
-
-static char *
-ngx_http_flv_rtmp_merge_app_conf(ngx_conf_t *cf, void *parent, void *child)
-{
-    ngx_http_flv_rtmp_app_conf_t    *prev = parent;
-    ngx_http_flv_rtmp_app_conf_t    *conf = child;
 
     ngx_conf_merge_value(conf->http_flv, prev->http_flv, 0);
 
@@ -819,15 +778,9 @@ next:
 static ngx_int_t
 ngx_http_flv_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
 {
-    ngx_http_flv_rtmp_app_conf_t        *hacf;
     ngx_http_flv_rtmp_ctx_t             *ctx;
 
     if (s->proto != NGX_PROTO_TYPE_HTTP_FLV_PULL) {
-        goto next;
-    }
-
-    hacf = ngx_rtmp_get_module_app_conf(s, ngx_http_flv_rtmpmodule);
-    if (hacf == NULL || !hacf->http_flv) {
         goto next;
     }
 

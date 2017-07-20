@@ -60,7 +60,6 @@ BLSS是一个NGINX第三方模块，它基于开源项目[nginx-rtmp-module](htt
 
                 application news {
                     live on;
-                    http_flv on;
                     gop_cache on;
                     gop_cache_count 5;  # cache 5 GOPs
 

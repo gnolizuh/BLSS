@@ -772,7 +772,6 @@ ngx_rtmp_live_broadcast(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     ngx_chain_t                    *header, *coheader, *meta,
                                    *apkt, *aapkt, *hapkt, *acopkt, *rpkt;
     ngx_rtmp_core_srv_conf_t       *cscf;
-    ngx_http_flv_rtmp_app_conf_t   *hacf;
     ngx_rtmp_live_app_conf_t       *lacf;
     ngx_rtmp_session_t             *ss;
     ngx_rtmp_header_t               ch, lh, clh;
@@ -789,8 +788,6 @@ ngx_rtmp_live_broadcast(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
     type_s = (h->type == NGX_RTMP_MSG_VIDEO ? "video" : "audio");
 #endif
-
-    hacf = ngx_rtmp_get_module_app_conf(s, ngx_http_flv_rtmpmodule);
 
     lacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_live_module);
 
@@ -890,9 +887,6 @@ ngx_rtmp_live_broadcast(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     /* broadcast to all subscribers */
 
     for (n = 0; n < NGX_RTMP_LIVE_TYPE_SIZE; ++ n) {
-        if (n == 1 && !hacf->http_flv) {
-            continue;
-        }
 
         handler = ngx_rtmp_send_handlers[n];
 
