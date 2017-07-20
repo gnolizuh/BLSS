@@ -676,7 +676,7 @@ ngx_rtmp_live_close_stream(ngx_rtmp_session_t *s, ngx_rtmp_close_stream_t *v)
                              "status", "Stop publishing");
         if (!lacf->idle_streams) {
             // close both rtmp and http flv connection.
-            for (n = 0; n < 2; ++ n) {
+            for (n = 0; n < NGX_RTMP_LIVE_TYPE_SIZE; ++ n) {
                 for (pctx = ctx->stream->ctx[n]; pctx; pctx = pctx->next) {
                     ss = pctx->session;
                     ngx_log_debug0(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
@@ -889,7 +889,7 @@ ngx_rtmp_live_broadcast(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
     /* broadcast to all subscribers */
 
-    for (n = 0; n < 2; ++ n) {
+    for (n = 0; n < NGX_RTMP_LIVE_TYPE_SIZE; ++ n) {
         if (n == 1 && !hacf->http_flv) {
             continue;
         }
