@@ -732,9 +732,9 @@ ngx_http_flv_join(ngx_rtmp_session_t *s, u_char *name, unsigned publisher)
     }
 
     ctx->stream = *stream;
-    ctx->next = (*stream)->ctx[1];
+    ctx->next = (*stream)->ctx[NGX_RTMP_LIVE_TYPE_HTTP_FLV];
 
-    (*stream)->ctx[1] = ctx;
+    (*stream)->ctx[NGX_RTMP_LIVE_TYPE_HTTP_FLV] = ctx;
 
     if (lacf->buflen) {
         s->out_buffer = 1;
@@ -779,7 +779,7 @@ ngx_http_flv_close_stream(ngx_rtmp_session_t *s, ngx_rtmp_close_stream_t *v)
     ngx_log_debug1(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
                    "http flv: leave '%s'", ctx->stream->name);
 
-    for (cctx = &ctx->stream->ctx[1]; *cctx; cctx = &(*cctx)->next) {
+    for (cctx = &ctx->stream->ctx[NGX_RTMP_LIVE_TYPE_HTTP_FLV]; *cctx; cctx = &(*cctx)->next) {
         if (*cctx == ctx) {
             *cctx = ctx->next;
             break;
@@ -790,7 +790,9 @@ ngx_http_flv_close_stream(ngx_rtmp_session_t *s, ngx_rtmp_close_stream_t *v)
         ngx_http_flv_stop(s);
     }
 
-    if (ctx->stream->ctx[0] || ctx->stream->ctx[1] || ctx->stream->pctx) {
+    if (ctx->stream->ctx[NGX_RTMP_LIVE_TYPE_RTMP] ||
+        ctx->stream->ctx[NGX_RTMP_LIVE_TYPE_HTTP_FLV] ||
+        ctx->stream->pctx) {
         ctx->stream = NULL;
         goto next;
     }

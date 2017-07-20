@@ -381,7 +381,7 @@ ngx_rtmp_live_set_status(ngx_rtmp_session_t *s, ngx_chain_t *control,
 
         ctx->stream->active = active;
 
-        for (pctx = ctx->stream->ctx[0]; pctx; pctx = pctx->next) {
+        for (pctx = ctx->stream->ctx[NGX_RTMP_LIVE_TYPE_RTMP]; pctx; pctx = pctx->next) {
             ngx_rtmp_live_set_status(pctx->session, control, status,
                                      nstatus, active);
         }
@@ -599,8 +599,8 @@ ngx_rtmp_live_join(ngx_rtmp_session_t *s, u_char *name, unsigned publisher)
         (*stream)->publishing = 1;
         (*stream)->pctx = ctx;
     } else {
-        ctx->next = (*stream)->ctx[0];
-        (*stream)->ctx[0] = ctx;
+        ctx->next = (*stream)->ctx[NGX_RTMP_LIVE_TYPE_RTMP];
+        (*stream)->ctx[NGX_RTMP_LIVE_TYPE_RTMP] = ctx;
     }
 
     ctx->stream = *stream;
@@ -659,7 +659,7 @@ ngx_rtmp_live_close_stream(ngx_rtmp_session_t *s, ngx_rtmp_close_stream_t *v)
     if (ctx->publishing) {
         ctx->stream->pctx = NULL;
     } else {
-        for (cctx = &ctx->stream->ctx[0]; *cctx; cctx = &(*cctx)->next) {
+        for (cctx = &ctx->stream->ctx[NGX_RTMP_LIVE_TYPE_RTMP]; *cctx; cctx = &(*cctx)->next) {
             if (*cctx == ctx) {
                 *cctx = ctx->next;
                 break;
@@ -687,7 +687,9 @@ ngx_rtmp_live_close_stream(ngx_rtmp_session_t *s, ngx_rtmp_close_stream_t *v)
         }
     }
 
-    if (ctx->stream->ctx[0] || ctx->stream->ctx[1] || ctx->stream->pctx) {
+    if (ctx->stream->ctx[NGX_RTMP_LIVE_TYPE_RTMP] ||
+        ctx->stream->ctx[NGX_RTMP_LIVE_TYPE_HTTP_FLV] ||
+        ctx->stream->pctx) {
         ctx->stream = NULL;
         goto next;
     }
