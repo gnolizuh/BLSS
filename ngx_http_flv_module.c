@@ -598,83 +598,6 @@ ngx_http_flv_http_free_shared_chain(ngx_rtmp_session_t *s, ngx_chain_t *in)
 
 
 static ngx_int_t
-ngx_http_flv_message(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
-                     ngx_chain_t *in)
-{
-    ngx_rtmp_live_app_conf_t       *lacf;
-    ngx_http_flv_rtmp_app_conf_t   *hacf;
-    ngx_rtmp_core_srv_conf_t       *cscf;
-    ngx_rtmp_live_ctx_t            *ctx, *pctx;
-    ngx_chain_t                    *mpkt;
-    ngx_rtmp_session_t             *ss;
-    ngx_rtmp_codec_ctx_t           *codec_ctx;
-#ifdef NGX_DEBUG
-    const char                     *type_s; 
-
-    type_s = (h->type == NGX_RTMP_MSG_VIDEO ? "video" : "audio"); 
-#endif
-
-    lacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_live_module);
-    if (lacf == NULL) {
-        return NGX_ERROR;
-    }
-
-    hacf = ngx_rtmp_get_module_app_conf(s, ngx_http_flv_rtmpmodule);
-    if (hacf == NULL) {
-        return NGX_ERROR;
-    }
-
-    if (!lacf->live || !hacf->http_flv) {
-        return NGX_OK;
-    }
-
-    cscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_core_module);
-    if(cscf == NULL) {
-        return NGX_ERROR;
-    }
-
-    codec_ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_codec_module);
-    if(codec_ctx == NULL || codec_ctx->msg == NULL) {
-        return NGX_ERROR;
-    }
-
-    ctx = ngx_rtmp_get_module_ctx(s, ngx_http_flv_rtmpmodule);
-    if (ctx == NULL || ctx->stream == NULL) {
-        return NGX_OK;
-    }
-
-    if (ctx->publishing == 0) {
-        ngx_log_debug1(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
-                       "http_flv: %s from non-publisher", type_s);
-        return NGX_OK;
-    }
-
-    mpkt = ngx_http_flv_append_shared_bufs(cscf, &codec_ctx->msgh, codec_ctx->msg);
-
-    if(mpkt == NULL) {
-        return NGX_ERROR;
-    }
-
-    /* broadcast to all subscribers */
-    for (pctx = ctx->stream->ctx[1]; pctx; pctx = pctx->next) {
-        if (pctx == ctx || pctx->paused) {
-            continue;
-        }
-
-        ss = pctx->session;
-
-        ngx_http_flv_send_message(ss, mpkt, 0);
-    }
-
-    if (mpkt) {
-        ngx_rtmp_free_shared_chain(cscf, mpkt);
-    }
-
-    return NGX_OK;
-}
-
-
-static ngx_int_t
 ngx_http_flv_send_header(ngx_rtmp_session_t *s)
 {
     static u_char httpheader[] = {
@@ -945,9 +868,6 @@ ngx_http_flv_rtmp_init(ngx_conf_t *cf)
 
     h = ngx_array_push(&cmcf->events[NGX_RTMP_CONNECT_END]);
     *h = ngx_http_flv_connect_end;
-
-    h = ngx_array_push(&cmcf->events[NGX_RTMP_ON_MESSAGE]);
-    *h = ngx_http_flv_message;
 
     /* chain handlers */
 
