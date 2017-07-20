@@ -31,8 +31,6 @@ static char * ngx_http_flv_http_merge_conf(ngx_conf_t *cf, void *parent, void *c
 
 /* rtmp handler registered */
 static ngx_int_t ngx_http_flv_rtmp_init(ngx_conf_t *cf);
-static void * ngx_http_flv_rtmp_create_app_conf(ngx_conf_t *cf);
-static char * ngx_http_flv_rtmp_merge_app_conf(ngx_conf_t *cf, void *parent, void *child);
 
 static ngx_int_t ngx_http_flv_send_message(ngx_rtmp_session_t *s, ngx_chain_t *out, ngx_uint_t priority);
 static ngx_int_t ngx_http_flv_connect_local(ngx_http_request_t *r, ngx_str_t *app, ngx_str_t *name);
