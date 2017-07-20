@@ -762,6 +762,8 @@ next:
 static ngx_int_t
 ngx_http_flv_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
 {
+    ngx_http_flv_rtmp_ctx_t             *ctx;
+
     if (s->proto != NGX_PROTO_TYPE_HTTP_FLV_PULL) {
         goto next;
     }
