@@ -53,6 +53,7 @@ struct ngx_rtmp_live_ctx_s {
     ngx_rtmp_live_chunk_stream_t        cs[2];
     ngx_uint_t                          meta_version;
     ngx_event_t                         idle_evt;
+    unsigned                            header:1;
     unsigned                            active:1;
     unsigned                            publishing:1;
     unsigned                            silent:1;

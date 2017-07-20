@@ -914,11 +914,11 @@ ngx_rtmp_live_broadcast(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
             ss = pctx->session;
             cs = &pctx->cs[csidx];
 
-            if (!pctx->active) {
+            if (!pctx->header) {
 
                 handler->send_header(ss, s);
 
-                pctx->active = 1;
+                pctx->header = 1;
             }
 
             /* send metadata */
