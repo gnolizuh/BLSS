@@ -48,9 +48,6 @@ ngx_rtmp_send_handler_t ngx_http_flv_send_handler = {
 };
 
 
-static u_char ngx_flv_header[] = "FLV\x1\x5\0\0\0\x9\0\0\0\0";
-
-
 static ngx_command_t ngx_http_flv_httpcommands[] = {
 
     { ngx_string("http_flv"),
