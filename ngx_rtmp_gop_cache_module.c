@@ -554,7 +554,7 @@ ngx_rtmp_gop_cache_send(ngx_rtmp_session_t *ss)
 {
     ngx_rtmp_session_t             *s;
     ngx_chain_t                    *pkt, *apkt, *meta, *header;
-    ngx_rtmp_live_ctx_t            *ctx, *pctx;
+    ngx_rtmp_live_ctx_t            *pctx;
     ngx_rtmp_gop_cache_ctx_t       *gctx;
     ngx_rtmp_live_app_conf_t       *lacf;
     ngx_rtmp_gop_cache_t           *cache;
@@ -571,9 +571,9 @@ ngx_rtmp_gop_cache_send(ngx_rtmp_session_t *ss)
         return;
     }
 
-    ctx = ngx_rtmp_get_module_ctx(ss, ngx_rtmp_live_module);
-    if (ctx == NULL || ctx->stream == NULL ||
-        ctx->stream->pctx == NULL || !ctx->stream->publishing) {
+    pctx = ngx_rtmp_get_module_ctx(ss, ngx_rtmp_live_module);
+    if (pctx == NULL || pctx->stream == NULL ||
+        pctx->stream->pctx == NULL || !pctx->stream->publishing) {
         return;
     }
 
@@ -583,14 +583,12 @@ ngx_rtmp_gop_cache_send(ngx_rtmp_session_t *ss)
     header = NULL;
     meta_version = 0;
 
-    s = ctx->stream->pctx->session;
+    s = pctx->stream->pctx->session;
 
     gctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_gop_cache_module);
     if (gctx == NULL) {
         return;
     }
-
-    pctx = ctx->stream->pctx;
 
     handler = ngx_rtmp_send_handlers[ss->proto == NGX_PROTO_TYPE_HTTP_FLV_PULL ? 1 : 0];
 
@@ -601,20 +599,30 @@ ngx_rtmp_gop_cache_send(ngx_rtmp_session_t *ss)
             meta_version = cache->meta_version;
         }
 
+        if (!pctx->header) {
+            ngx_log_debug0(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
+                           "gop cache send: header");
+
+            handler->send_header(ss, s);
+
+            pctx->header = 1;
+        }
+
         /* send metadata */
-        if (meta && meta_version != ctx->meta_version) {
+
+        if (meta && meta_version != pctx->meta_version) {
             ngx_log_debug0(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
                            "gop cache send: meta");
 
             if (handler->send_message(ss, meta, 0) == NGX_OK) {
-                ctx->meta_version = meta_version;
+                pctx->meta_version = meta_version;
             }
         }
 
         for (gop_frame = cache->head; gop_frame; gop_frame = gop_frame->next) {
             csidx = !(lacf->interleave || gop_frame->h.type == NGX_RTMP_MSG_VIDEO);
 
-            cs = &ctx->cs[csidx];
+            cs = &pctx->cs[csidx];
 
             lh = ch = gop_frame->h;
 

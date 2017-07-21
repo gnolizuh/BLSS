@@ -31,17 +31,28 @@ static char * ngx_http_flv_http_merge_conf(ngx_conf_t *cf, void *parent, void *c
 
 /* rtmp handler registered */
 static ngx_int_t ngx_http_flv_rtmp_init(ngx_conf_t *cf);
-static void * ngx_http_flv_rtmp_create_app_conf(ngx_conf_t *cf);
-static char * ngx_http_flv_rtmp_merge_app_conf(ngx_conf_t *cf, void *parent, void *child);
 
 static ngx_int_t ngx_http_flv_send_message(ngx_rtmp_session_t *s, ngx_chain_t *out, ngx_uint_t priority);
 static ngx_int_t ngx_http_flv_connect_local(ngx_http_request_t *r, ngx_str_t *app, ngx_str_t *name);
+static void ngx_http_flv_http_send_header(ngx_rtmp_session_t *s, ngx_rtmp_session_t *ps);
 static ngx_int_t ngx_http_flv_http_send_message(ngx_rtmp_session_t *s, ngx_chain_t *in, ngx_uint_t priority);
 static ngx_chain_t * ngx_http_flv_http_append_shared_bufs(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_rtmp_header_t *lh, ngx_chain_t *in);
 static void ngx_http_flv_http_free_shared_chain(ngx_rtmp_session_t *s, ngx_chain_t *in);
 
 
+static u_char ngx_http_flv_header[] = {
+    "HTTP/1.1 200 OK\r\n"
+    "Cache-Control: no-cache\r\n"
+    "Content-Type: video/x-flv\r\n"
+    "Connection: close\r\n"
+    "Expires: -1\r\n"
+    "Pragma: no-cache\r\n"
+    "\r\n"
+};
+
+
 ngx_rtmp_send_handler_t ngx_http_flv_send_handler = {
+    ngx_http_flv_http_send_header,
     ngx_http_flv_http_send_message,
     ngx_http_flv_http_append_shared_bufs,
     ngx_http_flv_http_free_shared_chain
@@ -89,19 +100,6 @@ ngx_module_t ngx_http_flv_httpmodule = {
 };
 
 
-static ngx_command_t ngx_http_flv_rtmpcommands[] = {
-
-    { ngx_string("http_flv"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_SVI_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
-      ngx_conf_set_flag_slot,
-      NGX_RTMP_APP_CONF_OFFSET,
-      offsetof(ngx_http_flv_rtmp_app_conf_t, http_flv),
-      NULL },
-
-    ngx_null_command
-};
-
-
 static ngx_rtmp_module_t ngx_http_flv_rtmpmodule_ctx = {
     NULL,                                   /* preconfiguration */
     ngx_http_flv_rtmp_init,                 /* postconfiguration */
@@ -111,15 +109,15 @@ static ngx_rtmp_module_t ngx_http_flv_rtmpmodule_ctx = {
     NULL,                                   /* merge server configuration */
     NULL,                                   /* create service configuration */
     NULL,                                   /* merge service configuration */
-    ngx_http_flv_rtmp_create_app_conf,      /* create application configuration */
-    ngx_http_flv_rtmp_merge_app_conf,       /* merge application configuration */
+    NULL,                                   /* create application configuration */
+    NULL,                                   /* merge application configuration */
 };
 
 
 ngx_module_t ngx_http_flv_rtmpmodule = {
     NGX_MODULE_V1,
     &ngx_http_flv_rtmpmodule_ctx,           /* module context */
-    ngx_http_flv_rtmpcommands,              /* module directives */
+    NULL,                                   /* module directives */
     NGX_RTMP_MODULE,                        /* module type */
     NULL,                                   /* init master */
     NULL,                                   /* init module */
@@ -456,34 +454,6 @@ ngx_http_flv_http_merge_conf(ngx_conf_t *cf, void *parent, void *child)
 }
 
 
-static void *
-ngx_http_flv_rtmp_create_app_conf(ngx_conf_t *cf)
-{
-    ngx_http_flv_rtmp_app_conf_t      *hacf;
-
-    hacf = ngx_pcalloc(cf->pool, sizeof(ngx_http_flv_rtmp_app_conf_t));
-    if (hacf == NULL) {
-        return NULL;
-    }
-
-    hacf->http_flv = NGX_CONF_UNSET;
-
-    return hacf;
-}
-
-
-static char *
-ngx_http_flv_rtmp_merge_app_conf(ngx_conf_t *cf, void *parent, void *child)
-{
-    ngx_http_flv_rtmp_app_conf_t    *prev = parent;
-    ngx_http_flv_rtmp_app_conf_t    *conf = child;
-
-    ngx_conf_merge_value(conf->http_flv, prev->http_flv, 0);
-
-    return NGX_CONF_OK;
-}
-
-
 static ngx_int_t
 ngx_http_flv_connect_end(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     ngx_chain_t *in)
@@ -562,6 +532,42 @@ ngx_http_flv_append_shared_bufs(ngx_rtmp_core_srv_conf_t *cscf, ngx_rtmp_header_
 }
 
 
+static void
+ngx_http_flv_http_send_header(ngx_rtmp_session_t *s, ngx_rtmp_session_t *ps)
+{
+    ngx_rtmp_core_srv_conf_t       *cscf;
+    ngx_rtmp_codec_ctx_t           *codec_ctx;
+    ngx_chain_t                     c1, c2, *pkt;
+    ngx_buf_t                       b1, b2;
+
+    u_char flv_header[] = "FLV\x1\0\0\0\0\x9\0\0\0\0";
+
+    cscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_core_module);
+
+    codec_ctx = ngx_rtmp_get_module_ctx(ps, ngx_rtmp_codec_module);
+    if (codec_ctx != NULL) {
+        if (codec_ctx->video_header != NULL) flv_header[4] |= 0x01;
+        if (codec_ctx->aac_header != NULL) flv_header[4] |= 0x04;
+    }
+
+    c1.buf = &b1;
+    c2.buf = &b2;
+    c1.next = &c2;
+    c2.next = NULL;
+
+    b1.start = b1.pos = &ngx_http_flv_header[0];
+    b1.end = b1.last = b1.pos + sizeof(ngx_http_flv_header) - 1;
+
+    b2.start = b2.pos = &flv_header[0];
+    b2.end = b2.last = b2.pos + sizeof(flv_header) - 1;
+
+    pkt = ngx_rtmp_append_shared_bufs(cscf, NULL, &c1);
+
+    ngx_http_flv_send_message(s, pkt, 0);
+
+    ngx_rtmp_free_shared_chain(cscf, pkt);
+}
+
 static ngx_int_t
 ngx_http_flv_http_send_message(ngx_rtmp_session_t *s, ngx_chain_t *in, ngx_uint_t priority)
 {
@@ -594,62 +600,6 @@ ngx_http_flv_http_free_shared_chain(ngx_rtmp_session_t *s, ngx_chain_t *in)
     }
 
     ngx_rtmp_free_shared_chain(cscf, in);
-}
-
-
-static ngx_int_t
-ngx_http_flv_send_header(ngx_rtmp_session_t *s)
-{
-    static u_char httpheader[] = {
-        "HTTP/1.1 200 OK\r\n"
-        "Cache-Control: no-cache\r\n"
-        "Content-Type: video/x-flv\r\n"
-        "Connection: close\r\n"
-        "Expires: -1\r\n"
-        "Pragma: no-cache\r\n"
-        "\r\n"
-    };
-
-    static u_char flvheader[] = {
-        0x46, /* 'F' */
-        0x4c, /* 'L' */
-        0x56, /* 'V' */
-        0x01, /* version = 1 */
-        0x05, /* 00000 1 0 1 = has audio & video */
-        0x00,
-        0x00,
-        0x00,
-        0x09, /* header size */
-        0x00,
-        0x00,
-        0x00,
-        0x00  /* PreviousTagSize0 (not actually a header) */
-    };
-
-    ngx_rtmp_core_srv_conf_t       *cscf;
-    ngx_chain_t                     c1, c2, *pkt;
-    ngx_buf_t                       b1, b2;
-
-    cscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_core_module);
-
-    c1.buf = &b1;
-    c2.buf = &b2;
-    c1.next = &c2;
-    c2.next = NULL;
-
-    b1.start = b1.pos = &httpheader[0];
-    b1.end = b1.last = b1.pos + sizeof(httpheader) - 1;
-
-    b2.start = b2.pos = &flvheader[0];
-    b2.end = b2.last = b2.pos + sizeof(flvheader);
-
-    pkt = ngx_rtmp_append_shared_bufs(cscf, NULL, &c1);
-
-    ngx_http_flv_send_message(s, pkt, 0);
-
-    ngx_rtmp_free_shared_chain(cscf, pkt);
-
-    return NGX_OK;
 }
 
 
@@ -819,15 +769,9 @@ next:
 static ngx_int_t
 ngx_http_flv_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
 {
-    ngx_http_flv_rtmp_app_conf_t        *hacf;
     ngx_http_flv_rtmp_ctx_t             *ctx;
 
     if (s->proto != NGX_PROTO_TYPE_HTTP_FLV_PULL) {
-        goto next;
-    }
-
-    hacf = ngx_rtmp_get_module_app_conf(s, ngx_http_flv_rtmpmodule);
-    if (hacf == NULL || !hacf->http_flv) {
         goto next;
     }
 
@@ -844,12 +788,6 @@ ngx_http_flv_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
     /* join stream as subscriber */
 
     ngx_http_flv_join(s, v->name, 0);
-
-    if (!ctx->initialized) {
-        ngx_http_flv_send_header(s);
-
-        ctx->initialized = 1;
-    }
 
     ngx_rtmp_playing++;
 

@@ -60,7 +60,6 @@ A nginx.conf example：
 
                 application news {
                     live on;
-                    http_flv on;
                     gop_cache on;
                     gop_cache_count 5;  # cache 5 GOPs
 

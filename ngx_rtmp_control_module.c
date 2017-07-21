@@ -299,7 +299,7 @@ ngx_rtmp_control_walk_stream(ngx_http_request_t *r,
     const char           *s;
     ngx_rtmp_live_ctx_t  *lctx;
 
-    for (n = 0; n < 2; ++ n) {
+    for (n = 0; n < NGX_RTMP_LIVE_TYPE_SIZE; ++ n) {
         for (lctx = ls->ctx[n]; lctx; lctx = lctx->next) {
             s = ngx_rtmp_control_walk_session(r, lctx);
             if (s != NGX_CONF_OK) {

@@ -31,12 +31,14 @@ static char *ngx_rtmp_live_set_msec_slot(ngx_conf_t *cf, ngx_command_t *cmd,
        void *conf);
 static void ngx_rtmp_live_start(ngx_rtmp_session_t *s);
 static void ngx_rtmp_live_stop(ngx_rtmp_session_t *s);
+static void ngx_rtmp_live_send_header(ngx_rtmp_session_t *s, ngx_rtmp_session_t *ps);
 static ngx_int_t ngx_rtmp_live_send_message(ngx_rtmp_session_t *s, ngx_chain_t *in, ngx_uint_t priority);
 static ngx_chain_t * ngx_rtmp_live_append_shared_bufs(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_rtmp_header_t *lh, ngx_chain_t *in);
 static void ngx_rtmp_live_free_shared_chain(ngx_rtmp_session_t *s, ngx_chain_t *in);
 
 
 ngx_rtmp_send_handler_t ngx_rtmp_live_send_handler = {
+    ngx_rtmp_live_send_header,
     ngx_rtmp_live_send_message,
     ngx_rtmp_live_append_shared_bufs,
     ngx_rtmp_live_free_shared_chain
@@ -231,6 +233,13 @@ ngx_rtmp_live_set_msec_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     }
 
     return ngx_conf_set_msec_slot(cf, cmd, conf);
+}
+
+
+static void
+ngx_rtmp_live_send_header(ngx_rtmp_session_t *s, ngx_rtmp_session_t *ps)
+{
+    return;
 }
 
 
@@ -676,7 +685,7 @@ ngx_rtmp_live_close_stream(ngx_rtmp_session_t *s, ngx_rtmp_close_stream_t *v)
                              "status", "Stop publishing");
         if (!lacf->idle_streams) {
             // close both rtmp and http flv connection.
-            for (n = 0; n < 2; ++ n) {
+            for (n = 0; n < NGX_RTMP_LIVE_TYPE_SIZE; ++ n) {
                 for (pctx = ctx->stream->ctx[n]; pctx; pctx = pctx->next) {
                     ss = pctx->session;
                     ngx_log_debug0(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
@@ -772,7 +781,6 @@ ngx_rtmp_live_broadcast(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     ngx_chain_t                    *header, *coheader, *meta,
                                    *apkt, *aapkt, *hapkt, *acopkt, *rpkt;
     ngx_rtmp_core_srv_conf_t       *cscf;
-    ngx_http_flv_rtmp_app_conf_t   *hacf;
     ngx_rtmp_live_app_conf_t       *lacf;
     ngx_rtmp_session_t             *ss;
     ngx_rtmp_header_t               ch, lh, clh;
@@ -789,8 +797,6 @@ ngx_rtmp_live_broadcast(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
     type_s = (h->type == NGX_RTMP_MSG_VIDEO ? "video" : "audio");
 #endif
-
-    hacf = ngx_rtmp_get_module_app_conf(s, ngx_http_flv_rtmpmodule);
 
     lacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_live_module);
 
@@ -889,10 +895,7 @@ ngx_rtmp_live_broadcast(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
     /* broadcast to all subscribers */
 
-    for (n = 0; n < 2; ++ n) {
-        if (n == 1 && !hacf->http_flv) {
-            continue;
-        }
+    for (n = 0; n < NGX_RTMP_LIVE_TYPE_SIZE; ++ n) {
 
         handler = ngx_rtmp_send_handlers[n];
 
@@ -910,6 +913,15 @@ ngx_rtmp_live_broadcast(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
             ss = pctx->session;
             cs = &pctx->cs[csidx];
+
+            if (!pctx->header) {
+                ngx_log_debug0(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
+                               "live: header");
+
+                handler->send_header(ss, s);
+
+                pctx->header = 1;
+            }
 
             /* send metadata */
 
