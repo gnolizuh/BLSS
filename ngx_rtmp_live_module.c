@@ -915,6 +915,8 @@ ngx_rtmp_live_broadcast(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
             cs = &pctx->cs[csidx];
 
             if (!pctx->header) {
+                ngx_log_debug0(NGX_LOG_DEBUG_RTMP, ss->connection->log, 0,
+                               "live: header");
 
                 handler->send_header(ss, s);
 
