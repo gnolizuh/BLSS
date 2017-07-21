@@ -40,6 +40,17 @@ static ngx_chain_t * ngx_http_flv_http_append_shared_bufs(ngx_rtmp_session_t *s,
 static void ngx_http_flv_http_free_shared_chain(ngx_rtmp_session_t *s, ngx_chain_t *in);
 
 
+static u_char ngx_http_flv_header[] = {
+    "HTTP/1.1 200 OK\r\n"
+    "Cache-Control: no-cache\r\n"
+    "Content-Type: video/x-flv\r\n"
+    "Connection: close\r\n"
+    "Expires: -1\r\n"
+    "Pragma: no-cache\r\n"
+    "\r\n"
+};
+
+
 ngx_rtmp_send_handler_t ngx_http_flv_send_handler = {
     ngx_http_flv_http_send_header,
     ngx_http_flv_http_send_message,
@@ -524,48 +535,31 @@ ngx_http_flv_append_shared_bufs(ngx_rtmp_core_srv_conf_t *cscf, ngx_rtmp_header_
 static void
 ngx_http_flv_http_send_header(ngx_rtmp_session_t *s, ngx_rtmp_session_t *ps)
 {
-    static u_char httpheader[] = {
-        "HTTP/1.1 200 OK\r\n"
-        "Cache-Control: no-cache\r\n"
-        "Content-Type: video/x-flv\r\n"
-        "Connection: close\r\n"
-        "Expires: -1\r\n"
-        "Pragma: no-cache\r\n"
-        "\r\n"
-    };
-
-    static u_char flvheader[] = {
-        0x46, /* 'F' */
-        0x4c, /* 'L' */
-        0x56, /* 'V' */
-        0x01, /* version = 1 */
-        0x05, /* 00000 1 0 1 = has audio & video */
-        0x00,
-        0x00,
-        0x00,
-        0x09, /* header size */
-        0x00,
-        0x00,
-        0x00,
-        0x00  /* PreviousTagSize0 (not actually a header) */
-    };
-
     ngx_rtmp_core_srv_conf_t       *cscf;
+    ngx_rtmp_codec_ctx_t           *codec_ctx;
     ngx_chain_t                     c1, c2, *pkt;
     ngx_buf_t                       b1, b2;
 
+    u_char flv_header[] = "FLV\x1\0\0\0\0\x9\0\0\0\0";
+
     cscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_core_module);
+
+    codec_ctx = ngx_rtmp_get_module_ctx(ps, ngx_rtmp_codec_module);
+    if (codec_ctx != NULL) {
+        if (codec_ctx->video_header != NULL) flv_header[4] |= 0x04;
+        if (codec_ctx->aac_header != NULL) flv_header[4] |= 0x01;
+    }
 
     c1.buf = &b1;
     c2.buf = &b2;
     c1.next = &c2;
     c2.next = NULL;
 
-    b1.start = b1.pos = &httpheader[0];
-    b1.end = b1.last = b1.pos + sizeof(httpheader) - 1;
+    b1.start = b1.pos = &ngx_http_flv_header[0];
+    b1.end = b1.last = b1.pos + sizeof(ngx_http_flv_header) - 1;
 
-    b2.start = b2.pos = &flvheader[0];
-    b2.end = b2.last = b2.pos + sizeof(flvheader);
+    b2.start = b2.pos = &flv_header[0];
+    b2.end = b2.last = b2.pos + sizeof(flv_header) - 1;
 
     pkt = ngx_rtmp_append_shared_bufs(cscf, NULL, &c1);
 
