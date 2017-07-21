@@ -537,6 +537,22 @@ ngx_http_flv_http_send_header(ngx_rtmp_session_t *s, ngx_rtmp_session_t *ps)
         "\r\n"
     };
 
+    static u_char flvheader[] = {
+        0x46, /* 'F' */
+        0x4c, /* 'L' */
+        0x56, /* 'V' */
+        0x01, /* version = 1 */
+        0x05, /* 00000 1 0 1 = has audio & video */
+        0x00,
+        0x00,
+        0x00,
+        0x09, /* header size */
+        0x00,
+        0x00,
+        0x00,
+        0x00  /* PreviousTagSize0 (not actually a header) */
+    };
+
     ngx_rtmp_core_srv_conf_t       *cscf;
     ngx_chain_t                     c1, c2, *pkt;
     ngx_buf_t                       b1, b2;
@@ -551,8 +567,8 @@ ngx_http_flv_http_send_header(ngx_rtmp_session_t *s, ngx_rtmp_session_t *ps)
     b1.start = b1.pos = &httpheader[0];
     b1.end = b1.last = b1.pos + sizeof(httpheader) - 1;
 
-    b2.start = b2.pos = &ngx_flv_header[0];
-    b2.end = b2.last = b2.pos + sizeof(ngx_flv_header);
+    b2.start = b2.pos = &flvheader[0];
+    b2.end = b2.last = b2.pos + sizeof(flvheader);
 
     pkt = ngx_rtmp_append_shared_bufs(cscf, NULL, &c1);
 
