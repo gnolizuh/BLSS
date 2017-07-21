@@ -554,7 +554,7 @@ ngx_rtmp_gop_cache_send(ngx_rtmp_session_t *ss)
 {
     ngx_rtmp_session_t             *s;
     ngx_chain_t                    *pkt, *apkt, *meta, *header;
-    ngx_rtmp_live_ctx_t            *ctx, *pctx;
+    ngx_rtmp_live_ctx_t            *pctx;
     ngx_rtmp_gop_cache_ctx_t       *gctx;
     ngx_rtmp_live_app_conf_t       *lacf;
     ngx_rtmp_gop_cache_t           *cache;
@@ -589,8 +589,6 @@ ngx_rtmp_gop_cache_send(ngx_rtmp_session_t *ss)
     if (gctx == NULL) {
         return;
     }
-
-    ctx = pctx->stream->pctx;
 
     handler = ngx_rtmp_send_handlers[ss->proto == NGX_PROTO_TYPE_HTTP_FLV_PULL ? 1 : 0];
 
