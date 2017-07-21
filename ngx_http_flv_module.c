@@ -546,8 +546,8 @@ ngx_http_flv_http_send_header(ngx_rtmp_session_t *s, ngx_rtmp_session_t *ps)
 
     codec_ctx = ngx_rtmp_get_module_ctx(ps, ngx_rtmp_codec_module);
     if (codec_ctx != NULL) {
-        if (codec_ctx->video_header != NULL) flv_header[4] |= 0x04;
-        if (codec_ctx->aac_header != NULL) flv_header[4] |= 0x01;
+        if (codec_ctx->video_header != NULL) flv_header[4] |= 0x01;
+        if (codec_ctx->aac_header != NULL) flv_header[4] |= 0x04;
     }
 
     c1.buf = &b1;
