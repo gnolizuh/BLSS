@@ -31,7 +31,6 @@ ngx_http_flv_init_connection(ngx_http_request_t *r)
 	struct sockaddr_in    *sin;
     ngx_rtmp_in_addr_t    *addr;
 	ngx_int_t              unix_socket;
-	u_char                *p;
 #if (NGX_HAVE_INET6)
     struct sockaddr_in6   *sin6;
     ngx_rtmp_in6_addr_t   *addr6;
