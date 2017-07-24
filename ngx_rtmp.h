@@ -734,6 +734,20 @@ ngx_rtmp_is_codec_header(ngx_chain_t *in)
 }
 
 
+static ngx_inline u_char *
+ngx_strrlchr(u_char *p, u_char *first, u_char c)
+{
+    while (--p > first) {
+
+        if (*p == c) {
+            return p;
+        }
+    }
+
+    return NULL;
+}
+
+
 extern ngx_rtmp_bandwidth_t                 ngx_rtmp_bw_out;
 extern ngx_rtmp_bandwidth_t                 ngx_rtmp_bw_in;
 
