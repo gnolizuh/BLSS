@@ -376,11 +376,11 @@ ngx_http_flv_http_handler(ngx_http_request_t *r)
     s->args.data = ngx_palloc(s->connection->pool, s->args.len);
     ngx_memcpy(s->args.data, r->args.data, s->args.len);
 
-    ngx_rtmp_format_app(s);
-
     ngx_log_error(NGX_LOG_INFO, r->connection->log, 0,
               "http_flv handle app: '%V' name: '%V' args: '%V'",
               &s->app, &s->name, &s->args);
+
+    ngx_rtmp_format_app(s);
 
     if (ngx_http_flv_connect_local(s) != NGX_OK) {
         return NGX_DECLINED;
