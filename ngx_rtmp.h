@@ -748,7 +748,7 @@ ngx_strrlchr(u_char *p, u_char *first, u_char c)
 }
 
 
-static void
+static ngx_inline void
 ngx_rtmp_format_app(ngx_rtmp_session_t *s)
 {
     u_char              *p;
