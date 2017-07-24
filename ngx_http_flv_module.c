@@ -360,7 +360,7 @@ ngx_http_flv_http_handler(ngx_http_request_t *r)
         }
     }
 
-    if (nslash != 2) {
+    if (nslash > 3) {
 
         return NGX_DECLINED;
     }

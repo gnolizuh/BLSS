@@ -312,6 +312,9 @@ ngx_rtmp_cmd_connect(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
     /* fill session parameters */
     s->connected = 1;
 
+    /* set host mask */
+    s->host_mask |= NGX_RTMP_HOSTNAME_RTMP;
+
     ngx_memzero(&h, sizeof(h));
     h.csid = NGX_RTMP_CSID_AMF_INI;
     h.type = NGX_RTMP_MSG_AMF_CMD;
@@ -331,8 +334,21 @@ ngx_rtmp_cmd_connect(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
 
 #undef NGX_RTMP_SET_STRPAR
 
-    ngx_rtmp_parse_tcurl(s->tc_url, &s->host, &s->host_mask);
+    // make host
+    s->host.data = s->tc_url.data + 7;
+    s->host.len = s->tc_url.len - 7;
 
+    p = ngx_strlchr(s->host.data, s->host.len, ':');
+    if (!p) {
+        p = ngx_strlchr(s->host.data, s->host.len, '/');
+        if (!p) {
+            p = s->host.data + s->host.len;
+        }
+    }
+
+    s->host.len = p - s->host.data;
+
+    // make app
     p = ngx_strlchr(s->app.data, s->app.data + s->app.len, '?');
     if (p) {
         s->app.len = (p - s->app.data);
