@@ -338,9 +338,9 @@ ngx_rtmp_cmd_connect(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
     s->host.data = s->tc_url.data + 7;
     s->host.len = s->tc_url.len - 7;
 
-    p = ngx_strlchr(s->host.data, s->host.len, ':');
+    p = ngx_strlchr(s->host.data, s->host.data + s->host.len, ':');
     if (!p) {
-        p = ngx_strlchr(s->host.data, s->host.len, '/');
+        p = ngx_strlchr(s->host.data, s->host.data + s->host.len, '/');
         if (!p) {
             p = s->host.data + s->host.len;
         }
