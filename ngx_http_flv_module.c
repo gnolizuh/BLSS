@@ -179,33 +179,6 @@ ngx_http_flv_send_message(ngx_rtmp_session_t *s, ngx_chain_t *out,
 
 
 static ngx_int_t
-ngx_http_flv_get_info(ngx_str_t *uri, ngx_str_t *app, ngx_str_t *name)
-{
-    size_t    len;
-
-    if (uri == NULL || uri->len == 0) {
-
-        return NGX_ERROR;
-    }
-
-    len = 0;
-    for(; uri->data[len] == '/' || uri->len == len; ++ len); // skip first '/'
-
-    app->data = &uri->data[len];                             // we got app
-
-    for(; uri->data[len] != '/' || uri->len == len; ++ len); // reach next '/'
-
-    app->len = &uri->data[len ++] - app->data;
-
-    name->data = &uri->data[len];
-    name->len = &uri->data[uri->len] - name->data
-        - ngx_strlen(".flv");                                // we got name
-
-    return NGX_OK;
-}
-
-
-static ngx_int_t
 ngx_http_flv_play_local(ngx_rtmp_session_t *s)
 {
     static ngx_rtmp_play_t      v;
