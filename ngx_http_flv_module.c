@@ -33,7 +33,7 @@ static char * ngx_http_flv_http_merge_conf(ngx_conf_t *cf, void *parent, void *c
 static ngx_int_t ngx_http_flv_rtmp_init(ngx_conf_t *cf);
 
 static ngx_int_t ngx_http_flv_send_message(ngx_rtmp_session_t *s, ngx_chain_t *out, ngx_uint_t priority);
-static ngx_int_t ngx_http_flv_connect_local(ngx_http_request_t *r, ngx_str_t *app, ngx_str_t *name);
+static ngx_int_t ngx_http_flv_connect_local(ngx_rtmp_session_t *s);
 static void ngx_http_flv_http_send_header(ngx_rtmp_session_t *s, ngx_rtmp_session_t *ps);
 static ngx_int_t ngx_http_flv_http_send_message(ngx_rtmp_session_t *s, ngx_chain_t *in, ngx_uint_t priority);
 static ngx_chain_t * ngx_http_flv_http_append_shared_bufs(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_rtmp_header_t *lh, ngx_chain_t *in);
@@ -179,33 +179,6 @@ ngx_http_flv_send_message(ngx_rtmp_session_t *s, ngx_chain_t *out,
 
 
 static ngx_int_t
-ngx_http_flv_get_info(ngx_str_t *uri, ngx_str_t *app, ngx_str_t *name)
-{
-    size_t    len;
-
-    if (uri == NULL || uri->len == 0) {
-
-        return NGX_ERROR;
-    }
-
-    len = 0;
-    for(; uri->data[len] == '/' || uri->len == len; ++ len); // skip first '/'
-
-    app->data = &uri->data[len];                             // we got app
-
-    for(; uri->data[len] != '/' || uri->len == len; ++ len); // reach next '/'
-
-    app->len = &uri->data[len ++] - app->data;
-
-    name->data = &uri->data[len];
-    name->len = &uri->data[uri->len] - name->data
-        - ngx_strlen(".flv");                                // we got name
-
-    return NGX_OK;
-}
-
-
-static ngx_int_t
 ngx_http_flv_play_local(ngx_rtmp_session_t *s)
 {
     static ngx_rtmp_play_t      v;
@@ -255,34 +228,26 @@ ngx_http_flv_close_session_handler(ngx_rtmp_session_t *s)
 
 
 static ngx_int_t
-ngx_http_flv_connect_local(ngx_http_request_t *r, ngx_str_t *app, ngx_str_t *name)
+ngx_http_flv_connect_local(ngx_rtmp_session_t *s)
 {
     static ngx_rtmp_connect_t   v;
 
-    ngx_rtmp_session_t         *s;
     ngx_http_flv_rtmp_ctx_t    *rtmpctx;
-    ngx_http_flv_http_ctx_t    *httpctx;
-
-    httpctx = ngx_http_get_module_ctx(r, ngx_http_flv_httpmodule);
-
-    s = httpctx->rs;
 
     ngx_memzero(&v, sizeof(ngx_rtmp_connect_t));
 
-    ngx_memcpy(v.app, app->data, ngx_min(app->len, sizeof(v.app) - 1));
-    ngx_memcpy(v.args, r->args.data, ngx_min(r->args.len, sizeof(v.args) - 1));
+    ngx_memcpy(v.app, s->app.data, ngx_min(s->app.len, sizeof(v.app) - 1));
     ngx_memcpy(v.flashver, "HTTP FLV flashver", ngx_strlen("HTTP FLV flashver"));
     ngx_memcpy(v.swf_url, "HTTP FLV swf_url", ngx_strlen("HTTP FLV swf_url"));
     ngx_memcpy(v.page_url, "HTTP FLV page_url", ngx_strlen("HTTP FLV page_url"));
 
-    *ngx_snprintf(v.tc_url, NGX_RTMP_MAX_URL, "http://%V/%V", &s->host, app) = 0;
+    *ngx_snprintf(v.tc_url, NGX_RTMP_MAX_URL, "http://%V/%V", &s->host, &s->app) = 0;
 
 #define NGX_RTMP_SET_STRPAR(name)                                             \
     s->name.len = ngx_strlen(v.name);                                         \
     s->name.data = ngx_palloc(s->connection->pool, s->name.len);              \
     ngx_memcpy(s->name.data, v.name, s->name.len)
 
-    NGX_RTMP_SET_STRPAR(app);
     NGX_RTMP_SET_STRPAR(args);
     NGX_RTMP_SET_STRPAR(flashver);
     NGX_RTMP_SET_STRPAR(swf_url);
@@ -290,9 +255,6 @@ ngx_http_flv_connect_local(ngx_http_request_t *r, ngx_str_t *app, ngx_str_t *nam
     NGX_RTMP_SET_STRPAR(page_url);
 
 #undef NGX_RTMP_SET_STRPAR
-
-    s->name.len = name->len;
-    s->name.data = ngx_pstrdup(s->pool, name);
 
     rtmpctx = ngx_rtmp_get_module_ctx(s, ngx_http_flv_rtmpmodule);
     if (rtmpctx == NULL) {
@@ -328,9 +290,11 @@ ngx_http_flv_http_handler(ngx_http_request_t *r)
 {
     ngx_http_flv_httploc_conf_t         *hlcf;
     ngx_http_cleanup_t                  *cln;
+    ngx_http_flv_http_ctx_t             *httpctx;
+    ngx_rtmp_session_t                  *s;
     ngx_int_t                            rc = 0;
-    ngx_str_t                            app, name;
     ngx_int_t                            nslash;
+    u_char                              *p;
     size_t                               i;
 
     hlcf = ngx_http_get_module_loc_conf(r, ngx_http_flv_httpmodule);
@@ -350,18 +314,14 @@ ngx_http_flv_http_handler(ngx_http_request_t *r)
 
     nslash = 0;
     for (i = 0; i < r->uri.len; ++ i) {
-
         if (r->uri.data[i] == '/') {
-
             ++ nslash;
         } else if (r->uri.data[i] == '?') {
-
             break;
         }
     }
 
-    if (nslash != 2) {
-
+    if (nslash > 3 || nslash < 2) {
         return NGX_DECLINED;
     }
 
@@ -380,18 +340,52 @@ ngx_http_flv_http_handler(ngx_http_request_t *r)
     ngx_log_error(NGX_LOG_INFO, r->connection->log, 0,
         "http_flv handle uri: '%V' args: '%V'", &r->uri, &r->args);
 
-    if (ngx_http_flv_get_info(&r->uri, &app, &name) != NGX_OK) {
+    // init session
+    ngx_http_flv_init_connection(r);
 
+    httpctx = ngx_http_get_module_ctx(r, ngx_http_flv_httpmodule);
+    if (httpctx == NULL) {
         return NGX_DECLINED;
     }
 
+    // get rtmp session
+    s = httpctx->rs;
+
+    s->proto = NGX_PROTO_TYPE_HTTP_FLV_PULL;
+    s->host_mask = NGX_RTMP_HOSTNAME_HTTP_FLV|NGX_RTMP_HOSTNAME_SUB;
+
+    p = ngx_strrlchr(r->uri.data + r->uri.len, r->uri.data + 1, '/');
+    if (!p) {
+        return NGX_DECLINED;
+    }
+
+    // get app
+    s->app.data = r->uri.data + 1;
+    s->app.len = p - s->app.data;
+
+    // get name
+    s->name.data = p + 1;
+    s->name.len = r->uri.data + r->uri.len - s->name.data - 4;
+
+    // get host
+    s->host = r->headers_in.host->value;
+    p = ngx_strlchr(s->host.data, s->host.data + s->host.len, ':');
+    if (p) {
+        s->host.len = p - s->host.data;
+    }
+
+    // get args
+    s->args.len = r->args.len;
+    s->args.data = ngx_palloc(s->connection->pool, s->args.len);
+    ngx_memcpy(s->args.data, r->args.data, s->args.len);
+
     ngx_log_error(NGX_LOG_INFO, r->connection->log, 0,
-              "http_flv handle app: '%V' name: '%V'", &app, &name);
+              "http_flv handle app: '%V' name: '%V' args: '%V'",
+              &s->app, &s->name, &s->args);
 
-    ngx_http_flv_init_connection(r);
+    ngx_rtmp_format_app(s);
 
-    if (ngx_http_flv_connect_local(r, &app, &name) != NGX_OK) {
-
+    if (ngx_http_flv_connect_local(s) != NGX_OK) {
         return NGX_DECLINED;
     }
 

@@ -31,7 +31,6 @@ ngx_http_flv_init_connection(ngx_http_request_t *r)
 	struct sockaddr_in    *sin;
     ngx_rtmp_in_addr_t    *addr;
 	ngx_int_t              unix_socket;
-	u_char                *p;
 #if (NGX_HAVE_INET6)
     struct sockaddr_in6   *sin6;
     ngx_rtmp_in6_addr_t   *addr6;
@@ -138,12 +137,6 @@ ngx_http_flv_init_connection(ngx_http_request_t *r)
         return;
     }
 
-    s->host = r->headers_in.host->value;
-    p = ngx_strlchr(s->host.data, s->host.data + s->host.len, ':');
-    if (p != NULL) {
-        s->host.len = p - s->host.data;
-    }
-
     r->read_event_handler = ngx_http_test_reading;
     r->blocked = 1;
 
@@ -221,7 +214,6 @@ ngx_http_flv_init_session(ngx_http_request_t *r, ngx_rtmp_addr_conf_t *addr_conf
     ngx_queue_init(&s->posted_dry_events);
 #endif
 
-    s->proto = NGX_PROTO_TYPE_HTTP_FLV_PULL;
     s->epoch = ngx_current_msec;
     s->timeout = cscf->timeout;
     s->buflen = cscf->buflen;

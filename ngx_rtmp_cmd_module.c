@@ -227,6 +227,9 @@ ngx_rtmp_cmd_connect_init(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
     ngx_rtmp_cmd_fill_args(v.app, v.args);
 
+    /* set host mask */
+    s->host_mask |= NGX_RTMP_HOSTNAME_RTMP;
+
     ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
             "connect: app='%s' args='%s' flashver='%s' swf_url='%s' "
             "tc_url='%s' page_url='%s' acodecs=%uD vcodecs=%uD "
@@ -331,12 +334,27 @@ ngx_rtmp_cmd_connect(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
 
 #undef NGX_RTMP_SET_STRPAR
 
-    ngx_rtmp_parse_tcurl(s->tc_url, &s->host, &s->host_mask);
+    // make host
+    s->host.data = s->tc_url.data + 7;
+    s->host.len = s->tc_url.len - 7;
 
+    p = ngx_strlchr(s->host.data, s->host.data + s->host.len, ':');
+    if (!p) {
+        p = ngx_strlchr(s->host.data, s->host.data + s->host.len, '/');
+        if (!p) {
+            p = s->host.data + s->host.len;
+        }
+    }
+
+    s->host.len = p - s->host.data;
+
+    // make app
     p = ngx_strlchr(s->app.data, s->app.data + s->app.len, '?');
     if (p) {
         s->app.len = (p - s->app.data);
     }
+
+    ngx_rtmp_format_app(s);
 
     s->acodecs = (uint32_t) v->acodecs;
     s->vcodecs = (uint32_t) v->vcodecs;
