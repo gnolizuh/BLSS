@@ -264,7 +264,6 @@ ngx_http_flv_connect_local(ngx_rtmp_session_t *s)
     ngx_memzero(&v, sizeof(ngx_rtmp_connect_t));
 
     ngx_memcpy(v.app, s->app.data, ngx_min(s->app.len, sizeof(v.app) - 1));
-    ngx_memcpy(v.args, r->args.data, ngx_min(r->args.len, sizeof(v.args) - 1));
     ngx_memcpy(v.flashver, "HTTP FLV flashver", ngx_strlen("HTTP FLV flashver"));
     ngx_memcpy(v.swf_url, "HTTP FLV swf_url", ngx_strlen("HTTP FLV swf_url"));
     ngx_memcpy(v.page_url, "HTTP FLV page_url", ngx_strlen("HTTP FLV page_url"));
@@ -399,8 +398,13 @@ ngx_http_flv_http_handler(ngx_http_request_t *r)
         s->host.len = p - s->host.data;
     }
 
+    s->args.len = r->args.len;
+    s->args.data = ngx_palloc(s->connection->pool, s->args.len);
+    ngx_memcpy(s->args.data, r->args.data, s->args.len);
+
     ngx_log_error(NGX_LOG_INFO, r->connection->log, 0,
-              "http_flv handle app: '%V' name: '%V'", &s->app, &s->name);
+              "http_flv handle app: '%V' name: '%V' args: '%V'",
+              &s->app, &s->name, &s->args);
 
     if (ngx_http_flv_connect_local(s) != NGX_OK) {
         return NGX_DECLINED;
