@@ -122,6 +122,10 @@ BLSS是一个NGINX第三方模块，它基于开源项目[nginx-rtmp-module](htt
 
     ffmpeg -re -i movie.flv -vcodec copy -acodec copy -f flv rtmp://test.pub.rtmp.cctv/news/test
 
+以IP形式进行推流：
+
+    ffmpeg -re -i movie.flv -vcodec copy -acodec copy -f flv rtmp://192.168.1.100/test.pub.rtmp.cctv/news/test
+
 ### 播放
 
 客户端需要绑定HOST：
@@ -133,3 +137,8 @@ BLSS是一个NGINX第三方模块，它基于开源项目[nginx-rtmp-module](htt
 
     rtmp://test.sub.rtmp.cctv/news/test
     http://test.sub.httpflv.cctv/news/test.flv
+
+以IP形式进行播放
+
+    rtmp://192.168.1.100/test.sub.rtmp.cctv/news/test
+    http://192.168.1.100/test.sub.httpflv.cctv/news/test.flv
