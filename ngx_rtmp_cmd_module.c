@@ -227,6 +227,9 @@ ngx_rtmp_cmd_connect_init(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
     ngx_rtmp_cmd_fill_args(v.app, v.args);
 
+    /* set host mask */
+    s->host_mask |= NGX_RTMP_HOSTNAME_RTMP;
+
     ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
             "connect: app='%s' args='%s' flashver='%s' swf_url='%s' "
             "tc_url='%s' page_url='%s' acodecs=%uD vcodecs=%uD "
@@ -311,9 +314,6 @@ ngx_rtmp_cmd_connect(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
 
     /* fill session parameters */
     s->connected = 1;
-
-    /* set host mask */
-    s->host_mask |= NGX_RTMP_HOSTNAME_RTMP;
 
     ngx_memzero(&h, sizeof(h));
     h.csid = NGX_RTMP_CSID_AMF_INI;
