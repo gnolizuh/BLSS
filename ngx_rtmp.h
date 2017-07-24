@@ -748,6 +748,22 @@ ngx_strrlchr(u_char *p, u_char *first, u_char c)
 }
 
 
+static void
+ngx_rtmp_format_app(ngx_rtmp_session_t *s)
+{
+    u_char              *p;
+
+    p = ngx_strlchr(s->app.data, s->app.data + s->app.len, '/');
+    if (p) {
+        s->host.data = s->app.data;
+        s->host.len = p - s->host.data;
+
+        s->app.data = p + 1;
+        s->app.len = s->app.len - s->host.len - 1;
+    }
+}
+
+
 extern ngx_rtmp_bandwidth_t                 ngx_rtmp_bw_out;
 extern ngx_rtmp_bandwidth_t                 ngx_rtmp_bw_in;
 

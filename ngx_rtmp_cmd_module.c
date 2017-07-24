@@ -354,6 +354,8 @@ ngx_rtmp_cmd_connect(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
         s->app.len = (p - s->app.data);
     }
 
+    ngx_rtmp_format_app(s);
+
     s->acodecs = (uint32_t) v->acodecs;
     s->vcodecs = (uint32_t) v->vcodecs;
 
