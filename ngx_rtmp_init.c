@@ -214,7 +214,6 @@ ngx_http_flv_init_session(ngx_http_request_t *r, ngx_rtmp_addr_conf_t *addr_conf
     ngx_queue_init(&s->posted_dry_events);
 #endif
 
-    s->proto = NGX_PROTO_TYPE_HTTP_FLV_PULL;
     s->epoch = ngx_current_msec;
     s->timeout = cscf->timeout;
     s->buflen = cscf->buflen;

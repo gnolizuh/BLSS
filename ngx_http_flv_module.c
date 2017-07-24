@@ -188,6 +188,9 @@ ngx_http_flv_play_local(ngx_rtmp_session_t *s)
     ngx_memcpy(v.name, s->name.data, ngx_min(s->name.len, sizeof(v.name) - 1));
     ngx_memcpy(v.args, s->args.data, ngx_min(s->args.len, sizeof(v.args) - 1));
 
+    s->proto = NGX_PROTO_TYPE_HTTP_FLV_PULL;
+    s->host_mask |= NGX_RTMP_HOSTNAME_SUB;
+
     return ngx_rtmp_cmd_play_local(s, &v);
 }
 
