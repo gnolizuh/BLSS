@@ -253,8 +253,8 @@ ngx_rtmp_cmd_connect_init(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     // restructure app & host
     p = ngx_strlchr(str.data, str.data + str.len, '/');
     if (p) {
-        ngx_memcpy(v.host, str.data, p - str.data);
-        ngx_memcpy(v.app, p + 1, str.data + str.len - p - 1);
+        *ngx_cpymem(v.host, str.data, p - str.data) = 0;
+        *ngx_cpymem(v.app, p + 1, str.data + str.len - p - 1) = 0;
     }
 
     /* set host mask */
