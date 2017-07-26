@@ -362,7 +362,7 @@ ngx_rtmp_notify_connect_create(ngx_rtmp_session_t *s, void *arg,
     ngx_chain_t                    *al, *bl;
     ngx_buf_t                      *b;
     ngx_str_t                      *addr_text;
-    size_t                          app_len, args_len, flashver_len,
+    size_t                          host_len, app_len, args_len, flashver_len,
                                     swf_url_len, tc_url_len, page_url_len;
 
     nscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_notify_module);
@@ -376,6 +376,7 @@ ngx_rtmp_notify_connect_create(ngx_rtmp_session_t *s, void *arg,
      * so we have to construct the request from
      * connection struct */
 
+    host_len = ngx_strlen(v->host);
     app_len = ngx_strlen(v->app);
     args_len = ngx_strlen(v->args);
     flashver_len = ngx_strlen(v->flashver);
@@ -387,6 +388,7 @@ ngx_rtmp_notify_connect_create(ngx_rtmp_session_t *s, void *arg,
 
     b = ngx_create_temp_buf(pool,
             sizeof("call=connect") - 1 +
+            sizeof("&host=") - 1 + host_len * 3 +
             sizeof("&app=") - 1 + app_len * 3 +
             sizeof("&flashver=") - 1 + flashver_len * 3 +
             sizeof("&swfurl=") - 1 + swf_url_len * 3 +
@@ -403,6 +405,10 @@ ngx_rtmp_notify_connect_create(ngx_rtmp_session_t *s, void *arg,
 
     al->buf = b;
     al->next = NULL;
+
+    b->last = ngx_cpymem(b->last, (u_char*) "host=", sizeof("host=") - 1);
+    b->last = (u_char*) ngx_escape_uri(b->last, v->host, host_len,
+                                       NGX_ESCAPE_ARGS);
 
     b->last = ngx_cpymem(b->last, (u_char*) "app=", sizeof("app=") - 1);
     b->last = (u_char*) ngx_escape_uri(b->last, v->app, app_len,
