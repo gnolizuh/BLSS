@@ -1185,8 +1185,8 @@ ngx_rtmp_live_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
     }
 
     ngx_log_debug2(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
-                   "live: publish: host='%s' name='%s' type='%s'",
-                   v->host, v->name, v->type);
+                   "live: publish: name='%s' type='%s'",
+                   v->name, v->type);
 
     /* join stream as publisher */
 
@@ -1226,8 +1226,8 @@ ngx_rtmp_live_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
     }
 
     ngx_log_debug4(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
-                   "live: play: host='%s' name='%s' start=%uD duration=%uD reset=%d",
-                   v->host, v->name, (uint32_t) v->start,
+                   "live: play: name='%s' start=%uD duration=%uD reset=%d",
+                   v->name, (uint32_t) v->start,
                    (uint32_t) v->duration, (uint32_t) v->reset);
 
     /* join stream as subscriber */
