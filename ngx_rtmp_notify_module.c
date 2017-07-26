@@ -410,7 +410,7 @@ ngx_rtmp_notify_connect_create(ngx_rtmp_session_t *s, void *arg,
     b->last = (u_char*) ngx_escape_uri(b->last, v->host, host_len,
                                        NGX_ESCAPE_ARGS);
 
-    b->last = ngx_cpymem(b->last, (u_char*) "app=", sizeof("app=") - 1);
+    b->last = ngx_cpymem(b->last, (u_char*) "&app=", sizeof("&app=") - 1);
     b->last = (u_char*) ngx_escape_uri(b->last, v->app, app_len,
                                        NGX_ESCAPE_ARGS);
 
