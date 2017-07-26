@@ -163,7 +163,6 @@ ngx_rtmp_cmd_connect_init(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 {
     ngx_str_t                   str;
     u_char                     *p;
-    size_t                      len;
 
     static ngx_rtmp_connect_t   v;
 
@@ -244,7 +243,7 @@ ngx_rtmp_cmd_connect_init(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     if (str.len > 10 && !ngx_memcmp(str.data + str.len - 10, "/_definst_", 10)) {
         str.data[str.len - 10] = 0;
         str.len -= 10;
-    } else if (len && v.app[len - 1] == '/') {
+    } else if (str.len && v.app[str.len - 1] == '/') {
         str.data[str.len - 1] = 0;
         str.len -= 1;
     }
