@@ -161,6 +161,8 @@ static ngx_int_t
 ngx_rtmp_cmd_connect_init(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
         ngx_chain_t *in)
 {
+    ngx_str_t                  *str;
+    u_char                     *p;
     size_t                      len;
 
     static ngx_rtmp_connect_t   v;
@@ -218,23 +220,52 @@ ngx_rtmp_cmd_connect_init(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
         return NGX_ERROR;
     }
 
-    len = ngx_strlen(v.app);
-    if (len > 10 && !ngx_memcmp(v.app + len - 10, "/_definst_", 10)) {
-        v.app[len - 10] = 0;
+    // get host
+    str.data = v.tc_url;
+    str.len = ngx_strlen(v.tc_url);
+    if (str.len > 7 && !ngx_memcmp(str.data, "rtmp://", 7)) {
+        str.data += 7;
+        str.len -= 7;
+    }
+
+    p = ngx_strlchr(str.data, str.data + str.len, ':');
+    if (!p) {
+        p = ngx_strlchr(str.data, str.data + str.len, '/');
+        if (!p) {
+            p = str.data + str.len;
+        }
+    }
+
+    ngx_memcpy(v.host, str.data, p - str.data);
+
+    // get app
+    str.data = v.app;
+    str.len = ngx_strlen(v.app);
+    if (str.len > 10 && !ngx_memcmp(str.data + str.len - 10, "/_definst_", 10)) {
+        str.data[len - 10] = 0;
+        str.len -= 10;
     } else if (len && v.app[len - 1] == '/') {
-        v.app[len - 1] = 0;
+        str.data[len - 1] = 0;
+        str.len -= 1;
     }
 
     ngx_rtmp_cmd_fill_args(v.app, v.args);
+
+    // restructure app & host
+    p = ngx_strlchr(str.data, str.data + str.len, '/');
+    if (p) {
+        ngx_memcpy(v.host, str.data, p - str.data);
+        ngx_memcpy(v.app, p + 1, str.data + str.len - p - 1);
+    }
 
     /* set host mask */
     s->host_mask |= NGX_RTMP_HOSTNAME_RTMP;
 
     ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
-            "connect: app='%s' args='%s' flashver='%s' swf_url='%s' "
+            "connect: host='%s' app='%s' args='%s' flashver='%s' swf_url='%s' "
             "tc_url='%s' page_url='%s' acodecs=%uD vcodecs=%uD "
             "object_encoding=%ui",
-            v.app, v.args, v.flashver, v.swf_url, v.tc_url, v.page_url,
+            v.host, v.app, v.args, v.flashver, v.swf_url, v.tc_url, v.page_url,
             (uint32_t)v.acodecs, (uint32_t)v.vcodecs,
             (ngx_int_t)v.object_encoding);
 
@@ -325,6 +356,7 @@ ngx_rtmp_cmd_connect(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
     s->name.data = ngx_palloc(s->connection->pool, s->name.len);              \
     ngx_memcpy(s->name.data, v->name, s->name.len)
 
+    NGX_RTMP_SET_STRPAR(host);
     NGX_RTMP_SET_STRPAR(app);
     NGX_RTMP_SET_STRPAR(args);
     NGX_RTMP_SET_STRPAR(flashver);
@@ -333,28 +365,6 @@ ngx_rtmp_cmd_connect(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
     NGX_RTMP_SET_STRPAR(page_url);
 
 #undef NGX_RTMP_SET_STRPAR
-
-    // make host
-    s->host.data = s->tc_url.data + 7;
-    s->host.len = s->tc_url.len - 7;
-
-    p = ngx_strlchr(s->host.data, s->host.data + s->host.len, ':');
-    if (!p) {
-        p = ngx_strlchr(s->host.data, s->host.data + s->host.len, '/');
-        if (!p) {
-            p = s->host.data + s->host.len;
-        }
-    }
-
-    s->host.len = p - s->host.data;
-
-    // make app
-    p = ngx_strlchr(s->app.data, s->app.data + s->app.len, '?');
-    if (p) {
-        s->app.len = (p - s->app.data);
-    }
-
-    ngx_rtmp_format_app(s);
 
     s->acodecs = (uint32_t) v->acodecs;
     s->vcodecs = (uint32_t) v->vcodecs;

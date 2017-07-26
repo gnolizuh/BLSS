@@ -374,16 +374,24 @@ ngx_http_flv_http_handler(ngx_http_request_t *r)
         s->host.len = p - s->host.data;
     }
 
+    // restructure app & host
+    p = ngx_strlchr(s->app.data, s->app.data + s->app.len, '/');
+    if (p) {
+        s->host.data = s->app.data;
+        s->host.len = p - s->host.data;
+
+        s->app.data = p + 1;
+        s->app.len = s->app.len - s->host.len - 1;
+    }
+
     // get args
     s->args.len = r->args.len;
     s->args.data = ngx_palloc(s->connection->pool, s->args.len);
     ngx_memcpy(s->args.data, r->args.data, s->args.len);
 
     ngx_log_error(NGX_LOG_INFO, r->connection->log, 0,
-              "http_flv handle app: '%V' name: '%V' args: '%V'",
-              &s->app, &s->name, &s->args);
-
-    ngx_rtmp_format_app(s);
+              "http_flv handle host: '%V' app: '%V' name: '%V' args: '%V'",
+              &s->host, &s->app, &s->name, &s->args);
 
     if (ngx_http_flv_connect_local(s) != NGX_OK) {
         return NGX_DECLINED;
