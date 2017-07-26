@@ -278,7 +278,6 @@ ngx_rtmp_cmd_connect(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
 {
     ngx_rtmp_core_srv_conf_t   *cscf;
     ngx_rtmp_header_t           h;
-    u_char                     *p;
 
     static double               trans;
     static double               capabilities = NGX_RTMP_CAPABILITIES;
