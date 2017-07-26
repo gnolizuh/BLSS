@@ -561,8 +561,8 @@ ngx_rtmp_cmd_publish_init(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     ngx_rtmp_cmd_fill_args(v.name, v.args);
 
     ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
-                  "publish: host='%s' name='%s' args='%s' type=%s silent=%d",
-                  v.host, v.name, v.args, v.type, v.silent);
+                  "publish: name='%s' args='%s' type=%s silent=%d",
+                  v.name, v.args, v.type, v.silent);
 
     s->proto = NGX_PROTO_TYPE_RTMP_PUSH;
     s->host_mask |= NGX_RTMP_HOSTNAME_PUB;
@@ -607,9 +607,9 @@ ngx_rtmp_cmd_play_local(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
     }
 
     ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
-                   "local play: host='%s' name='%s' args='%s' start=%i duration=%i "
+                   "local play: name='%s' args='%s' start=%i duration=%i "
                    "reset=%i silent=%i",
-                   v->host, v->name, v->args, (ngx_int_t) v->start,
+                   v->name, v->args, (ngx_int_t) v->start,
                    (ngx_int_t) v->duration, (ngx_int_t) v->reset,
                    (ngx_int_t) v->silent);
 
@@ -662,9 +662,9 @@ ngx_rtmp_cmd_play_init(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     ngx_rtmp_cmd_fill_args(v.name, v.args);
 
     ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
-                  "play: host='%s' name='%s' args='%s' start=%i duration=%i "
+                  "play: name='%s' args='%s' start=%i duration=%i "
                   "reset=%i silent=%i",
-                  v.host, v.name, v.args, (ngx_int_t) v.start,
+                  v.name, v.args, (ngx_int_t) v.start,
                   (ngx_int_t) v.duration, (ngx_int_t) v.reset,
                   (ngx_int_t) v.silent);
 
