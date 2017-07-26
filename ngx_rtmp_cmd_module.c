@@ -161,7 +161,7 @@ static ngx_int_t
 ngx_rtmp_cmd_connect_init(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
         ngx_chain_t *in)
 {
-    ngx_str_t                  *str;
+    ngx_str_t                   str;
     u_char                     *p;
     size_t                      len;
 
