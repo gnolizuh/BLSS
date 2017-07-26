@@ -791,8 +791,8 @@ ngx_http_flv_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
     ngx_http_send_header(r);
 
     ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
-                  "http flv play: name='%s' start=%uD duration=%uD reset=%d",
-                  v->name, (uint32_t) v->start,
+                  "http flv play: host='%s' name='%s' start=%uD duration=%uD reset=%d",
+                  v->host, v->name, (uint32_t) v->start,
                   (uint32_t) v->duration, (uint32_t) v->reset);
 
     /* join stream as subscriber */

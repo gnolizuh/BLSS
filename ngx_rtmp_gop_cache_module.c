@@ -745,8 +745,8 @@ ngx_rtmp_gop_cache_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
     }
 
     ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
-                  "gop cache publish: name='%s' type='%s'",
-                  v->name, v->type);
+                  "gop cache publish: host='%s' name='%s' type='%s'",
+                  v->host, v->name, v->type);
 
     ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_gop_cache_module);
     if (ctx == NULL) {
@@ -772,8 +772,8 @@ ngx_rtmp_gop_cache_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
     }
 
     ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
-                  "gop cache play: name='%s' start=%uD duration=%uD reset=%d",
-                  v->name, (uint32_t) v->start,
+                  "gop cache play: host='%s' name='%s' start=%uD duration=%uD reset=%d",
+                  v->host, v->name, (uint32_t) v->start,
                   (uint32_t) v->duration, (uint32_t) v->reset);
 
     ngx_rtmp_gop_cache_send(s);
