@@ -242,10 +242,10 @@ ngx_rtmp_cmd_connect_init(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     str.data = v.app;
     str.len = ngx_strlen(v.app);
     if (str.len > 10 && !ngx_memcmp(str.data + str.len - 10, "/_definst_", 10)) {
-        str.data[len - 10] = 0;
+        str.data[str.len - 10] = 0;
         str.len -= 10;
     } else if (len && v.app[len - 1] == '/') {
-        str.data[len - 1] = 0;
+        str.data[str.len - 1] = 0;
         str.len -= 1;
     }
 
