@@ -850,8 +850,8 @@ ngx_rtmp_dash_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
     }
 
     ngx_log_debug2(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
-                   "dash: publish: host='%s' name='%s' type='%s'",
-                   v->host, v->name, v->type);
+                   "dash: publish: name='%s' type='%s'",
+                   v->name, v->type);
 
     ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_dash_module);
 
