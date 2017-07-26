@@ -236,6 +236,7 @@ ngx_http_flv_connect_local(ngx_rtmp_session_t *s)
 
     ngx_memzero(&v, sizeof(ngx_rtmp_connect_t));
 
+    ngx_memcpy(v.host, s->host.data, ngx_min(s->host.len, sizeof(v.host) - 1));
     ngx_memcpy(v.app, s->app.data, ngx_min(s->app.len, sizeof(v.app) - 1));
     ngx_memcpy(v.flashver, "HTTP FLV flashver", ngx_strlen("HTTP FLV flashver"));
     ngx_memcpy(v.swf_url, "HTTP FLV swf_url", ngx_strlen("HTTP FLV swf_url"));
@@ -374,16 +375,24 @@ ngx_http_flv_http_handler(ngx_http_request_t *r)
         s->host.len = p - s->host.data;
     }
 
+    // restructure app & host
+    p = ngx_strlchr(s->app.data, s->app.data + s->app.len, '/');
+    if (p) {
+        s->host.data = s->app.data;
+        s->host.len = p - s->host.data;
+
+        s->app.data = p + 1;
+        s->app.len = s->app.len - s->host.len - 1;
+    }
+
     // get args
     s->args.len = r->args.len;
     s->args.data = ngx_palloc(s->connection->pool, s->args.len);
     ngx_memcpy(s->args.data, r->args.data, s->args.len);
 
     ngx_log_error(NGX_LOG_INFO, r->connection->log, 0,
-              "http_flv handle app: '%V' name: '%V' args: '%V'",
-              &s->app, &s->name, &s->args);
-
-    ngx_rtmp_format_app(s);
+              "http_flv handle host: '%V' app: '%V' name: '%V' args: '%V'",
+              &s->host, &s->app, &s->name, &s->args);
 
     if (ngx_http_flv_connect_local(s) != NGX_OK) {
         return NGX_DECLINED;
@@ -764,6 +773,7 @@ static ngx_int_t
 ngx_http_flv_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
 {
     ngx_http_flv_rtmp_ctx_t             *ctx;
+    ngx_http_request_t                  *r;
 
     if (s->proto != NGX_PROTO_TYPE_HTTP_FLV_PULL) {
         goto next;
@@ -773,6 +783,12 @@ ngx_http_flv_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
     if (ctx == NULL) {
         goto next;
     }
+
+    r = s->connection->data;
+
+    r->headers_out.status = NGX_HTTP_OK;
+
+    ngx_http_send_header(r);
 
     ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
                   "http flv play: name='%s' start=%uD duration=%uD reset=%d",

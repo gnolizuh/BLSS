@@ -137,7 +137,6 @@ ngx_http_flv_init_connection(ngx_http_request_t *r)
         return;
     }
 
-    r->read_event_handler = ngx_http_test_reading;
     r->blocked = 1;
 
     c->write->handler = ngx_http_flv_send;
