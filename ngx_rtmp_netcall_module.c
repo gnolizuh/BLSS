@@ -604,7 +604,7 @@ ngx_rtmp_netcall_http_format_session(ngx_rtmp_session_t *s, ngx_pool_t *pool)
     b->last = (u_char*) ngx_escape_uri(b->last, s->host.data, s->host.len,
                                        NGX_ESCAPE_ARGS);
 
-    b->last = ngx_cpymem(b->last, (u_char*) "&app=", sizeof("app=") - 1);
+    b->last = ngx_cpymem(b->last, (u_char*) "&app=", sizeof("&app=") - 1);
     b->last = (u_char*) ngx_escape_uri(b->last, s->app.data, s->app.len,
                                        NGX_ESCAPE_ARGS);
 
