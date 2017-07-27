@@ -644,17 +644,15 @@ ngx_rtmp_auto_relay_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
         goto next;
     }
 
+    ctx->slots = ngx_pcalloc(s->connection->pool,
+                             sizeof(ngx_int_t) * NGX_MAX_PROCESSES);
+    if (ctx->slots == NULL) {
+        goto next;
+    }
+
     if (apcf->relay_stream == NGX_RTMP_RELAY_STREAM_ALL) {
-
-        ctx->slots = ngx_pcalloc(s->connection->pool,
-                                 sizeof(ngx_int_t) * NGX_MAX_PROCESSES);
-        if (ctx->slots == NULL) {
-            goto next;
-        }
-
         ngx_rtmp_auto_relay_all_push(&ctx->push_evt);
     } else if (apcf->relay_stream == NGX_RTMP_RELAY_STREAM_HASH) {
-
         ngx_rtmp_auto_relay_hash_push(&ctx->push_evt);
     }
 
