@@ -168,7 +168,7 @@ ngx_rtmp_cmd_connect_init(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
     static ngx_rtmp_amf_elt_t  in_cmd[] = {
 
-        { NGX_RTMP_AMF_NUMBER,
+        { NGX_RTMP_AMF_INT32,
           ngx_string("hostMask"),
           &v.host_mask, sizeof(v.host_mask) },
 
