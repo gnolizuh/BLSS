@@ -268,7 +268,7 @@ ngx_rtmp_cmd_connect_init(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     }
 
     /* set host mask */
-    s->host_mask |= v.host_mask > 0 ? v.host_mask : NGX_RTMP_HOSTNAME_RTMP;
+    s->host_mask |= v.host_mask > 0 ? (int) v.host_mask : NGX_RTMP_HOSTNAME_RTMP;
 
     ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
             "connect: host='%s' app='%s' args='%s' flashver='%s' swf_url='%s' "
