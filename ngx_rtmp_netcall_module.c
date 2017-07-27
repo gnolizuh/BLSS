@@ -583,7 +583,8 @@ ngx_rtmp_netcall_http_format_session(ngx_rtmp_session_t *s, ngx_pool_t *pool)
     }
 
     b = ngx_create_temp_buf(pool,
-            sizeof("host=") - 1 + s->host.len * 3 +
+            sizeof("service=") - 1 + s->service.len * 3 +
+            sizeof("&host=") - 1 + s->host.len * 3 +
             sizeof("&app=") - 1 + s->app.len * 3 +
             sizeof("&flashver=") - 1 + s->flashver.len * 3 +
             sizeof("&swfurl=") - 1 + s->swf_url.len * 3 +
@@ -600,7 +601,11 @@ ngx_rtmp_netcall_http_format_session(ngx_rtmp_session_t *s, ngx_pool_t *pool)
     cl->buf = b;
     cl->next = NULL;
 
-    b->last = ngx_cpymem(b->last, (u_char*) "host=", sizeof("host=") - 1);
+    b->last = ngx_cpymem(b->last, (u_char*) "service=", sizeof("service=") - 1);
+    b->last = (u_char*) ngx_escape_uri(b->last, s->service.data, s->service.len,
+                                       NGX_ESCAPE_ARGS);
+
+    b->last = ngx_cpymem(b->last, (u_char*) "&host=", sizeof("&host=") - 1);
     b->last = (u_char*) ngx_escape_uri(b->last, s->host.data, s->host.len,
                                        NGX_ESCAPE_ARGS);
 

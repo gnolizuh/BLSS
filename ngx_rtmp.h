@@ -316,6 +316,7 @@ struct ngx_rtmp_session_s {
     ngx_str_t               app;
     ngx_str_t               name;
     ngx_str_t               host;
+    ngx_str_t               service;
     ngx_str_t               args;
     ngx_str_t               flashver;
     ngx_str_t               swf_url;

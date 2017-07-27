@@ -134,6 +134,7 @@ ngx_rtmp_cmd_get_conf(ngx_rtmp_session_t *s, const char *func)
 
     /* found service */
     s->svi_conf = hn->service->svi_conf;
+    s->service = hn->service->name;
 
     /* match application to find out app conf */
     cacfp = hn->service->applications.elts;
