@@ -773,7 +773,6 @@ static ngx_int_t
 ngx_http_flv_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
 {
     ngx_http_flv_rtmp_ctx_t             *ctx;
-    ngx_http_request_t                  *r;
 
     if (s->proto != NGX_PROTO_TYPE_HTTP_FLV_PULL) {
         goto next;
@@ -783,12 +782,6 @@ ngx_http_flv_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
     if (ctx == NULL) {
         goto next;
     }
-
-    r = s->connection->data;
-
-    r->headers_out.status = NGX_HTTP_OK;
-
-    ngx_http_send_header(r);
 
     ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
                   "http flv play: name='%s' start=%uD duration=%uD reset=%d",
