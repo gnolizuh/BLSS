@@ -15,6 +15,8 @@
 
 typedef struct {
     ngx_url_t                       url;
+    ngx_uint_t                      host_mask;
+    ngx_str_t                       host;
     ngx_str_t                       app;
     ngx_str_t                       name;
     ngx_str_t                       tc_url;
@@ -43,6 +45,8 @@ struct ngx_rtmp_relay_ctx_s {
     ngx_rtmp_relay_ctx_t           *play;
     ngx_rtmp_relay_ctx_t           *next;
 
+    ngx_uint_t                      host_mask;
+    ngx_str_t                       host;
     ngx_str_t                       app;
     ngx_str_t                       tc_url;
     ngx_str_t                       page_url;

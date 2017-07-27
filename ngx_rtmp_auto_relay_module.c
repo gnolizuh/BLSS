@@ -387,6 +387,8 @@ ngx_rtmp_auto_relay_all_push(ngx_event_t *ev)
     ngx_str_set(&at.page_url, "nginx-auto-all-push");
     at.tag = &ngx_rtmp_auto_relay_module;
     at.tc_url = s->tc_url;
+    at.host = s->host;
+    at.host_mask = s->host_mask & (NGX_RTMP_HOSTNAME_RTMP | NGX_RTMP_HOSTNAME_HTTP_FLV | NGX_RTMP_HOSTNAME_HLS);
 
     if (ctx->args[0]) {
         at.play_path.data = play_path;
@@ -544,6 +546,8 @@ ngx_rtmp_auto_relay_hash_push(ngx_event_t *ev)
     ngx_str_set(&at.page_url, "nginx-auto-hash-push");
     at.tag = &ngx_rtmp_auto_relay_module;
     at.tc_url = s->tc_url;
+    at.host = s->host;
+    at.host_mask = s->host_mask & (NGX_RTMP_HOSTNAME_RTMP | NGX_RTMP_HOSTNAME_HTTP_FLV | NGX_RTMP_HOSTNAME_HLS);
 
     if (ctx->args[0]) {
         at.play_path.data = play_path;
@@ -644,17 +648,15 @@ ngx_rtmp_auto_relay_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
         goto next;
     }
 
+    ctx->slots = ngx_pcalloc(s->connection->pool,
+                             sizeof(ngx_int_t) * NGX_MAX_PROCESSES);
+    if (ctx->slots == NULL) {
+        goto next;
+    }
+
     if (apcf->relay_stream == NGX_RTMP_RELAY_STREAM_ALL) {
-
-        ctx->slots = ngx_pcalloc(s->connection->pool,
-                                 sizeof(ngx_int_t) * NGX_MAX_PROCESSES);
-        if (ctx->slots == NULL) {
-            goto next;
-        }
-
         ngx_rtmp_auto_relay_all_push(&ctx->push_evt);
     } else if (apcf->relay_stream == NGX_RTMP_RELAY_STREAM_HASH) {
-
         ngx_rtmp_auto_relay_hash_push(&ctx->push_evt);
     }
 
@@ -711,6 +713,8 @@ ngx_rtmp_auto_relay_hash_pull(ngx_rtmp_session_t *s)
     ngx_str_set(&at.page_url, "nginx-auto-hash-pull");
     at.tag = &ngx_rtmp_auto_relay_module;
     at.tc_url = s->tc_url;
+    at.host = s->host;
+    at.host_mask = s->host_mask & (NGX_RTMP_HOSTNAME_RTMP | NGX_RTMP_HOSTNAME_HTTP_FLV | NGX_RTMP_HOSTNAME_HLS);
 
     if (ctx->args[0]) {
         at.play_path.data = play_path;

@@ -168,6 +168,14 @@ ngx_rtmp_cmd_connect_init(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
     static ngx_rtmp_amf_elt_t  in_cmd[] = {
 
+        { NGX_RTMP_AMF_NUMBER,
+          ngx_string("hostMask"),
+          &v.host_mask, sizeof(v.host_mask) },
+
+        { NGX_RTMP_AMF_STRING,
+          ngx_string("host"),
+          v.host, sizeof(v.host) },
+
         { NGX_RTMP_AMF_STRING,
           ngx_string("app"),
           v.app, sizeof(v.app) },
@@ -220,22 +228,24 @@ ngx_rtmp_cmd_connect_init(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     }
 
     // get host
-    str.data = v.tc_url;
-    str.len = ngx_strlen(v.tc_url);
-    if (str.len > 7 && !ngx_memcmp(str.data, "rtmp://", 7)) {
-        str.data += 7;
-        str.len -= 7;
-    }
-
-    p = ngx_strlchr(str.data, str.data + str.len, ':');
-    if (!p) {
-        p = ngx_strlchr(str.data, str.data + str.len, '/');
-        if (!p) {
-            p = str.data + str.len;
+    if (ngx_strlen(v.host) == 0) {
+        str.data = v.tc_url;
+        str.len = ngx_strlen(v.tc_url);
+        if (str.len > 7 && !ngx_memcmp(str.data, "rtmp://", 7)) {
+            str.data += 7;
+            str.len -= 7;
         }
-    }
 
-    ngx_memcpy(v.host, str.data, p - str.data);
+        p = ngx_strlchr(str.data, str.data + str.len, ':');
+        if (!p) {
+            p = ngx_strlchr(str.data, str.data + str.len, '/');
+            if (!p) {
+                p = str.data + str.len;
+            }
+        }
+
+        ngx_memcpy(v.host, str.data, p - str.data);
+    }
 
     // get app
     str.data = v.app;
@@ -258,7 +268,7 @@ ngx_rtmp_cmd_connect_init(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     }
 
     /* set host mask */
-    s->host_mask |= NGX_RTMP_HOSTNAME_RTMP;
+    s->host_mask |= v.host_mask > 0 ? (int) v.host_mask : NGX_RTMP_HOSTNAME_RTMP;
 
     ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
             "connect: host='%s' app='%s' args='%s' flashver='%s' swf_url='%s' "
