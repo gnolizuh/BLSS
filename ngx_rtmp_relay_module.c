@@ -812,7 +812,7 @@ ngx_rtmp_relay_send_connect(ngx_rtmp_session_t *s)
 
     static ngx_rtmp_amf_elt_t   out_cmd[] = {
 
-        { NGX_RTMP_AMF_INT32,
+        { NGX_RTMP_AMF_NUMBER,
           ngx_string("hostMask"),
           NULL, 0 }, /* <-- fill */
 
