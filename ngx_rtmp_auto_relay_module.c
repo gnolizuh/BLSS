@@ -387,6 +387,7 @@ ngx_rtmp_auto_relay_all_push(ngx_event_t *ev)
     ngx_str_set(&at.page_url, "nginx-auto-all-push");
     at.tag = &ngx_rtmp_auto_relay_module;
     at.tc_url = s->tc_url;
+    at.host = s->host;
 
     if (ctx->args[0]) {
         at.play_path.data = play_path;
@@ -544,6 +545,7 @@ ngx_rtmp_auto_relay_hash_push(ngx_event_t *ev)
     ngx_str_set(&at.page_url, "nginx-auto-hash-push");
     at.tag = &ngx_rtmp_auto_relay_module;
     at.tc_url = s->tc_url;
+    at.host = s->host;
 
     if (ctx->args[0]) {
         at.play_path.data = play_path;
