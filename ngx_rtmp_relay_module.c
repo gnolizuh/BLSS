@@ -394,6 +394,7 @@ ngx_rtmp_relay_create_connection(ngx_rtmp_conf_ctx_t *cctx, ngx_str_t* name,
     NGX_RTMP_RELAY_STR_COPY(flash_ver,  flash_ver);
     NGX_RTMP_RELAY_STR_COPY(play_path,  play_path);
 
+    rctx->host_mask = target->host_mask;
     rctx->live  = target->live;
     rctx->start = target->start;
     rctx->stop  = target->stop;
@@ -811,6 +812,10 @@ ngx_rtmp_relay_send_connect(ngx_rtmp_session_t *s)
 
     static ngx_rtmp_amf_elt_t   out_cmd[] = {
 
+        { NGX_RTMP_AMF_INT32,
+          ngx_string("hostMask"),
+          NULL, 0 }, /* <-- fill */
+
         { NGX_RTMP_AMF_STRING,
           ngx_string("host"),
           NULL, 0 }, /* <-- fill */
@@ -874,25 +879,30 @@ ngx_rtmp_relay_send_connect(ngx_rtmp_session_t *s)
         return NGX_ERROR;
     }
 
+    /* host_mask */
+    if (ctx->host_mask > 0) {
+        out_cmd[0].data = &ctx->host_mask;
+    }
+
     /* host */
     if (ctx->host.len) {
-        out_cmd[0].data = ctx->host.data;
-        out_cmd[0].len  = ctx->host.len;
+        out_cmd[1].data = ctx->host.data;
+        out_cmd[1].len  = ctx->host.len;
     }
 
     /* app */
     if (ctx->app.len) {
-        out_cmd[1].data = ctx->app.data;
-        out_cmd[1].len  = ctx->app.len;
+        out_cmd[2].data = ctx->app.data;
+        out_cmd[2].len  = ctx->app.len;
     } else {
-        out_cmd[1].data = cacf->name.data;
-        out_cmd[1].len  = cacf->name.len;
+        out_cmd[2].data = cacf->name.data;
+        out_cmd[2].len  = cacf->name.len;
     }
 
     /* tcUrl */
     if (ctx->tc_url.len) {
-        out_cmd[2].data = ctx->tc_url.data;
-        out_cmd[2].len  = ctx->tc_url.len;
+        out_cmd[3].data = ctx->tc_url.data;
+        out_cmd[3].len  = ctx->tc_url.len;
     } else {
         len = sizeof("rtmp://") - 1 + ctx->url.len +
             sizeof("/") - 1 + ctx->app.len;
@@ -900,7 +910,7 @@ ngx_rtmp_relay_send_connect(ngx_rtmp_session_t *s)
         if (p == NULL) {
             return NGX_ERROR;
         }
-        out_cmd[2].data = p;
+        out_cmd[3].data = p;
         p = ngx_cpymem(p, "rtmp://", sizeof("rtmp://") - 1);
 
         url_len = ctx->url.len;
@@ -912,24 +922,24 @@ ngx_rtmp_relay_send_connect(ngx_rtmp_session_t *s)
         p = ngx_cpymem(p, ctx->url.data, url_len);
         *p++ = '/';
         p = ngx_cpymem(p, ctx->app.data, ctx->app.len);
-        out_cmd[2].len = p - (u_char *)out_cmd[2].data;
+        out_cmd[3].len = p - (u_char *)out_cmd[3].data;
     }
 
     /* pageUrl */
-    out_cmd[3].data = ctx->page_url.data;
-    out_cmd[3].len  = ctx->page_url.len;
+    out_cmd[4].data = ctx->page_url.data;
+    out_cmd[4].len  = ctx->page_url.len;
 
     /* swfUrl */
-    out_cmd[4].data = ctx->swf_url.data;
-    out_cmd[4].len  = ctx->swf_url.len;
+    out_cmd[5].data = ctx->swf_url.data;
+    out_cmd[5].len  = ctx->swf_url.len;
 
     /* flashVer */
     if (ctx->flash_ver.len) {
-        out_cmd[5].data = ctx->flash_ver.data;
-        out_cmd[5].len  = ctx->flash_ver.len;
+        out_cmd[6].data = ctx->flash_ver.data;
+        out_cmd[6].len  = ctx->flash_ver.len;
     } else {
-        out_cmd[5].data = NGX_RTMP_RELAY_FLASHVER;
-        out_cmd[5].len  = sizeof(NGX_RTMP_RELAY_FLASHVER) - 1;
+        out_cmd[6].data = NGX_RTMP_RELAY_FLASHVER;
+        out_cmd[6].len  = sizeof(NGX_RTMP_RELAY_FLASHVER) - 1;
     }
 
     ngx_memzero(&h, sizeof(h));

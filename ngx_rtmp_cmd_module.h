@@ -23,6 +23,7 @@
 
 typedef struct {
     double                          trans;
+    int                             host_mask;
     u_char                          host[NGX_RTMP_MAX_URL];
     u_char                          app[NGX_RTMP_MAX_NAME];
     u_char                          args[NGX_RTMP_MAX_ARGS];

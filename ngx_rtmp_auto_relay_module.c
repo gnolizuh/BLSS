@@ -388,6 +388,7 @@ ngx_rtmp_auto_relay_all_push(ngx_event_t *ev)
     at.tag = &ngx_rtmp_auto_relay_module;
     at.tc_url = s->tc_url;
     at.host = s->host;
+    at.host_mask = s->host_mask & (NGX_RTMP_HOSTNAME_RTMP | NGX_RTMP_HOSTNAME_HTTP_FLV | NGX_RTMP_HOSTNAME_HLS);
 
     if (ctx->args[0]) {
         at.play_path.data = play_path;
@@ -546,6 +547,7 @@ ngx_rtmp_auto_relay_hash_push(ngx_event_t *ev)
     at.tag = &ngx_rtmp_auto_relay_module;
     at.tc_url = s->tc_url;
     at.host = s->host;
+    at.host_mask = s->host_mask & (NGX_RTMP_HOSTNAME_RTMP | NGX_RTMP_HOSTNAME_HTTP_FLV | NGX_RTMP_HOSTNAME_HLS);
 
     if (ctx->args[0]) {
         at.play_path.data = play_path;
@@ -712,6 +714,7 @@ ngx_rtmp_auto_relay_hash_pull(ngx_rtmp_session_t *s)
     at.tag = &ngx_rtmp_auto_relay_module;
     at.tc_url = s->tc_url;
     at.host = s->host;
+    at.host_mask = s->host_mask & (NGX_RTMP_HOSTNAME_RTMP | NGX_RTMP_HOSTNAME_HTTP_FLV | NGX_RTMP_HOSTNAME_HLS);
 
     if (ctx->args[0]) {
         at.play_path.data = play_path;
