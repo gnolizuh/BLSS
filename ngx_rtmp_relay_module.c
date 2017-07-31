@@ -917,8 +917,6 @@ ngx_rtmp_relay_send_connect(ngx_rtmp_session_t *s)
         }
 
         p = ngx_cpymem(p, ctx->url.data, url_len);
-        *p++ = '/';
-        p = ngx_cpymem(p, ctx->app.data, ctx->app.len);
         out_cmd[3].len = p - (u_char *)out_cmd[3].data;
     }
 
