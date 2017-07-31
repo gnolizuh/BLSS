@@ -1074,6 +1074,8 @@ ngx_rtmp_notify_publish_handle(ngx_rtmp_session_t *s,
     u->uri_part = 1;
     u->no_resolve = 1; /* want ip here */
 
+    target.host_mask = s->host_mask;
+
     if (ngx_parse_url(s->connection->pool, u) != NGX_OK) {
         ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
                       "notify: push failed '%V'", &local_name);
@@ -1152,6 +1154,8 @@ ngx_rtmp_notify_play_handle(ngx_rtmp_session_t *s,
     u->default_port = 1935;
     u->uri_part = 1;
     u->no_resolve = 1; /* want ip here */
+
+    target.host_mask = s->host_mask;
 
     if (ngx_parse_url(s->connection->pool, u) != NGX_OK) {
         ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
