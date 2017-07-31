@@ -413,7 +413,7 @@ ngx_rtmp_relay_create_connection(ngx_rtmp_conf_ctx_t *cctx, ngx_str_t* name,
         if (first != last) {
 
             /* deduce app */
-            p = ngx_strlchr(first, last, '/');
+            p = ngx_strrlchr(last, first, '/');
             if (p == NULL) {
                 p = last;
             }
@@ -880,15 +880,12 @@ ngx_rtmp_relay_send_connect(ngx_rtmp_session_t *s)
     }
 
     /* host_mask */
-    if (ctx->host_mask > 0) {
-        out_cmd[0].data = &ctx->host_mask;
-    }
+    out_cmd[0].data = &ctx->host_mask;
+    out_cmd[0].len = sizeof(ctx->host_mask);
 
     /* host */
-    if (ctx->host.len) {
-        out_cmd[1].data = ctx->host.data;
-        out_cmd[1].len  = ctx->host.len;
-    }
+    out_cmd[1].data = ctx->host.data;
+    out_cmd[1].len  = ctx->host.len;
 
     /* app */
     if (ctx->app.len) {
@@ -914,14 +911,12 @@ ngx_rtmp_relay_send_connect(ngx_rtmp_session_t *s)
         p = ngx_cpymem(p, "rtmp://", sizeof("rtmp://") - 1);
 
         url_len = ctx->url.len;
-        url_end = ngx_strlchr(ctx->url.data, ctx->url.data + ctx->url.len, '/');
+        url_end = ngx_strrlchr(ctx->url.data + ctx->url.len, ctx->url.data, '/');
         if (url_end) {
             url_len = (size_t) (url_end - ctx->url.data);
         }
 
         p = ngx_cpymem(p, ctx->url.data, url_len);
-        *p++ = '/';
-        p = ngx_cpymem(p, ctx->app.data, ctx->app.len);
         out_cmd[3].len = p - (u_char *)out_cmd[3].data;
     }
 
