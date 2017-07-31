@@ -413,7 +413,7 @@ ngx_rtmp_relay_create_connection(ngx_rtmp_conf_ctx_t *cctx, ngx_str_t* name,
         if (first != last) {
 
             /* deduce app */
-            p = ngx_strlchr(first, last, '/');
+            p = ngx_strrlchr(last, first, '/');
             if (p == NULL) {
                 p = last;
             }
