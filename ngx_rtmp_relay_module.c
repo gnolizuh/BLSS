@@ -880,15 +880,12 @@ ngx_rtmp_relay_send_connect(ngx_rtmp_session_t *s)
     }
 
     /* host_mask */
-    if (ctx->host_mask > 0) {
-        out_cmd[0].data = &ctx->host_mask;
-    }
+    out_cmd[0].data = &ctx->host_mask;
+    out_cmd[0].len = sizeof(ctx->host_mask);
 
     /* host */
-    if (ctx->host.len) {
-        out_cmd[1].data = ctx->host.data;
-        out_cmd[1].len  = ctx->host.len;
-    }
+    out_cmd[1].data = ctx->host.data;
+    out_cmd[1].len  = ctx->host.len;
 
     /* app */
     if (ctx->app.len) {

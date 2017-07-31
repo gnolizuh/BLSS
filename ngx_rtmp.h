@@ -202,7 +202,7 @@ typedef struct {
 #define NGX_PROTO_TYPE_RTMP_PUSH        3
 #define NGX_PROTO_TYPE_HLS_TS_PULL      4
 #define NGX_PROTO_TYPE_HLS_M3U8_PULL    5
-#define NGX_PROTO_TYPE_HTTP_FLV_PULL    4
+#define NGX_PROTO_TYPE_HTTP_FLV_PULL    6
 
 
 /* RTMP message types */
