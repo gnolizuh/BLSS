@@ -911,7 +911,7 @@ ngx_rtmp_relay_send_connect(ngx_rtmp_session_t *s)
         p = ngx_cpymem(p, "rtmp://", sizeof("rtmp://") - 1);
 
         url_len = ctx->url.len;
-        url_end = ngx_strlchr(ctx->url.data, ctx->url.data + ctx->url.len, '/');
+        url_end = ngx_strrlchr(ctx->url.data + ctx->url.len, ctx->url.data, '/');
         if (url_end) {
             url_len = (size_t) (url_end - ctx->url.data);
         }
