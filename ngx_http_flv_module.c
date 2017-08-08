@@ -565,6 +565,7 @@ ngx_http_flv_http_send_header(ngx_rtmp_session_t *s, ngx_rtmp_session_t *ps)
     ngx_rtmp_free_shared_chain(cscf, pkt);
 }
 
+
 static ngx_int_t
 ngx_http_flv_http_send_message(ngx_rtmp_session_t *s, ngx_chain_t *in, ngx_uint_t priority)
 {
