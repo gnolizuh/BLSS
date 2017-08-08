@@ -138,12 +138,12 @@ ngx_rtmp_cmd_get_conf(ngx_rtmp_session_t *s, const char *func)
 
     /* match application to find out app conf */
     cacfp = hn->service->applications.elts;
-    for(n = 0; n < hn->service->applications.nelts; ++n) {
-        if (cacfp[n]->name.len == s->app.len &&
-            ngx_strncmp(cacfp[n]->name.data, s->app.data, s->app.len) == 0)
+    for(n = 0; n < hn->service->applications.nelts; ++n, ++cacfp) {
+        if ((*cacfp)->name.len == s->app.len &&
+            ngx_strncmp((*cacfp)->name.data, s->app.data, s->app.len) == 0)
         {
             /* found app! */
-            s->app_conf = cacfp[n]->app_conf;
+            s->app_conf = (*cacfp)->app_conf;
             break;
         }
     }
