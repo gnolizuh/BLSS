@@ -176,17 +176,6 @@ ngx_http_header_out_t  ngx_http_headers_out[] = {
 };
 
 
-static u_char ngx_http_flv_header[] = {
-    "HTTP/1.1 200 OK\r\n"
-    "Cache-Control: no-cache\r\n"
-    "Content-Type: video/x-flv\r\n"
-    "Connection: close\r\n"
-    "Expires: -1\r\n"
-    "Pragma: no-cache\r\n"
-    "\r\n"
-};
-
-
 ngx_rtmp_send_handler_t ngx_http_flv_send_handler = {
     ngx_http_flv_http_send_header,
     ngx_http_flv_http_send_message,
