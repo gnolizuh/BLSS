@@ -41,7 +41,7 @@ struct ngx_rtmp_header_val_s {
 typedef struct {
     ngx_rtmp_expires_t         expires;
     time_t                     expires_time;
-    ngx_rtmp_complex_value_t  *expires_value;
+    ngx_http_complex_value_t  *expires_value;
     ngx_array_t               *headers;
 } ngx_rtmp_headers_conf_t;
 
@@ -569,15 +569,21 @@ ngx_http_flv_http_send_header(ngx_rtmp_session_t *s, ngx_rtmp_session_t *ps)
 {
     ngx_rtmp_core_srv_conf_t       *cscf;
     ngx_rtmp_headers_conf_t        *rhcf;
+    ngx_http_request_t             *r;
     ngx_rtmp_codec_ctx_t           *codec_ctx;
     ngx_chain_t                     c1, c2, *pkt;
     ngx_buf_t                       b1, b2;
 
     u_char flv_header[] = "FLV\x1\0\0\0\0\x9\0\0\0\0";
 
+    r = s->connection->data;
+
     cscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_core_module);
 
     rhcf = ngx_http_get_module_loc_conf(r, ngx_http_headers_filter_module);
+    if (rhcf == NULL) {
+        return;
+    }
 
     codec_ctx = ngx_rtmp_get_module_ctx(ps, ngx_rtmp_codec_module);
     if (codec_ctx != NULL) {
