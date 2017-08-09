@@ -12,6 +12,9 @@
 #include "ngx_rtmp_codec_module.h"
 
 
+extern ngx_module_t   ngx_http_headers_filter_module;
+
+
 typedef struct ngx_rtmp_header_val_s  ngx_rtmp_header_val_t;
 typedef struct ngx_http_complex_value_t ngx_rtmp_complex_value_t;
 
