@@ -589,11 +589,11 @@ ngx_http_flv_http_send_header(ngx_rtmp_session_t *s, ngx_rtmp_session_t *ps)
     r->header_sent = 1;
 
     if (r != r->main) {
-        return NGX_OK;
+        return;
     }
 
     if (r->http_version < NGX_HTTP_VERSION_10) {
-        return NGX_OK;
+        return;
     }
 
     if (r->method == NGX_HTTP_HEAD) {
@@ -739,7 +739,7 @@ ngx_http_flv_http_send_header(ngx_rtmp_session_t *s, ngx_rtmp_session_t *ps)
             host.data = addr;
 
             if (ngx_connection_local_sockaddr(c, &host, 0) != NGX_OK) {
-                return NGX_ERROR;
+                return;
             }
         }
 
@@ -850,7 +850,7 @@ ngx_http_flv_http_send_header(ngx_rtmp_session_t *s, ngx_rtmp_session_t *ps)
 
     b = ngx_create_temp_buf(r->pool, len);
     if (b == NULL) {
-        return NGX_ERROR;
+        return;
     }
 
     /* "HTTP/1.x " */
@@ -864,174 +864,6 @@ ngx_http_flv_http_send_header(ngx_rtmp_session_t *s, ngx_rtmp_session_t *ps)
         b->last = ngx_sprintf(b->last, "%03ui ", status);
     }
     *b->last++ = CR; *b->last++ = LF;
-
-    if (r->headers_out.date == NULL) {
-        b->last = ngx_cpymem(b->last, "Date: ", sizeof("Date: ") - 1);
-        b->last = ngx_cpymem(b->last, ngx_cached_http_time.data,
-                             ngx_cached_http_time.len);
-
-        *b->last++ = CR; *b->last++ = LF;
-    }
-
-    if (r->headers_out.content_type.len) {
-        b->last = ngx_cpymem(b->last, "Content-Type: ",
-                             sizeof("Content-Type: ") - 1);
-        p = b->last;
-        b->last = ngx_copy(b->last, r->headers_out.content_type.data,
-                           r->headers_out.content_type.len);
-
-        if (r->headers_out.content_type_len == r->headers_out.content_type.len
-            && r->headers_out.charset.len)
-        {
-            b->last = ngx_cpymem(b->last, "; charset=",
-                                 sizeof("; charset=") - 1);
-            b->last = ngx_copy(b->last, r->headers_out.charset.data,
-                               r->headers_out.charset.len);
-
-            /* update r->headers_out.content_type for possible logging */
-
-            r->headers_out.content_type.len = b->last - p;
-            r->headers_out.content_type.data = p;
-        }
-
-        *b->last++ = CR; *b->last++ = LF;
-    }
-
-    if (r->headers_out.content_length == NULL
-        && r->headers_out.content_length_n >= 0)
-    {
-        b->last = ngx_sprintf(b->last, "Content-Length: %O" CRLF,
-                              r->headers_out.content_length_n);
-    }
-
-    if (r->headers_out.last_modified == NULL
-        && r->headers_out.last_modified_time != -1)
-    {
-        b->last = ngx_cpymem(b->last, "Last-Modified: ",
-                             sizeof("Last-Modified: ") - 1);
-        b->last = ngx_http_time(b->last, r->headers_out.last_modified_time);
-
-        *b->last++ = CR; *b->last++ = LF;
-    }
-
-    if (host.data) {
-
-        p = b->last + sizeof("Location: ") - 1;
-
-        b->last = ngx_cpymem(b->last, "Location: http",
-                             sizeof("Location: http") - 1);
-
-#if (NGX_HTTP_SSL)
-        if (c->ssl) {
-            *b->last++ ='s';
-        }
-#endif
-
-        *b->last++ = ':'; *b->last++ = '/'; *b->last++ = '/';
-        b->last = ngx_copy(b->last, host.data, host.len);
-
-        if (port) {
-            b->last = ngx_sprintf(b->last, ":%ui", port);
-        }
-
-        b->last = ngx_copy(b->last, r->headers_out.location->value.data,
-                           r->headers_out.location->value.len);
-
-        /* update r->headers_out.location->value for possible logging */
-
-        r->headers_out.location->value.len = b->last - p;
-        r->headers_out.location->value.data = p;
-        ngx_str_set(&r->headers_out.location->key, "Location");
-
-        *b->last++ = CR; *b->last++ = LF;
-    }
-
-    if (r->chunked) {
-        b->last = ngx_cpymem(b->last, "Transfer-Encoding: chunked" CRLF,
-                             sizeof("Transfer-Encoding: chunked" CRLF) - 1);
-    }
-
-    if (r->headers_out.status == NGX_HTTP_SWITCHING_PROTOCOLS) {
-        b->last = ngx_cpymem(b->last, "Connection: upgrade" CRLF,
-                             sizeof("Connection: upgrade" CRLF) - 1);
-
-    } else if (r->keepalive) {
-        b->last = ngx_cpymem(b->last, "Connection: keep-alive" CRLF,
-                             sizeof("Connection: keep-alive" CRLF) - 1);
-
-        if (clcf->keepalive_header) {
-            b->last = ngx_sprintf(b->last, "Keep-Alive: timeout=%T" CRLF,
-                                  clcf->keepalive_header);
-        }
-
-    } else {
-        b->last = ngx_cpymem(b->last, "Connection: close" CRLF,
-                             sizeof("Connection: close" CRLF) - 1);
-    }
-
-#if (NGX_HTTP_GZIP)
-    if (r->gzip_vary) {
-        if (clcf->gzip_vary) {
-            len += sizeof("Vary: Accept-Encoding" CRLF) - 1;
-
-        } else {
-            r->gzip_vary = 0;
-        }
-    }
-#endif
-
-    part = &r->headers_out.headers.part;
-    header = part->elts;
-
-    for (i = 0; /* void */; i++) {
-
-        if (i >= part->nelts) {
-            if (part->next == NULL) {
-                break;
-            }
-
-            part = part->next;
-            header = part->elts;
-            i = 0;
-        }
-
-        if (header[i].hash == 0) {
-            continue;
-        }
-
-        len += header[i].key.len + sizeof(": ") - 1 + header[i].value.len
-               + sizeof(CRLF) - 1;
-    }
-
-    b = ngx_create_temp_buf(r->pool, len);
-    if (b == NULL) {
-        return NGX_ERROR;
-    }
-
-    /* "HTTP/1.x " */
-    b->last = ngx_cpymem(b->last, "HTTP/1.1 ", sizeof("HTTP/1.x ") - 1);
-
-    /* status line */
-    if (status_line) {
-        b->last = ngx_copy(b->last, status_line->data, status_line->len);
-
-    } else {
-        b->last = ngx_sprintf(b->last, "%03ui ", status);
-    }
-    *b->last++ = CR; *b->last++ = LF;
-
-    if (r->headers_out.server == NULL) {
-        if (clcf->server_tokens) {
-            p = (u_char *) ngx_http_server_full_string;
-            len = sizeof(ngx_http_server_full_string) - 1;
-
-        } else {
-            p = (u_char *) ngx_http_server_string;
-            len = sizeof(ngx_http_server_string) - 1;
-        }
-
-        b->last = ngx_cpymem(b->last, p, len);
-    }
 
     if (r->headers_out.date == NULL) {
         b->last = ngx_cpymem(b->last, "Date: ", sizeof("Date: ") - 1);
