@@ -18,7 +18,7 @@ typedef ngx_int_t (*ngx_rtmp_set_header_pt)(ngx_http_request_t *r,
     ngx_rtmp_header_val_t *hv, ngx_str_t *value);
 
 
-struct ngx_http_header_val_s {
+struct ngx_rtmp_header_val_s {
     ngx_http_complex_value_t   value;
     ngx_str_t                  key;
     ngx_rtmp_set_header_pt     handler;
