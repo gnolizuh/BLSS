@@ -504,6 +504,8 @@ ngx_http_flv_http_handler(ngx_http_request_t *r)
     cln->handler = ngx_http_flv_cleanup;
     cln->data = r;
 
+    r->headers_out.status = NGX_HTTP_OK;
+
     return NGX_OK;
 }
 
