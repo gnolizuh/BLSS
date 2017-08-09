@@ -674,10 +674,23 @@ ngx_http_flv_http_send_header(ngx_rtmp_session_t *s, ngx_rtmp_session_t *ps)
     ngx_rtmp_codec_ctx_t           *codec_ctx;
     ngx_chain_t                     c1, c2, *pkt;
     ngx_buf_t                       b1, b2;
-    size_t                          len;
-    ngx_str_t                       host, *status_line;
-    ngx_uint_t                      status, i, port;
-    ngx_http_core_loc_conf_t       *clcf;
+
+    u_char                    *p;
+    size_t                     len;
+    ngx_str_t                  host, *status_line;
+    ngx_buf_t                 *b;
+    ngx_uint_t                 status, i, port;
+    ngx_chain_t                out;
+    ngx_list_part_t           *part;
+    ngx_table_elt_t           *header;
+    ngx_connection_t          *c;
+    ngx_http_core_loc_conf_t  *clcf;
+    // ngx_http_core_srv_conf_t  *cscf;
+    struct sockaddr_in        *sin;
+#if (NGX_HAVE_INET6)
+    struct sockaddr_in6       *sin6;
+#endif
+    u_char                     addr[NGX_SOCKADDR_STRLEN];
 
     // u_char flv_header[] = "FLV\x1\0\0\0\0\x9\0\0\0\0";
 
