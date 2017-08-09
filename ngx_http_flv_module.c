@@ -12,11 +12,7 @@
 #include "ngx_rtmp_codec_module.h"
 
 
-extern ngx_module_t   ngx_http_headers_filter_module;
-
-
 typedef struct ngx_rtmp_header_val_s  ngx_rtmp_header_val_t;
-typedef struct ngx_http_complex_value_t ngx_rtmp_complex_value_t;
 
 typedef ngx_int_t (*ngx_rtmp_set_header_pt)(ngx_http_request_t *r,
     ngx_rtmp_header_val_t *hv, ngx_str_t *value);
@@ -34,7 +30,7 @@ typedef enum {
 
 
 struct ngx_rtmp_header_val_s {
-    ngx_rtmp_complex_value_t   value;
+    ngx_http_complex_value_t   value;
     ngx_str_t                  key;
     ngx_rtmp_set_header_pt     handler;
     ngx_uint_t                 offset;
@@ -54,6 +50,7 @@ static ngx_rtmp_play_pt                 next_play;
 static ngx_rtmp_close_stream_pt         next_close_stream;
 
 
+extern ngx_module_t   ngx_http_headers_filter_module;
 extern ngx_uint_t ngx_rtmp_playing;
 ngx_uint_t ngx_http_flv_naccepted;
 
