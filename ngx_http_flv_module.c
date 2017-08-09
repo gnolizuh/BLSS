@@ -155,27 +155,6 @@ static ngx_str_t ngx_http_status_lines[] = {
 };
 
 
-ngx_http_header_out_t  ngx_http_headers_out[] = {
-    { ngx_string("Server"), offsetof(ngx_http_headers_out_t, server) },
-    { ngx_string("Date"), offsetof(ngx_http_headers_out_t, date) },
-    { ngx_string("Content-Length"),
-                 offsetof(ngx_http_headers_out_t, content_length) },
-    { ngx_string("Content-Encoding"),
-                 offsetof(ngx_http_headers_out_t, content_encoding) },
-    { ngx_string("Location"), offsetof(ngx_http_headers_out_t, location) },
-    { ngx_string("Last-Modified"),
-                 offsetof(ngx_http_headers_out_t, last_modified) },
-    { ngx_string("Accept-Ranges"),
-                 offsetof(ngx_http_headers_out_t, accept_ranges) },
-    { ngx_string("Expires"), offsetof(ngx_http_headers_out_t, expires) },
-    { ngx_string("Cache-Control"),
-                 offsetof(ngx_http_headers_out_t, cache_control) },
-    { ngx_string("ETag"), offsetof(ngx_http_headers_out_t, etag) },
-
-    { ngx_null_string, 0 }
-};
-
-
 ngx_rtmp_send_handler_t ngx_http_flv_send_handler = {
     ngx_http_flv_http_send_header,
     ngx_http_flv_http_send_message,
