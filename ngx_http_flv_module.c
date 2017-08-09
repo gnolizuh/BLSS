@@ -685,7 +685,7 @@ ngx_http_flv_http_send_header(ngx_rtmp_session_t *s, ngx_rtmp_session_t *ps)
     ngx_table_elt_t           *header;
     ngx_connection_t          *c;
     ngx_http_core_loc_conf_t  *clcf;
-    // ngx_http_core_srv_conf_t  *cscf;
+    ngx_http_core_srv_conf_t  *hcscf;
     struct sockaddr_in        *sin;
 #if (NGX_HAVE_INET6)
     struct sockaddr_in6       *sin6;
@@ -847,8 +847,8 @@ ngx_http_flv_http_send_header(ngx_rtmp_session_t *s, ngx_rtmp_session_t *ps)
         r->headers_out.location->hash = 0;
 
         if (clcf->server_name_in_redirect) {
-            cscf = ngx_http_get_module_srv_conf(r, ngx_http_core_module);
-            host = cscf->server_name;
+            hcscf = ngx_http_get_module_srv_conf(r, ngx_http_core_module);
+            host = hcscf->server_name;
 
         } else if (r->headers_in.server.len) {
             host = r->headers_in.server;
@@ -1148,6 +1148,8 @@ ngx_http_flv_http_send_header(ngx_rtmp_session_t *s, ngx_rtmp_session_t *ps)
 
     out.buf = b;
     out.next = NULL;
+
+    cscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_core_module);
 
     pkt = ngx_rtmp_append_shared_bufs(cscf, NULL, &out);
 
