@@ -75,6 +75,107 @@ static ngx_chain_t * ngx_http_flv_http_append_shared_bufs(ngx_rtmp_session_t *s,
 static void ngx_http_flv_http_free_shared_chain(ngx_rtmp_session_t *s, ngx_chain_t *in);
 
 
+static char ngx_http_server_string[] = "Server: nginx" CRLF;
+static char ngx_http_server_full_string[] = "Server: " NGINX_VER CRLF;
+
+
+static ngx_str_t ngx_http_status_lines[] = {
+
+    ngx_string("200 OK"),
+    ngx_string("201 Created"),
+    ngx_string("202 Accepted"),
+    ngx_null_string,  /* "203 Non-Authoritative Information" */
+    ngx_string("204 No Content"),
+    ngx_null_string,  /* "205 Reset Content" */
+    ngx_string("206 Partial Content"),
+
+    /* ngx_null_string, */  /* "207 Multi-Status" */
+
+#define NGX_HTTP_LAST_2XX  207
+#define NGX_HTTP_OFF_3XX   (NGX_HTTP_LAST_2XX - 200)
+
+    /* ngx_null_string, */  /* "300 Multiple Choices" */
+
+    ngx_string("301 Moved Permanently"),
+    ngx_string("302 Moved Temporarily"),
+    ngx_string("303 See Other"),
+    ngx_string("304 Not Modified"),
+    ngx_null_string,  /* "305 Use Proxy" */
+    ngx_null_string,  /* "306 unused" */
+    ngx_string("307 Temporary Redirect"),
+
+#define NGX_HTTP_LAST_3XX  308
+#define NGX_HTTP_OFF_4XX   (NGX_HTTP_LAST_3XX - 301 + NGX_HTTP_OFF_3XX)
+
+    ngx_string("400 Bad Request"),
+    ngx_string("401 Unauthorized"),
+    ngx_string("402 Payment Required"),
+    ngx_string("403 Forbidden"),
+    ngx_string("404 Not Found"),
+    ngx_string("405 Not Allowed"),
+    ngx_string("406 Not Acceptable"),
+    ngx_null_string,  /* "407 Proxy Authentication Required" */
+    ngx_string("408 Request Time-out"),
+    ngx_string("409 Conflict"),
+    ngx_string("410 Gone"),
+    ngx_string("411 Length Required"),
+    ngx_string("412 Precondition Failed"),
+    ngx_string("413 Request Entity Too Large"),
+    ngx_string("414 Request-URI Too Large"),
+    ngx_string("415 Unsupported Media Type"),
+    ngx_string("416 Requested Range Not Satisfiable"),
+
+    /* ngx_null_string, */  /* "417 Expectation Failed" */
+    /* ngx_null_string, */  /* "418 unused" */
+    /* ngx_null_string, */  /* "419 unused" */
+    /* ngx_null_string, */  /* "420 unused" */
+    /* ngx_null_string, */  /* "421 unused" */
+    /* ngx_null_string, */  /* "422 Unprocessable Entity" */
+    /* ngx_null_string, */  /* "423 Locked" */
+    /* ngx_null_string, */  /* "424 Failed Dependency" */
+
+#define NGX_HTTP_LAST_4XX  417
+#define NGX_HTTP_OFF_5XX   (NGX_HTTP_LAST_4XX - 400 + NGX_HTTP_OFF_4XX)
+
+    ngx_string("500 Internal Server Error"),
+    ngx_string("501 Not Implemented"),
+    ngx_string("502 Bad Gateway"),
+    ngx_string("503 Service Temporarily Unavailable"),
+    ngx_string("504 Gateway Time-out"),
+
+    ngx_null_string,        /* "505 HTTP Version Not Supported" */
+    ngx_null_string,        /* "506 Variant Also Negotiates" */
+    ngx_string("507 Insufficient Storage"),
+    /* ngx_null_string, */  /* "508 unused" */
+    /* ngx_null_string, */  /* "509 unused" */
+    /* ngx_null_string, */  /* "510 Not Extended" */
+
+#define NGX_HTTP_LAST_5XX  508
+
+};
+
+
+ngx_http_header_out_t  ngx_http_headers_out[] = {
+    { ngx_string("Server"), offsetof(ngx_http_headers_out_t, server) },
+    { ngx_string("Date"), offsetof(ngx_http_headers_out_t, date) },
+    { ngx_string("Content-Length"),
+                 offsetof(ngx_http_headers_out_t, content_length) },
+    { ngx_string("Content-Encoding"),
+                 offsetof(ngx_http_headers_out_t, content_encoding) },
+    { ngx_string("Location"), offsetof(ngx_http_headers_out_t, location) },
+    { ngx_string("Last-Modified"),
+                 offsetof(ngx_http_headers_out_t, last_modified) },
+    { ngx_string("Accept-Ranges"),
+                 offsetof(ngx_http_headers_out_t, accept_ranges) },
+    { ngx_string("Expires"), offsetof(ngx_http_headers_out_t, expires) },
+    { ngx_string("Cache-Control"),
+                 offsetof(ngx_http_headers_out_t, cache_control) },
+    { ngx_string("ETag"), offsetof(ngx_http_headers_out_t, etag) },
+
+    { ngx_null_string, 0 }
+};
+
+
 static u_char ngx_http_flv_header[] = {
     "HTTP/1.1 200 OK\r\n"
     "Cache-Control: no-cache\r\n"
