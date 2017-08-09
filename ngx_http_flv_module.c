@@ -13,18 +13,38 @@
 
 
 typedef struct ngx_rtmp_header_val_s  ngx_rtmp_header_val_t;
+typedef struct ngx_http_complex_value_t ngx_rtmp_complex_value_t;
 
 typedef ngx_int_t (*ngx_rtmp_set_header_pt)(ngx_http_request_t *r,
     ngx_rtmp_header_val_t *hv, ngx_str_t *value);
 
 
+typedef enum {
+    NGX_RTMP_EXPIRES_OFF,
+    NGX_RTMP_EXPIRES_EPOCH,
+    NGX_RTMP_EXPIRES_MAX,
+    NGX_RTMP_EXPIRES_ACCESS,
+    NGX_RTMP_EXPIRES_MODIFIED,
+    NGX_RTMP_EXPIRES_DAILY,
+    NGX_RTMP_EXPIRES_UNSET
+} ngx_rtmp_expires_t;
+
+
 struct ngx_rtmp_header_val_s {
-    ngx_http_complex_value_t   value;
+    ngx_rtmp_complex_value_t   value;
     ngx_str_t                  key;
     ngx_rtmp_set_header_pt     handler;
     ngx_uint_t                 offset;
     ngx_uint_t                 always;  /* unsigned  always:1 */
 };
+
+
+typedef struct {
+    ngx_rtmp_expires_t         expires;
+    time_t                     expires_time;
+    ngx_rtmp_complex_value_t  *expires_value;
+    ngx_array_t               *headers;
+} ngx_rtmp_headers_conf_t;
 
 
 static ngx_rtmp_play_pt                 next_play;
