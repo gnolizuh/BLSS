@@ -669,11 +669,11 @@ static void
 ngx_http_flv_http_send_header(ngx_rtmp_session_t *s, ngx_rtmp_session_t *ps)
 {
     ngx_rtmp_core_srv_conf_t       *cscf;
-    ngx_rtmp_headers_conf_t        *rhcf;
+    // ngx_rtmp_headers_conf_t        *rhcf;
     ngx_http_request_t             *r;
-    ngx_rtmp_codec_ctx_t           *codec_ctx;
-    ngx_chain_t                     c1, c2, *pkt;
-    ngx_buf_t                       b1, b2;
+    // ngx_rtmp_codec_ctx_t           *codec_ctx;
+    ngx_chain_t                     /*c1, c2, */*pkt;
+    // ngx_buf_t                       b1, b2;
 
     u_char                    *p;
     size_t                     len;
