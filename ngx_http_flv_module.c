@@ -12,6 +12,21 @@
 #include "ngx_rtmp_codec_module.h"
 
 
+typedef struct ngx_rtmp_header_val_s  ngx_rtmp_header_val_t;
+
+typedef ngx_int_t (*ngx_rtmp_set_header_pt)(ngx_http_request_t *r,
+    ngx_rtmp_header_val_t *hv, ngx_str_t *value);
+
+
+struct ngx_http_header_val_s {
+    ngx_http_complex_value_t   value;
+    ngx_str_t                  key;
+    ngx_rtmp_set_header_pt     handler;
+    ngx_uint_t                 offset;
+    ngx_uint_t                 always;  /* unsigned  always:1 */
+};
+
+
 static ngx_rtmp_play_pt                 next_play;
 static ngx_rtmp_close_stream_pt         next_close_stream;
 
@@ -533,6 +548,7 @@ static void
 ngx_http_flv_http_send_header(ngx_rtmp_session_t *s, ngx_rtmp_session_t *ps)
 {
     ngx_rtmp_core_srv_conf_t       *cscf;
+    ngx_rtmp_headers_conf_t        *rhcf;
     ngx_rtmp_codec_ctx_t           *codec_ctx;
     ngx_chain_t                     c1, c2, *pkt;
     ngx_buf_t                       b1, b2;
@@ -540,6 +556,8 @@ ngx_http_flv_http_send_header(ngx_rtmp_session_t *s, ngx_rtmp_session_t *ps)
     u_char flv_header[] = "FLV\x1\0\0\0\0\x9\0\0\0\0";
 
     cscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_core_module);
+
+    rhcf = ngx_http_get_module_loc_conf(r, ngx_http_headers_filter_module);
 
     codec_ctx = ngx_rtmp_get_module_ctx(ps, ngx_rtmp_codec_module);
     if (codec_ctx != NULL) {
