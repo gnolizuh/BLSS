@@ -649,13 +649,13 @@ ngx_http_flv_http_send_header(ngx_rtmp_session_t *s, ngx_rtmp_session_t *ps)
     ngx_rtmp_core_srv_conf_t       *cscf;
     ngx_http_core_loc_conf_t       *clcf;
     ngx_http_core_srv_conf_t       *hcscf;
+    ngx_rtmp_codec_ctx_t           *codec_ctx;
     struct sockaddr_in             *sin;
 #if (NGX_HAVE_INET6)
     struct sockaddr_in6            *sin6;
 #endif
     u_char                          addr[NGX_SOCKADDR_STRLEN];
-
-    // u_char flv_header[] = "FLV\x1\0\0\0\0\x9\0\0\0\0";
+    u_char                          flv_header[] = "FLV\x1\0\0\0\0\x9\0\0\0\0";
 
     r = s->connection->data;
 
@@ -691,7 +691,8 @@ ngx_http_flv_http_send_header(ngx_rtmp_session_t *s, ngx_rtmp_session_t *ps)
 
     len = sizeof("HTTP/1.x ") - 1 + sizeof(CRLF) - 1
               /* the end of the header */
-              + sizeof(CRLF) - 1;
+              + sizeof(CRLF) - 1
+              + sizeof(flv_header) - 1;
 
     /* status line */
 
@@ -1106,6 +1107,21 @@ ngx_http_flv_http_send_header(ngx_rtmp_session_t *s, ngx_rtmp_session_t *ps)
     *b->last++ = CR; *b->last++ = LF;
 
     r->header_size = b->last - b->pos;
+
+    /* the begin of FLV header */
+    codec_ctx = ngx_rtmp_get_module_ctx(ps, ngx_rtmp_codec_module);
+
+    if (codec_ctx != NULL) {
+        if (codec_ctx->video_header != NULL) {
+            flv_header[4] |= 0x01;
+        }
+
+        if (codec_ctx->aac_header != NULL){
+            flv_header[4] |= 0x04;
+        }
+    }
+
+    b->last = ngx_cpymem(b->last, flv_header, sizeof(flv_header) - 1);
 
     if (r->header_only) {
         b->last_buf = 1;
