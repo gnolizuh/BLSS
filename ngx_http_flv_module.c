@@ -559,6 +559,10 @@ ngx_http_flv_http_handler(ngx_http_request_t *r)
     cln->handler = ngx_http_flv_cleanup;
     cln->data = r;
 
+    r->headers_out.status = NGX_HTTP_OK;
+
+    ngx_http_flv_headers_filter(r);
+
     return NGX_OK;
 }
 
@@ -713,8 +717,6 @@ ngx_http_flv_http_send_header(ngx_rtmp_session_t *s, ngx_rtmp_session_t *ps)
     u_char                          flv_header[] = "FLV\x1\0\0\0\0\x9\0\0\0\0";
 
     r = s->connection->data;
-
-    r->headers_out.status = NGX_HTTP_OK;
 
     if (r->header_sent) {
         return;
