@@ -93,6 +93,10 @@ A nginx.conf example：
             listen 80 reuseport;
 
             location / {
+
+                add_header 'Content-Type' 'video/x-flv';      # content type header
+                add_header 'Access-Control-Allow-Origin' '*'; # cross-domain header
+
                 http_flv on;    # delivery http-flv
             }
         }

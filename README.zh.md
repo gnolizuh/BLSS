@@ -93,6 +93,10 @@ BLSS是一个NGINX第三方模块，它基于开源项目[nginx-rtmp-module](htt
             listen 80 reuseport;
 
             location / {
+
+                add_header 'Content-Type' 'video/x-flv';      # content type header
+                add_header 'Access-Control-Allow-Origin' '*'; # cross-domain header
+
                 http_flv on;    # 开启http-flv分发模式
             }
         }
