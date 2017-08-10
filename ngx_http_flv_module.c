@@ -235,6 +235,61 @@ ngx_module_t ngx_http_flv_rtmpmodule = {
 
 
 static ngx_int_t
+ngx_http_flv_headers_filter(ngx_http_request_t *r)
+{
+    ngx_str_t                      value;
+    ngx_uint_t                     i, safe_status;
+    ngx_rtmp_header_val_t         *h;
+    ngx_rtmp_headers_conf_t       *conf;
+
+    conf = ngx_http_get_module_loc_conf(r, ngx_http_headers_filter_module);
+
+    if (conf->headers == NULL) {
+        return NGX_ERROR;
+    }
+
+    switch (r->headers_out.status) {
+
+    case NGX_HTTP_OK:
+    case NGX_HTTP_CREATED:
+    case NGX_HTTP_NO_CONTENT:
+    case NGX_HTTP_PARTIAL_CONTENT:
+    case NGX_HTTP_MOVED_PERMANENTLY:
+    case NGX_HTTP_MOVED_TEMPORARILY:
+    case NGX_HTTP_SEE_OTHER:
+    case NGX_HTTP_NOT_MODIFIED:
+    case NGX_HTTP_TEMPORARY_REDIRECT:
+        safe_status = 1;
+        break;
+
+    default:
+        safe_status = 0;
+        break;
+    }
+
+    if (conf->headers) {
+        h = conf->headers->elts;
+        for (i = 0; i < conf->headers->nelts; i++) {
+
+            if (!safe_status && !h[i].always) {
+                continue;
+            }
+
+            if (ngx_http_complex_value(r, &h[i].value, &value) != NGX_OK) {
+                return NGX_ERROR;
+            }
+
+            if (h[i].handler(r, &h[i], &value) != NGX_OK) {
+                return NGX_ERROR;
+            }
+        }
+    }
+
+    return NGX_OK;
+}
+
+
+static ngx_int_t
 ngx_http_flv_send_message(ngx_rtmp_session_t *s, ngx_chain_t *out,
         ngx_uint_t priority)
 {
