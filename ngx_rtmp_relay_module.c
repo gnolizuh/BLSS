@@ -502,6 +502,9 @@ ngx_rtmp_relay_create_connection(ngx_rtmp_conf_ctx_t *cctx, ngx_str_t* name,
     }
     rs->app_conf = cctx->app_conf;
     rs->relay = 1;
+    rs->host = rctx->host;
+    rs->app = rctx->app;
+    rs->tc_url = rctx->tc_url;
     rctx->session = rs;
     ngx_rtmp_set_ctx(rs, rctx, ngx_rtmp_relay_module);
     ngx_str_set(&rs->flashver, "ngx-local-relay");
@@ -777,6 +780,11 @@ ngx_rtmp_relay_play_local(ngx_rtmp_session_t *s)
 
     s->proto = NGX_PROTO_TYPE_RTMP_PULL;
 
+    if (ngx_rtmp_cmd_get_conf(s, "play_local") != NGX_OK) {
+
+        return NGX_ERROR;
+    }
+
     return ngx_rtmp_play(s, &v);
 }
 
@@ -798,6 +806,11 @@ ngx_rtmp_relay_publish_local(ngx_rtmp_session_t *s)
             ngx_min(sizeof(v.name) - 1, ctx->name.len))) = 0;
 
     s->proto = NGX_PROTO_TYPE_RTMP_PUSH;
+
+    if (ngx_rtmp_cmd_get_conf(s, "publish_local") != NGX_OK) {
+
+        return NGX_ERROR;
+    }
 
     return ngx_rtmp_publish(s, &v);
 }
