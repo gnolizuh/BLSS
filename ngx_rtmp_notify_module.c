@@ -1373,7 +1373,7 @@ ngx_rtmp_notify_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
     ngx_rtmp_netcall_init_t         ci;
     ngx_url_t                      *url;
 
-    if (s->auto_relayed) {
+    if (s->auto_relayed || s->relay) {
         goto next;
     }
 
@@ -1415,7 +1415,7 @@ ngx_rtmp_notify_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
     ngx_rtmp_netcall_init_t         ci;
     ngx_url_t                      *url;
 
-    if (s->auto_relayed) {
+    if (s->auto_relayed || s->relay) {
         goto next;
     }
 
