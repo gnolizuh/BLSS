@@ -503,7 +503,7 @@ ngx_rtmp_relay_create_connection(ngx_rtmp_conf_ctx_t *cctx, ngx_str_t* name,
     rs->app_conf = cctx->app_conf;
     rs->relay = 1;
 
-#define NGX_RTMP_RELAY_STR_COPY1(to, from)
+#define NGX_RTMP_RELAY_STR_COPY1(to, from)                         \
     do {                                                           \
         rs->to.len = rctx->from.len;                               \
         rs->to.data = ngx_palloc(c->pool, rctx->from.len);         \
