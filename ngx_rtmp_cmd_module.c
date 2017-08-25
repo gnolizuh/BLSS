@@ -113,7 +113,7 @@ ngx_rtmp_cmd_fill_args(u_char name[NGX_RTMP_MAX_NAME],
 }
 
 
-ngx_int_t
+static ngx_int_t
 ngx_rtmp_cmd_get_conf(ngx_rtmp_session_t *s, const char *func)
 {
     ngx_rtmp_core_app_conf_t  **cacfp;

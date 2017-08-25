@@ -386,6 +386,7 @@ ngx_rtmp_relay_create_connection(ngx_rtmp_conf_ctx_t *cctx, ngx_str_t* name,
         goto clear;                                                           \
     }
 
+    NGX_RTMP_RELAY_STR_COPY(service,    service);
     NGX_RTMP_RELAY_STR_COPY(host,       host);
     NGX_RTMP_RELAY_STR_COPY(app,        app);
     NGX_RTMP_RELAY_STR_COPY(tc_url,     tc_url);
@@ -513,6 +514,7 @@ ngx_rtmp_relay_create_connection(ngx_rtmp_conf_ctx_t *cctx, ngx_str_t* name,
         ngx_memcpy(rs->to.data, rctx->from.data, rctx->from.len);  \
     } while(0)
 
+    NGX_RTMP_RELAY_STR_COPY1(service, service);
     NGX_RTMP_RELAY_STR_COPY1(host, host);
     NGX_RTMP_RELAY_STR_COPY1(app, app);
     NGX_RTMP_RELAY_STR_COPY1(tc_url, tc_url);
@@ -793,11 +795,6 @@ ngx_rtmp_relay_play_local(ngx_rtmp_session_t *s)
 
     s->proto = NGX_PROTO_TYPE_RTMP_PULL;
 
-    if (ngx_rtmp_cmd_get_conf(s, "play_local") != NGX_OK) {
-
-        return NGX_ERROR;
-    }
-
     return ngx_rtmp_play(s, &v);
 }
 
@@ -819,11 +816,6 @@ ngx_rtmp_relay_publish_local(ngx_rtmp_session_t *s)
             ngx_min(sizeof(v.name) - 1, ctx->name.len))) = 0;
 
     s->proto = NGX_PROTO_TYPE_RTMP_PUSH;
-
-    if (ngx_rtmp_cmd_get_conf(s, "publish_local") != NGX_OK) {
-
-        return NGX_ERROR;
-    }
 
     return ngx_rtmp_publish(s, &v);
 }

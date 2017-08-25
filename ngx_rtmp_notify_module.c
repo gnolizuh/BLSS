@@ -1075,6 +1075,7 @@ ngx_rtmp_notify_publish_handle(ngx_rtmp_session_t *s,
     u->no_resolve = 1; /* want ip here */
 
     target.host_mask = s->host_mask;
+    target.service = s->service;
 
     if (ngx_parse_url(s->connection->pool, u) != NGX_OK) {
         ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
@@ -1156,6 +1157,7 @@ ngx_rtmp_notify_play_handle(ngx_rtmp_session_t *s,
     u->no_resolve = 1; /* want ip here */
 
     target.host_mask = s->host_mask;
+    target.service = s->service;
 
     if (ngx_parse_url(s->connection->pool, u) != NGX_OK) {
         ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
