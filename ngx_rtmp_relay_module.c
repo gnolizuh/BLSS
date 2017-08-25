@@ -386,6 +386,7 @@ ngx_rtmp_relay_create_connection(ngx_rtmp_conf_ctx_t *cctx, ngx_str_t* name,
         goto clear;                                                           \
     }
 
+    NGX_RTMP_RELAY_STR_COPY(service,    service);
     NGX_RTMP_RELAY_STR_COPY(host,       host);
     NGX_RTMP_RELAY_STR_COPY(app,        app);
     NGX_RTMP_RELAY_STR_COPY(tc_url,     tc_url);
@@ -502,6 +503,23 @@ ngx_rtmp_relay_create_connection(ngx_rtmp_conf_ctx_t *cctx, ngx_str_t* name,
     }
     rs->app_conf = cctx->app_conf;
     rs->relay = 1;
+
+#define NGX_RTMP_RELAY_STR_COPY1(to, from)                         \
+    do {                                                           \
+        rs->to.len = rctx->from.len;                               \
+        rs->to.data = ngx_palloc(c->pool, rctx->from.len);         \
+        if (rs->to.data == NULL) {                                 \
+            goto clear;                                            \
+        }                                                          \
+        ngx_memcpy(rs->to.data, rctx->from.data, rctx->from.len);  \
+    } while(0)
+
+    NGX_RTMP_RELAY_STR_COPY1(service, service);
+    NGX_RTMP_RELAY_STR_COPY1(host, host);
+    NGX_RTMP_RELAY_STR_COPY1(app, app);
+    NGX_RTMP_RELAY_STR_COPY1(tc_url, tc_url);
+#undef NGX_RTMP_RELAY_STR_COPY1
+
     rctx->session = rs;
     ngx_rtmp_set_ctx(rs, rctx, ngx_rtmp_relay_module);
     ngx_str_set(&rs->flashver, "ngx-local-relay");
