@@ -513,9 +513,9 @@ ngx_rtmp_relay_create_connection(ngx_rtmp_conf_ctx_t *cctx, ngx_str_t* name,
         ngx_memcpy(rs->to.data, rctx->from.data, rctx->from.len);  \
     } while(0)
 
-    NGX_RTMP_RELAY_STR_COPY1(host);
-    NGX_RTMP_RELAY_STR_COPY1(app);
-    NGX_RTMP_RELAY_STR_COPY1(tc_url);
+    NGX_RTMP_RELAY_STR_COPY1(host, host);
+    NGX_RTMP_RELAY_STR_COPY1(app, app);
+    NGX_RTMP_RELAY_STR_COPY1(tc_url, tc_url);
 #undef NGX_RTMP_RELAY_STR_COPY1
 
     rctx->session = rs;
