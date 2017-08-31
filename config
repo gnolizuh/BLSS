@@ -48,6 +48,7 @@ RTMP_DEPS="                                                 \
                 $ngx_addon_dir/ngx_rtmp_play_module.h       \
                 $ngx_addon_dir/ngx_rtmp_record_module.h     \
                 $ngx_addon_dir/ngx_rtmp_relay_module.h      \
+                $ngx_addon_dir/ngx_rtmp_auto_relay_module.h \
                 $ngx_addon_dir/ngx_rtmp_streams.h           \
                 $ngx_addon_dir/ngx_rtmp_bitop.h             \
                 $ngx_addon_dir/ngx_rtmp_proxy_protocol.h    \
