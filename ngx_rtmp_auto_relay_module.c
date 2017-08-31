@@ -616,7 +616,8 @@ ngx_rtmp_auto_relay_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
     ngx_rtmp_auto_relay_ctx_t      *ctx;
     ngx_rtmp_live_stream_t        **stream;
 
-    if (s->auto_relayed || (s->relay && !s->static_relay)) {
+    if (s->remote_relay ||
+        (s->local_relay && !s->local_static_relay)) {
         goto next;
     }
 
@@ -780,7 +781,8 @@ ngx_rtmp_auto_relay_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
     ngx_rtmp_auto_relay_ctx_t      *ctx;
     ngx_rtmp_live_stream_t        **stream;
 
-    if (s->auto_relayed || (s->relay && !s->static_relay)) {
+    if (s->remote_relay ||
+        (s->local_relay && !s->local_static_relay)) {
         goto next;
     }
 

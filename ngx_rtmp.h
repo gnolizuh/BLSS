@@ -342,10 +342,10 @@ struct ngx_rtmp_session_s {
     unsigned                ping_active:1;
     unsigned                ping_reset:1;
 
-    /* auto-pushed? */
-    unsigned                auto_relayed:1;
-    unsigned                relay:1;
-    unsigned                static_relay:1;
+    /* auto-relay? */
+    unsigned                remote_relay:1;        /* from unix-socket, remote session */
+    unsigned                local_relay:1;         /* any relay, local session */
+    unsigned                local_static_relay:1;  /* static relay, local session */
 
     ngx_uint_t              proto;
     ngx_uint_t              host_mask;

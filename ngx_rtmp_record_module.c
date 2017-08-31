@@ -709,7 +709,8 @@ ngx_rtmp_record_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
     ngx_rtmp_record_ctx_t          *ctx;
     u_char                         *p;
 
-    if (s->auto_relayed) {
+    if (s->remote_relay ||
+        (s->local_relay && !s->local_static_relay)) {
         goto next;
     }
 
@@ -753,7 +754,8 @@ next:
 static ngx_int_t
 ngx_rtmp_record_stream_begin(ngx_rtmp_session_t *s, ngx_rtmp_stream_begin_t *v)
 {
-    if (s->auto_relayed) {
+    if (s->remote_relay ||
+        (s->local_relay && !s->local_static_relay)) {
         goto next;
     }
 
@@ -770,7 +772,8 @@ next:
 static ngx_int_t
 ngx_rtmp_record_stream_eof(ngx_rtmp_session_t *s, ngx_rtmp_stream_begin_t *v)
 {
-    if (s->auto_relayed) {
+    if (s->remote_relay ||
+        (s->local_relay && !s->local_static_relay)) {
         goto next;
     }
 
@@ -857,7 +860,8 @@ static ngx_int_t
 ngx_rtmp_record_close_stream(ngx_rtmp_session_t *s,
                              ngx_rtmp_close_stream_t *v)
 {
-    if (s->auto_relayed) {
+    if (s->remote_relay ||
+        (s->local_relay && !s->local_static_relay)) {
         goto next;
     }
 

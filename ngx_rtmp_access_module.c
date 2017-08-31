@@ -436,7 +436,8 @@ ngx_rtmp_access_rule(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 static ngx_int_t
 ngx_rtmp_access_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
 {
-    if (s->auto_relayed) {
+    if (s->remote_relay ||
+        (s->local_relay && !s->local_static_relay)) {
         goto next;
     }
 
@@ -452,6 +453,11 @@ next:
 static ngx_int_t
 ngx_rtmp_access_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
 {
+    if (s->remote_relay ||
+        (s->local_relay && !s->local_static_relay)) {
+        goto next;
+    }
+
     if (ngx_rtmp_access(s, NGX_RTMP_ACCESS_PLAY) != NGX_OK) {
         return NGX_ERROR;
     }
