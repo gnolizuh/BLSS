@@ -462,6 +462,7 @@ ngx_rtmp_access_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
         return NGX_ERROR;
     }
 
+next:
     return next_play(s, v);
 }
 

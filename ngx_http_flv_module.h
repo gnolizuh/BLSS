@@ -4,8 +4,8 @@
  */
 
 
-#ifndef _NGX_RTMP_HDL_H_INCLUDED_
-#define _NGX_RTMP_HDL_H_INCLUDED_
+#ifndef _NGX_RTMP_HTTP_FLV_H_INCLUDED_
+#define _NGX_RTMP_HTTP_FLV_H_INCLUDED_
 
 
 #include <ngx_config.h>
@@ -29,5 +29,5 @@ ngx_chain_t *
 ngx_http_flv_append_shared_bufs(ngx_rtmp_core_srv_conf_t *cscf, ngx_rtmp_header_t *h, ngx_chain_t *in);
 
 
-#endif /* _NGX_RTMP_HDL_H_INCLUDED_ */
+#endif /* _NGX_RTMP_HTTP_FLV_H_INCLUDED_ */
 

@@ -10,11 +10,7 @@
 #include "ngx_rtmp_cmd_module.h"
 #include "ngx_rtmp_relay_module.h"
 #include "ngx_rtmp_live_module.h"
-
-
-#define NGX_RTMP_RELAY_STREAM_OFF   0
-#define NGX_RTMP_RELAY_STREAM_ALL   1
-#define NGX_RTMP_RELAY_STREAM_HASH  2
+#include "ngx_rtmp_auto_relay_module.h"
 
 
 static ngx_rtmp_publish_pt          next_publish;
@@ -31,23 +27,6 @@ static ngx_int_t ngx_rtmp_auto_relay_publish(ngx_rtmp_session_t *s, ngx_rtmp_pub
 static ngx_int_t ngx_rtmp_auto_relay_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v);
 static ngx_int_t ngx_rtmp_auto_relay_delete_stream(ngx_rtmp_session_t *s, ngx_rtmp_delete_stream_t *v);
 #endif
-
-
-typedef struct ngx_rtmp_auto_relay_ctx_s ngx_rtmp_auto_relay_ctx_t;
-
-struct ngx_rtmp_auto_relay_ctx_s {
-    ngx_int_t                      *slots; /* NGX_MAX_PROCESSES */
-    u_char                          name[NGX_RTMP_MAX_NAME];
-    u_char                          args[NGX_RTMP_MAX_ARGS];
-    ngx_event_t                     push_evt;
-};
-
-
-typedef struct {
-    ngx_uint_t                      relay_stream;
-    ngx_str_t                       auto_relay_socket_dir;
-    ngx_msec_t                      relay_reconnect_time;
-} ngx_rtmp_auto_relay_conf_t;
 
 
 static ngx_conf_enum_t ngx_rtmp_auto_relay_mode_slots[] = {

@@ -13,6 +13,7 @@
 #include "ngx_rtmp_netcall_module.h"
 #include "ngx_rtmp_record_module.h"
 #include "ngx_rtmp_relay_module.h"
+#include "ngx_rtmp_auto_relay_module.h"
 
 
 static ngx_rtmp_connect_pt                      next_connect;
@@ -356,6 +357,7 @@ ngx_rtmp_notify_access(ngx_rtmp_session_t *s)
 {
     ngx_rtmp_auto_relay_conf_t     *apcf;
     ngx_rtmp_auto_relay_ctx_t      *ctx;
+    ngx_core_conf_t                *ccf;
     ngx_int_t                       h;
 
     apcf = (ngx_rtmp_auto_relay_conf_t *) ngx_get_conf(ngx_cycle->conf_ctx,
@@ -372,7 +374,7 @@ ngx_rtmp_notify_access(ngx_rtmp_session_t *s)
     if (apcf->relay_stream == NGX_RTMP_RELAY_STREAM_ALL) {
         if (s->remote_relay ||
             (s->local_relay && !s->local_static_relay)) {
-            return ERROR;
+            return NGX_ERROR;
         }
     } else if (apcf->relay_stream == NGX_RTMP_RELAY_STREAM_HASH) {
         if (ngx_strlen(ctx->name) > 0) {
