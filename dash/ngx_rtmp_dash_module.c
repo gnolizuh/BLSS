@@ -845,8 +845,7 @@ ngx_rtmp_dash_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
         goto next;
     }
 
-    if (s->remote_relay ||
-        (s->local_relay && !s->local_static_relay)) {
+    if (!s->master_relay) {
         goto next;
     }
 

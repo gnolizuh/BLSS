@@ -359,6 +359,10 @@ ngx_rtmp_auto_relay_all_push(ngx_event_t *ev)
         return;
     }
 
+    if (s->remote_relay) {
+        return;
+    }
+
     name.data = ctx->name;
     name.len = ngx_strlen(name.data);
 
@@ -514,7 +518,10 @@ ngx_rtmp_auto_relay_hash_push(ngx_event_t *ev)
 
     h = ngx_hash_key(ctx->name, ngx_strlen(ctx->name)) % ccf->worker_processes;
     if (h == ngx_process_slot) {
+        s->master_relay = 1;
         return;
+    } else {
+        s->master_relay = 0;
     }
 
     pid = ngx_processes[h].pid;
@@ -594,11 +601,6 @@ ngx_rtmp_auto_relay_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
     ngx_rtmp_auto_relay_conf_t     *apcf;
     ngx_rtmp_auto_relay_ctx_t      *ctx;
     ngx_rtmp_live_stream_t        **stream;
-
-    if (s->remote_relay ||
-        (s->local_relay && !s->local_static_relay)) {
-        goto next;
-    }
 
     apcf = (ngx_rtmp_auto_relay_conf_t *) ngx_get_conf(ngx_cycle->conf_ctx,
                                                        ngx_rtmp_auto_relay_module);
@@ -683,7 +685,10 @@ ngx_rtmp_auto_relay_hash_pull(ngx_rtmp_session_t *s)
 
     h = ngx_hash_key(ctx->name, ngx_strlen(ctx->name)) % ccf->worker_processes;
     if (h == ngx_process_slot) {
+        s->master_relay = 1;
         return;
+    } else {
+        s->master_relay = 0;
     }
 
     pid = ngx_processes[h].pid;
@@ -759,11 +764,6 @@ ngx_rtmp_auto_relay_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
     ngx_rtmp_auto_relay_conf_t     *apcf;
     ngx_rtmp_auto_relay_ctx_t      *ctx;
     ngx_rtmp_live_stream_t        **stream;
-
-    if (s->remote_relay ||
-        (s->local_relay && !s->local_static_relay)) {
-        goto next;
-    }
 
     apcf = (ngx_rtmp_auto_relay_conf_t *) ngx_get_conf(ngx_cycle->conf_ctx,
                                                        ngx_rtmp_auto_relay_module);

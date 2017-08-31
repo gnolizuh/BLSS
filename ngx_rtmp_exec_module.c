@@ -1167,8 +1167,7 @@ ngx_rtmp_exec_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
     ngx_rtmp_exec_ctx_t       *ctx;
     ngx_rtmp_exec_app_conf_t  *eacf;
 
-    if (s->remote_relay ||
-        (s->local_relay && !s->local_static_relay)) {
+    if (!s->master_relay) {
         goto next;
     }
 
@@ -1313,8 +1312,7 @@ ngx_rtmp_exec_record_done(ngx_rtmp_session_t *s, ngx_rtmp_record_done_t *v)
     ngx_rtmp_exec_ctx_t       *ctx;
     ngx_rtmp_exec_app_conf_t  *eacf;
 
-    if (s->remote_relay ||
-        (s->local_relay && !s->local_static_relay)) {
+    if (!s->master_relay) {
         goto next;
     }
 

@@ -682,8 +682,7 @@ ngx_rtmp_relay_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
     size_t                          n;
     ngx_rtmp_relay_ctx_t           *ctx;
 
-    if (s->remote_relay ||
-        (s->local_relay && !s->local_static_relay)) {
+    if (!s->master_relay) {
         goto next;
     }
 
@@ -739,8 +738,7 @@ ngx_rtmp_relay_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
     size_t                          n;
     ngx_rtmp_relay_ctx_t           *ctx;
 
-    if (s->remote_relay ||
-        (s->local_relay && !s->local_static_relay)) {
+    if (!s->master_relay) {
         goto next;
     }
 

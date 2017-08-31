@@ -352,41 +352,6 @@ ngx_rtmp_notify_create_request(ngx_rtmp_session_t *s, ngx_pool_t *pool,
 }
 
 
-static ngx_int_t
-ngx_rtmp_notify_access(ngx_rtmp_session_t *s)
-{
-    ngx_rtmp_auto_relay_conf_t     *apcf;
-    ngx_rtmp_auto_relay_ctx_t      *ctx;
-    ngx_core_conf_t                *ccf;
-    ngx_int_t                       h;
-
-    apcf = (ngx_rtmp_auto_relay_conf_t *) ngx_get_conf(ngx_cycle->conf_ctx,
-                                                       ngx_rtmp_auto_relay_module);
-
-    ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_auto_relay_index_module);
-    if (ctx == NULL) {
-        return NGX_OK;
-    }
-
-    ccf = (ngx_core_conf_t *) ngx_get_conf(ngx_cycle->conf_ctx,
-                                           ngx_core_module);
-
-    if (apcf->relay_stream == NGX_RTMP_RELAY_STREAM_ALL) {
-        if (s->remote_relay ||
-            (s->local_relay && !s->local_static_relay)) {
-            return NGX_ERROR;
-        }
-    } else if (apcf->relay_stream == NGX_RTMP_RELAY_STREAM_HASH) {
-        if (ngx_strlen(ctx->name) > 0) {
-            h = ngx_hash_key(ctx->name, ngx_strlen(ctx->name)) % ccf->worker_processes;
-            return h == ngx_process_slot ? NGX_OK : NGX_ERROR;
-        }
-    }
-
-    return NGX_OK;
-}
-
-
 static ngx_chain_t *
 ngx_rtmp_notify_connect_create(ngx_rtmp_session_t *s, void *arg,
         ngx_pool_t *pool)
@@ -1340,7 +1305,7 @@ ngx_rtmp_notify_connect(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
     ngx_rtmp_netcall_init_t         ci;
     ngx_url_t                      *url;
 
-    if (ngx_rtmp_notify_access(s) == NGX_ERROR) {
+    if (!s->master_relay) {
         goto next;
     }
 
@@ -1376,7 +1341,7 @@ ngx_rtmp_notify_disconnect(ngx_rtmp_session_t *s)
     ngx_rtmp_netcall_init_t         ci;
     ngx_url_t                      *url;
 
-    if (ngx_rtmp_notify_access(s) == NGX_ERROR) {
+    if (!s->master_relay) {
         goto next;
     }
 
@@ -1409,7 +1374,7 @@ ngx_rtmp_notify_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
     ngx_rtmp_netcall_init_t         ci;
     ngx_url_t                      *url;
 
-    if (ngx_rtmp_notify_access(s) == NGX_ERROR) {
+    if (!s->master_relay) {
         goto next;
     }
 
@@ -1451,7 +1416,10 @@ ngx_rtmp_notify_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
     ngx_rtmp_netcall_init_t         ci;
     ngx_url_t                      *url;
 
-    if (ngx_rtmp_notify_access(s) == NGX_ERROR) {
+    ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+                  "notify: play master_relay '%d'", s->master_relay);
+
+    if (!s->master_relay) {
         goto next;
     }
 
@@ -1493,7 +1461,7 @@ ngx_rtmp_notify_close_stream(ngx_rtmp_session_t *s,
     ngx_rtmp_notify_ctx_t          *ctx;
     ngx_rtmp_notify_app_conf_t     *nacf;
 
-    if (ngx_rtmp_notify_access(s) == NGX_ERROR) {
+    if (!s->master_relay) {
         goto next;
     }
 
@@ -1538,7 +1506,7 @@ ngx_rtmp_notify_record_done(ngx_rtmp_session_t *s, ngx_rtmp_record_done_t *v)
     ngx_rtmp_netcall_init_t         ci;
     ngx_rtmp_notify_app_conf_t     *nacf;
 
-    if (ngx_rtmp_notify_access(s) == NGX_ERROR) {
+    if (!s->master_relay) {
         goto next;
     }
 
