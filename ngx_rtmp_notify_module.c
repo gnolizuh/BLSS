@@ -1416,9 +1416,6 @@ ngx_rtmp_notify_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
     ngx_rtmp_netcall_init_t         ci;
     ngx_url_t                      *url;
 
-    ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
-                  "notify: play master_relay '%d'", s->master_relay);
-
     if (!s->master_relay) {
         goto next;
     }
