@@ -1286,7 +1286,7 @@ ngx_rtmp_hls_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
         goto next;
     }
 
-    if (s->auto_relayed) {
+    if (!s->master_relay) {
         goto next;
     }
 

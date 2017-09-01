@@ -1167,13 +1167,12 @@ ngx_rtmp_exec_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
     ngx_rtmp_exec_ctx_t       *ctx;
     ngx_rtmp_exec_app_conf_t  *eacf;
 
-    eacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_exec_module);
-
-    if (eacf == NULL || !eacf->active) {
+    if (!s->master_relay) {
         goto next;
     }
 
-    if (s->auto_relayed) {
+    eacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_exec_module);
+    if (eacf == NULL || !eacf->active) {
         goto next;
     }
 
@@ -1313,7 +1312,7 @@ ngx_rtmp_exec_record_done(ngx_rtmp_session_t *s, ngx_rtmp_record_done_t *v)
     ngx_rtmp_exec_ctx_t       *ctx;
     ngx_rtmp_exec_app_conf_t  *eacf;
 
-    if (s->auto_relayed) {
+    if (!s->master_relay) {
         goto next;
     }
 

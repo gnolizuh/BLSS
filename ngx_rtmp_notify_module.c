@@ -13,6 +13,7 @@
 #include "ngx_rtmp_netcall_module.h"
 #include "ngx_rtmp_record_module.h"
 #include "ngx_rtmp_relay_module.h"
+#include "ngx_rtmp_auto_relay_module.h"
 
 
 static ngx_rtmp_connect_pt                      next_connect;
@@ -1304,7 +1305,7 @@ ngx_rtmp_notify_connect(ngx_rtmp_session_t *s, ngx_rtmp_connect_t *v)
     ngx_rtmp_netcall_init_t         ci;
     ngx_url_t                      *url;
 
-    if (s->auto_relayed || s->relay) {
+    if (!s->master_relay) {
         goto next;
     }
 
@@ -1340,7 +1341,7 @@ ngx_rtmp_notify_disconnect(ngx_rtmp_session_t *s)
     ngx_rtmp_netcall_init_t         ci;
     ngx_url_t                      *url;
 
-    if (s->auto_relayed || s->relay) {
+    if (!s->master_relay) {
         goto next;
     }
 
@@ -1373,7 +1374,7 @@ ngx_rtmp_notify_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
     ngx_rtmp_netcall_init_t         ci;
     ngx_url_t                      *url;
 
-    if (s->auto_relayed || s->relay) {
+    if (!s->master_relay) {
         goto next;
     }
 
@@ -1415,7 +1416,10 @@ ngx_rtmp_notify_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
     ngx_rtmp_netcall_init_t         ci;
     ngx_url_t                      *url;
 
-    if (s->auto_relayed || s->relay) {
+    ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+                  "notify: play master_relay '%d'", s->master_relay);
+
+    if (!s->master_relay) {
         goto next;
     }
 
@@ -1457,7 +1461,7 @@ ngx_rtmp_notify_close_stream(ngx_rtmp_session_t *s,
     ngx_rtmp_notify_ctx_t          *ctx;
     ngx_rtmp_notify_app_conf_t     *nacf;
 
-    if (s->auto_relayed) {
+    if (!s->master_relay) {
         goto next;
     }
 
@@ -1502,7 +1506,7 @@ ngx_rtmp_notify_record_done(ngx_rtmp_session_t *s, ngx_rtmp_record_done_t *v)
     ngx_rtmp_netcall_init_t         ci;
     ngx_rtmp_notify_app_conf_t     *nacf;
 
-    if (s->auto_relayed) {
+    if (!s->master_relay) {
         goto next;
     }
 

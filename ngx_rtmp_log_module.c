@@ -837,10 +837,6 @@ ngx_rtmp_log_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
 {
     ngx_rtmp_log_ctx_t *ctx;
 
-    if (s->auto_relayed || s->relay) {
-        goto next;
-    }
-
     ctx = ngx_rtmp_log_set_names(s, v->name, v->args);
     if (ctx == NULL) {
         goto next;
@@ -857,10 +853,6 @@ static ngx_int_t
 ngx_rtmp_log_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
 {
     ngx_rtmp_log_ctx_t *ctx;
-
-    if (s->auto_relayed || s->relay) {
-        goto next;
-    }
 
     ctx = ngx_rtmp_log_set_names(s, v->name, v->args);
     if (ctx == NULL) {
@@ -926,10 +918,6 @@ ngx_rtmp_log_disconnect(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     ngx_uint_t                  n, i;
     u_char                     *line, *p;
     size_t                      len;
-
-    if (s->auto_relayed || s->relay) {
-        return NGX_OK;
-    }
 
     lacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_log_module);
     if (lacf == NULL || lacf->off || lacf->logs == NULL) {
