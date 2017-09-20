@@ -601,7 +601,6 @@ ngx_rtmp_relay_create(ngx_rtmp_session_t *s, ngx_str_t *name,
     ngx_rtmp_relay_ctx_t           *publish_ctx, *play_ctx, **cctx;
     ngx_uint_t                      hash;
 
-
     racf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_relay_module);
     if (racf == NULL) {
         return NGX_ERROR;
@@ -682,10 +681,6 @@ ngx_rtmp_relay_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
     size_t                          n;
     ngx_rtmp_relay_ctx_t           *ctx;
 
-    if (!s->master_relay) {
-        goto next;
-    }
-
     ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_relay_module);
     if (ctx) {
         goto next;
@@ -737,10 +732,6 @@ ngx_rtmp_relay_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
     ngx_str_t                       name;
     size_t                          n;
     ngx_rtmp_relay_ctx_t           *ctx;
-
-    if (!s->master_relay) {
-        goto next;
-    }
 
     ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_relay_module);
     if (ctx) {
@@ -1418,9 +1409,10 @@ ngx_rtmp_relay_close(ngx_rtmp_session_t *s)
         }
 #endif
 
-        if (ctx->publish->play == NULL && ctx->publish->session->local_relay) {
+        /* push request refused */
+        if (ctx->session->local_relay) {
             ngx_log_debug2(NGX_LOG_DEBUG_RTMP,
-                 ctx->publish->session->connection->log, 0,
+                ctx->publish->session->connection->log, 0,
                 "relay: publish disconnect empty app='%V' name='%V'",
                 &ctx->app, &ctx->name);
             ngx_rtmp_finalize_session(ctx->publish->session);
