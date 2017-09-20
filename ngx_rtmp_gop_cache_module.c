@@ -234,7 +234,7 @@ ngx_rtmp_gop_link_frame(ngx_rtmp_session_t *s, ngx_rtmp_gop_frame_t *frame)
 
     ngx_log_debug5(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
                    "gop link frame: type=%s "
-                   "ctx->video_frame_cnt=%uD ctx->audio_frame_cnt=%uD"
+                   "ctx->video_frame_cnt=%uD ctx->audio_frame_cnt=%uD "
                    "cache->video_frame_cnt=%uD cache->audio_frame_cnt=%uD",
                    frame->h.type == NGX_RTMP_MSG_VIDEO ? "video" : "audio",
                    ctx->video_frame_cnt, ctx->audio_frame_cnt,
