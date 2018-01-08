@@ -11,54 +11,74 @@ BLSS: Bravo Live Streaming Service
 [5]: https://img.shields.io/github/downloads/atom/atom/total.svg
 [6]: https://github.com/gnolizuh/BLSS/releases
 
-[中文说明](https://github.com/gnolizuh/BLSS/blob/master/README.zh.md) 
+Media streaming server based on [nginx-rtmp-module](https://github.com/arut/nginx-rtmp-module).
 
-# Introduction
+# Features
 
-BLSS is a NGINX third-party module, which is based on the secondary development of open source projects [nginx-rtmp-module](https://github.com/arut/nginx-rtmp-module) to achieve, based on the original features to retain some of the key features,
-Such as HTTP-FLV protocol distribution, GOP cache, regular match push-pull domain name, virtual host and so on.
+* All features of [nginx-rtmp-module](https://github.com/arut/nginx-rtmp-module) are inherited, i.e., it is 100% compatible with [nginx-rtmp-module](https://github.com/arut/nginx-rtmp-module).
 
-# Installation
+* HTTP-based FLV live streaming support.
 
-Download [nginx](https://nginx.org/)：
+* Dynamic GOP cache for low latency.
 
-    wget https://nginx.org/download/nginx-$VERSION.tar.gz
-    tar zxvf nginx-$VERSION.tar.gz
+* Socket sharding feature for higer performance (MUST be linux kernel 2.6 or later).
 
-Download [BLSS](https://github.com/gnolizuh/BLSS/releases)：
+* Ability to separate different users at top of application block (rtmp service{} block).
 
-    wget https://github.com/gnolizuh/BLSS/archive/v1.1.4.tar.gz
-    tar zxvf v1.1.4.tar.gz
+* Dynamic matching virtual hosts supported.
 
-Compile and install：
+* Provide ability for relaying by bkdr hash function (relay_stream hash option).
 
-    cd NGINX-SRC-DIR
+# Systems supported
+
+* Linux (kernel 2.6 or later are recommended)/FreeBSD/MacOS/Windows (limited).
+
+# Dependencies
+
+* [GCC](https://gcc.gnu.org/) for compiling on Unix-like systems.
+
+* [MSVC](http://www.mingw.org/wiki/MSYS) for compiling on Windows (see [how to build nginx on win32](http://nginx.org/en/docs/howto_build_on_win32.html)).
+
+* [PCRE](http://www.pcre.org/), [zlib](http://zlib.net/) and [OpenSSL](http://www.openssl.org/) libraries sources if needed.
+
+# Build
+
+cd to NGINX source directory & run this:
+
     ./configure --add-module=/path/to/BLSS
     make
     make install
 
-Compile with debug mode：
+# Get Started 
 
-    ./configure --add-module=/path/to/BLSS --with-debug
+* Build BLSS module according to the section above.
 
-# Configuration
+* Configure the nginx.conf file and start nginx.
 
-A nginx.conf example：
+* Publish stream.
+
+        ffmpeg -re -i live.flv -c copy -f flv rtmp://publish.com[:port]/appname/streamname
+
+* Play.
+
+        ffplay rtmp://rtmpplay.com[:port]/appname/streamname # RTMP
+        ffplay http://flvplay.com[:port]/appname/streamname  # HTTP based FLV
+
+# Example
 
     worker_processes 8;   # multi-worker process mode
     relay_stream hash;    # stream relay mode
 
-    # rtmp block
     rtmp {
         server {
             listen 1935 reuseport;
 
             service cctv {
-                hostname pub rtmp *.pub.rtmp.cctv;         # match rtmp push domain
-                hostname sub rtmp *.sub.rtmp.cctv;         # match rtmp pull domain
-                hostname sub http_flv *.sub.httpflv.cctv;  # match http-flv pull domain
+                hostname pub rtmp publish.com;      # match rtmp push domain
+                hostname sub rtmp rtmpplay.com;     # match rtmp pull domain
+                hostname sub http_flv flvplay.com;  # match http-flv pull domain
 
-                application news {
+                application live {
                     live on;
                     gop_cache on;
                     gop_cache_count 5;  # cache 5 GOPs
@@ -67,41 +87,6 @@ A nginx.conf example：
                     hls_fragment 10s;
                     hls_playlist_length 30s;
                 }
-
-                application sports {
-                    hls on;
-                    hls_fragment 1m;
-                    hls_playlist_length 3m;
-                }
             }
         }
     }
-    
-    http {
-        include      mime.types;
-        default_type application/octet-stream;
-
-        log_format   main  '$remote_addr - $remote_user [$time_local] "$request" '
-                            '$status $body_bytes_sent "$http_referer" '
-                            '"$http_user_agent" "$http_x_forwarded_for"';
-
-        access_log   logs/http_sla.log main;
-
-        keepalive_timeout 60;
-
-        server {
-            listen 80 reuseport;
-
-            location / {
-
-                add_header 'Content-Type' 'video/x-flv';      # content type header
-                add_header 'Access-Control-Allow-Origin' '*'; # cross-domain header
-
-                http_flv on;    # delivery http-flv
-            }
-        }
-    }
-
-run nginx:
-
-    ./obj/nginx -p /path/to/nginx
