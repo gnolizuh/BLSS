@@ -18,7 +18,6 @@
 #define NGX_RTMP_CODEC_META_COPY    2
 
 
-#define MAX_VPS_COUNT 16
 #define MAX_SUB_LAYERS 7
 #define MAX_SPS_COUNT 32
 
@@ -40,19 +39,10 @@ static void ngx_rtmp_codec_parse_avc_header(ngx_rtmp_session_t *s,
 static void ngx_rtmp_codec_dump_header(ngx_rtmp_session_t *s, const char *type,
        ngx_chain_t *in);
 #endif
-
 static void ngx_rtmp_codec_parse_hevc_header(ngx_rtmp_session_t*s,
        ngx_chain_t *in);
 static ngx_int_t ngx_rtmp_codec_parse_ptl(ngx_rtmp_bit_reader_t *br,
        ngx_uint_t max_sub_layers);
-static void ngx_rtmp_codec_parse_avc_header_compat(ngx_uint_t type, ngx_rtmp_session_t *s,
-       ngx_chain_t **in, ngx_chain_t *sps);
-static void ngx_rtmp_codec_parse_hevc_header_compat(ngx_uint_t type, ngx_rtmp_session_t *s,
-       ngx_chain_t **in, ngx_chain_t *sps);
-static ngx_int_t ngx_rtmp_codec_parse_avc_header_in_keyframe(ngx_rtmp_session_t *s,
-       ngx_chain_t *in, ngx_buf_t *out);
-static ngx_int_t ngx_rtmp_codec_parse_hevc_header_in_keyframe(ngx_rtmp_session_t *s, ngx_chain_t *in,
-       ngx_buf_t *out);
 
 typedef struct {
     ngx_uint_t                      meta;
@@ -215,70 +205,13 @@ ngx_rtmp_codec_disconnect(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 }
 
 
-static ngx_inline ngx_int_t
-ngx_rtmp_codec_video_is_combined_nals(ngx_chain_t *in, ngx_rtmp_session_t *s)
-{
-    ngx_rtmp_codec_ctx_t     *ctx;
-    uint8_t                  src_nal_type, nal_type;
-
-    ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_codec_module);
-    if (ctx == NULL || ctx->avc_nal_bytes == 0) {
-        return NGX_ERROR;
-    }
-
-    if (ngx_rtmp_get_video_frame_type(in) != NGX_RTMP_VIDEO_KEY_FRAME) {
-        return NGX_ERROR;
-    }
-
-    if (in->buf->pos + 5 + ctx->avc_nal_bytes <= in->buf->last) {
-
-        src_nal_type = in->buf->pos[5 + ctx->avc_nal_bytes];
-
-        if (ctx->video_codec_id == NGX_RTMP_VIDEO_H264) {
-            nal_type = src_nal_type & 0x1f;
-
-            return (nal_type >= 7 && nal_type <= 9) ? NGX_OK : NGX_ERROR;
-        } else if (ctx->video_codec_id == NGX_RTMP_VIDEO_H265){
-            nal_type = (src_nal_type >> 1) & 0x3f;
-
-            return (nal_type >= 32 && nal_type <= 33) ? NGX_OK : NGX_ERROR;
-        }
-    }
-
-    return NGX_ERROR;
-}
-
-#define NGX_RTMP_CODEC_NON_SEQ_HEADER    0
-#define NGX_RTMP_CODEC_SINGLE_SEQ_HEADER 1
-#define NGX_RTMP_CODEC_COMBO_SEQ_HEADER  2
-
-static inline ngx_int_t
-ngx_rtmp_get_codec_header_type(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_chain_t *in)
-{
-    if (ngx_rtmp_is_codec_header(in)) {
-        return NGX_RTMP_CODEC_SINGLE_SEQ_HEADER;
-    }
-
-    if (h->type == NGX_RTMP_MSG_VIDEO &&
-        ngx_rtmp_codec_video_is_combined_nals(in, s) == NGX_OK) {
-        return NGX_RTMP_CODEC_COMBO_SEQ_HEADER;
-    }
-
-    return NGX_RTMP_CODEC_NON_SEQ_HEADER;
-}
-
-
 static ngx_int_t
 ngx_rtmp_codec_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
         ngx_chain_t *in)
 {
     ngx_rtmp_core_srv_conf_t            *cscf;
     ngx_rtmp_codec_ctx_t                *ctx;
-    ngx_chain_t                         **header;
-    ngx_buf_t                           sps_buf;
-    u_char                              buffer[NGX_RTMP_SPS_MAX_LENGTH];
-    ngx_chain_t                         sps;
-    ngx_uint_t                          seq_header_type;
+    ngx_chain_t                        **header;
     uint8_t                             fmt;
     static ngx_uint_t                   sample_rates[] =
                                         { 5512, 11025, 22050, 44100 };
@@ -318,23 +251,13 @@ ngx_rtmp_codec_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
         return NGX_OK;
     }
 
-    // there are two cases
-    // case one: PacketType equals to 0, that means FLV TAG MUST be sequence header.
-    // case two: PacketType equals to 1, it's possible that sequence header are one of the NALs.
-    seq_header_type = ngx_rtmp_get_codec_header_type(s, h, in);
-    if (seq_header_type == NGX_RTMP_CODEC_NON_SEQ_HEADER) {
+    /* no conf */
+    if (!ngx_rtmp_is_codec_header(in)) {
         return NGX_OK;
-    }
+    }}
 
     cscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_core_module);
     header = NULL;
-
-    sps_buf.start = buffer;
-    sps_buf.end   = buffer + sizeof(buffer);
-    sps_buf.pos   = sps_buf.start;
-    sps_buf.last  = sps_buf.pos;
-    sps.buf       = &sps_buf;
-    sps.next      = NULL;
 
     // MUST be audio / video sequence header.
     if (h->type == NGX_RTMP_MSG_AUDIO) {
@@ -345,9 +268,9 @@ ngx_rtmp_codec_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     } else {
         header = &ctx->video_header;
         if (ctx->video_codec_id == NGX_RTMP_VIDEO_H264) {
-            ngx_rtmp_codec_parse_avc_header_compat(seq_header_type, s, &in, &sps);
+            ngx_rtmp_codec_parse_avc_header(s, &in);
         } else if (ctx->video_codec_id == NGX_RTMP_VIDEO_H265){
-            ngx_rtmp_codec_parse_hevc_header_compat(seq_header_type, s, &in, &sps);
+            ngx_rtmp_codec_parse_hevc_header(s, &in);
         }
     }
 
@@ -364,46 +287,6 @@ ngx_rtmp_codec_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     return NGX_OK;
 }
 
-
-static void
-ngx_rtmp_codec_parse_avc_header_compat(ngx_uint_t type, ngx_rtmp_session_t *s,
-    ngx_chain_t **in, ngx_chain_t *sps)
-{
-    if (in == NULL || *in == NULL || sps == NULL) {
-        return;
-    }
-
-    if (type == NGX_RTMP_CODEC_COMBO_SEQ_HEADER) {
-        if (ngx_rtmp_codec_parse_avc_header_in_keyframe(s, *in, sps->buf) != NGX_OK) {
-            return;
-        }
-        *in = sps;
-    }
-
-    ngx_rtmp_codec_parse_avc_header(s, *in);
-}
-
-
-static void
-ngx_rtmp_codec_parse_hevc_header_compat(ngx_uint_t type, ngx_rtmp_session_t *s,
-    ngx_chain_t **in, ngx_chain_t *sps)
-{
-    if (in == NULL || *in == NULL || sps == NULL) {
-        return;
-    }
-
-    if (type == NGX_RTMP_CODEC_COMBO_SEQ_HEADER &&
-        ngx_rtmp_codec_parse_hevc_header_in_keyframe(s, *in, sps->buf) == NGX_OK) {
-        *in = sps;
-    }
-
-    ngx_rtmp_codec_parse_hevc_header(s, *in);
-}
-
-
-#undef NGX_RTMP_CODEC_NON_SEQ_HEADER
-#undef NGX_RTMP_CODEC_SINGLE_SEQ_HEADER
-#undef NGX_RTMP_CODEC_COMBO_SEQ_HEADER
 
 static void
 ngx_rtmp_codec_parse_aac_header(ngx_rtmp_session_t *s, ngx_chain_t *in)
@@ -597,7 +480,7 @@ ngx_rtmp_codec_parse_avc_header(ngx_rtmp_session_t *s, ngx_chain_t *in)
 
     case 1:
 
-        /* delta pic order alwys zero */
+        /* delta pic order always zero */
         ngx_rtmp_bit_read(&br, 1);
 
         /* offset for non-ref pic */
@@ -690,8 +573,9 @@ ngx_rtmp_codec_process_startcode(ngx_buf_t* in, ngx_buf_t* out)
     }
 }
 
+
 static void
-ngx_rtmp_codec_parse_hevc_header(ngx_rtmp_session_t*s, ngx_chain_t *in)
+ngx_rtmp_codec_parse_hevc_header(ngx_rtmp_session_t *s, ngx_chain_t *in)
 {
     ngx_uint_t              num_of_arrays, nal_type , nal_num, nal_len, vps_id,
                             max_sub_layers, cf_idc, sps_id,
@@ -703,6 +587,10 @@ ngx_rtmp_codec_parse_hevc_header(ngx_rtmp_session_t*s, ngx_chain_t *in)
     ngx_buf_t               sps_out;
     u_char                  sps_in_buf[NGX_RTMP_SPS_MAX_LENGTH] = { 0 };
     ngx_buf_t               sps_in;
+
+#if (NGX_DEBUG)
+    ngx_rtmp_codec_dump_header(s, "hevc", in);
+#endif
 
     ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_codec_module);
 
@@ -718,36 +606,31 @@ ngx_rtmp_codec_parse_hevc_header(ngx_rtmp_session_t*s, ngx_chain_t *in)
 
     ngx_rtmp_bit_init_reader(&br, in->buf->pos, in->buf->last);
 
-    ngx_rtmp_bit_read(&br, 40);
+    ngx_rtmp_bit_read(&br, 48 + 3 /* skip profile_space & tier_flag */);
 
-    /* configurationVersion */
-    ngx_rtmp_bit_read(&br, 8);
+    ctx->avc_profile = (ngx_uint_t) ngx_rtmp_bit_read(&br, 5);
+    ctx->avc_compat = (ngx_uint_t) ngx_rtmp_bit_read_32(&br);
 
-    /* profile, tie, level */
-    ngx_memzero(ctx->avc_conf_record, sizeof(ctx->avc_conf_record));
-    ngx_memcpy(ctx->avc_conf_record, br.pos, sizeof(ctx->avc_conf_record));
+    ngx_rtmp_bit_read(&br, 48);
 
-    ctx->avc_profile = (ngx_uint_t) ngx_rtmp_bit_read_8(&br) & 0x1f;
-    ctx->avc_compat = (ngx_uint_t) ngx_rtmp_bit_read(&br, 32);
     ctx->avc_level = (ngx_uint_t) ngx_rtmp_bit_read_8(&br);
 
-    ctx->avc_nal_bytes = 4;
+    ngx_rtmp_bit_read(&br, 64);
 
-    if (br.pos + 15 >= br.last) {
-        return;
-    }
-
-    br.pos += 15;
+    /* nal bytes */
+    ctx->avc_nal_bytes = (ngx_uint_t) ((ngx_rtmp_bit_read_8(&br) & 0x03) + 1);
 
     /* numOfArrays */
     num_of_arrays = (ngx_uint_t) ngx_rtmp_bit_read_8(&br);
 
     nal_type = 0;
+    nal_num = 0;
 
     for (n = 0; n < num_of_arrays; n++) {
         nal_type = (ngx_uint_t) ngx_rtmp_bit_read_8(&br) & 0x3f;
+        nal_num = (ngx_uint_t) ngx_rtmp_bit_read(&br, 16);
 
-        if(nal_type == HEVC_NAL_SPS) {
+        if (nal_type == HEVC_NAL_SPS) {
             break;
         }
 
@@ -763,34 +646,18 @@ ngx_rtmp_codec_parse_hevc_header(ngx_rtmp_session_t*s, ngx_chain_t *in)
         }
     }
 
-    if (nal_type != HEVC_NAL_SPS) {
+    if (nal_type != HEVC_NAL_SPS ||
+        nal_num == 0) {
         return;
     }
 
-    nal_num = (ngx_uint_t) ngx_rtmp_bit_read(&br, 16);
-    nal_len = (ngx_uint_t) ngx_rtmp_bit_read(&br, 16);
-
-    if (!(nal_num > 0 && nal_len > 0)) {
+    if (!((ngx_uint_t) ngx_rtmp_bit_read(&br, 16) > 0) {
         return;
     }
-
-    if (nal_len > NGX_RTMP_SPS_MAX_LENGTH) {
-        ngx_log_error(NGX_LOG_ERR, s->connection->log, 0,
-                      "codec: too big sps or pps, nal_type:%uD, remained=%uD, len=%uD",
-                      nal_type, NGX_RTMP_SPS_MAX_LENGTH, nal_len);
-        return;
-    }
-
-    ngx_memcpy((u_char*) sps_in.pos, br.pos, nal_len);
-    sps_in.last = sps_in.pos + nal_len;
-
-    ngx_rtmp_codec_process_startcode(&sps_in, &sps_out);
 
     /* SPS */
 
-    /* forbidden_zero_bit */
-    ngx_rtmp_bit_init_reader(&br, sps_out.pos, sps_out.last);
-
+    /* forbidden zero bit */
     ngx_rtmp_bit_read(&br, 1);
 
     nal_type = (ngx_uint_t) ngx_rtmp_bit_read(&br, 6);
@@ -798,21 +665,24 @@ ngx_rtmp_codec_parse_hevc_header(ngx_rtmp_session_t*s, ngx_chain_t *in)
         return;
     }
 
-    ngx_rtmp_bit_read(&br, 9);
+    /* nuh layer id */
+    ngx_rtmp_bit_read(&br, 6);
 
-    vps_id = (ngx_uint_t) ngx_rtmp_bit_read(&br, 4);
-    if (vps_id >= MAX_VPS_COUNT) {
-        return;
-    }
+    /* nuh temporal id + 1 */
+    ngx_rtmp_bit_read(&br, 3);
+
+    /* vps id */
+    ngx_rtmp_bit_read(&br, 4);
+
+    ngx_rtmp_bit_read_8(&br);
 
     /* sps_max_sub_layers_minus1 */
     max_sub_layers = (ngx_uint_t) ngx_rtmp_bit_read(&br, 3);
-    if (max_sub_layers > MAX_SUB_LAYERS) {
-        return;
-    }
 
     /* sps_temporal_id_nesting_flag */
     ngx_rtmp_bit_read(&br, 1);
+
+    ngx_rtmp_bit_read(&br, 16);
 
     if (ngx_rtmp_codec_parse_ptl(&br, max_sub_layers) != NGX_OK) {
         return;
@@ -864,314 +734,6 @@ ngx_rtmp_codec_parse_hevc_header(ngx_rtmp_session_t*s, ngx_chain_t *in)
 #endif
 }
 
-
-static ngx_int_t
-ngx_rtmp_codec_parse_avc_header_in_keyframe(ngx_rtmp_session_t *s,
-    ngx_chain_t *in, ngx_buf_t *out)
-{
-    ngx_rtmp_codec_ctx_t    *ctx;
-    u_char                  *p;
-    uint8_t                 fmt, ftype, htype, src_nal_type, nal_type;
-    uint32_t                rlen, len;
-    ngx_buf_t               *b;
-    ngx_uint_t              nal_bytes;
-    ngx_int_t               has_sps = 0;
-    ngx_int_t               remained;
-
-    ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_codec_module);
-    if (ctx == NULL ||
-        ctx->video_codec_id != NGX_RTMP_VIDEO_H264 ||
-        ctx->avc_nal_bytes == 0 ||
-        out == NULL) {
-        return NGX_ERROR;
-    }
-
-    p = in->buf->pos;
-    if (ngx_rtmp_hls_copy(s, &fmt, &p, 1, &in) != NGX_OK) {
-        return NGX_ERROR;
-    }
-
-    /* 1: keyframe (IDR)
-     * 2: inter frame
-     * 3: disposable inter frame */
-    ftype = (fmt & 0xf0) >> 4;
-
-    if (ftype != 1) {
-        return NGX_ERROR;
-    }
-
-    /* H264 HDR/PICT */
-    if (ngx_rtmp_hls_copy(s, &htype, &p, 1, &in) != NGX_OK) {
-        return NGX_ERROR;
-    }
-
-    /* proceed only with PICT */
-    if (htype != 1) {
-        return NGX_OK;
-    }
-
-    b = out;
-
-    *b->last++ = 0x17;
-    *b->last++ = 0x00;
-
-    /* 3 bytes: decoder delay */
-    if (ngx_rtmp_hls_copy(s, NULL, &p, 3, &in) != NGX_OK) {
-        return NGX_ERROR;
-    }
-
-    /* 3 bytes: composition time */
-    *b->last++ = 0x00;
-    *b->last++ = 0x00;
-    *b->last++ = 0x00;
-
-    /* 1 byte: configuration version */
-    *b->last++ = 0x01;
-
-    /* 1 byte: avc profile indication */
-    *b->last++ = ctx->avc_profile;
-
-    /* 1 byte: profile compatibility */
-    *b->last++ = ctx->avc_compat;
-
-    /* 1 byte: avc level indication */
-    *b->last++ = ctx->avc_level;
-
-    /* 1 byte: reserved 6 bits + lengthSizeMinusOne 2 bits */
-    *b->last++ = 0xff;
-
-    /* numOfSps */
-    *b->last++ = 0xe1;
-
-    /* h264 nal -> len + body */
-    /* body: nal_type(1) +  */
-
-    nal_bytes = ctx->avc_nal_bytes;
-    remained = NGX_RTMP_SPS_MAX_LENGTH;
-
-    while (in) {
-        if (ngx_rtmp_hls_copy(s, &rlen, &p, nal_bytes, &in) != NGX_OK) {
-            return NGX_OK;
-        }
-
-        len = 0;
-        ngx_rtmp_rmemcpy(&len, &rlen, nal_bytes);
-
-        if (len == 0) {
-            continue;
-        }
-
-        if (ngx_rtmp_hls_copy(s, &src_nal_type, &p, 1, &in) != NGX_OK) {
-            return NGX_OK;
-        }
-
-        /**
-          * +---------------+
-          * |0|1|2|3|4|5|6|7|
-          * +-+-+-+-+-+-+-+-+
-          * |F|NRI|  Type   |
-          * +---------------+
-          **/
-        nal_type = src_nal_type & 0x1f;
-
-        if (!(nal_type >= AVC_NAL_SPS && nal_type <= AVC_NAL_PPS)) {
-            if (ngx_rtmp_hls_copy(s, NULL, &p, len - 1, &in) != NGX_OK) {
-                return NGX_ERROR;
-            }
-            continue;
-        }
-
-        remained = NGX_RTMP_SPS_MAX_LENGTH - (b->last - b->pos);
-
-        //avc: nal len(2B) + nal data (len Byte) + pps num(1B)
-        if (len + 3 > remained) {
-            ngx_log_error(NGX_LOG_ERR, s->connection->log, 0,
-                          "codec: avc too big sps or pps, nal_type:%uD, remained=%uD, len=%uD",
-                          nal_type, remained, len);
-            return NGX_ERROR;
-        }
-
-        /* nal length */
-        *b->last++ = len >> 8;
-        *b->last++ = len & 0xff;
-        *b->last++ = src_nal_type;
-
-        if (ngx_rtmp_hls_copy(s, b->last, &p, len - 1, &in) != NGX_OK) {
-            return NGX_ERROR;
-        }
-
-        b->last += len - 1;
-
-        /* NALs MUST be SPS + PPS */
-        *b->last++ = 0x01;
-        has_sps = 1;
-    }
-
-    return (has_sps == 1) ? NGX_OK : NGX_ERROR;
-}
-
-
-static ngx_int_t
-ngx_rtmp_codec_parse_hevc_header_in_keyframe(ngx_rtmp_session_t *s, ngx_chain_t *in,
-    ngx_buf_t *out)
-{
-    ngx_rtmp_codec_ctx_t    *ctx;
-    u_char                  *p;
-    uint8_t                 fmt, ftype, htype, src_nal_type, nal_type;
-    uint32_t                rlen, len;
-    ngx_uint_t              nal_bytes;
-    ngx_buf_t               *b;
-    ngx_int_t               has_sps = 0;
-    ngx_int_t               remained;
-
-    ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_codec_module);
-    if (ctx == NULL ||
-        ctx->video_codec_id != NGX_RTMP_VIDEO_H265 ||
-        ctx->avc_nal_bytes == 0 ||
-        out == NULL) {
-        return NGX_ERROR;
-    }
-
-    p = in->buf->pos;
-    if (ngx_rtmp_hls_copy(s, &fmt, &p, 1, &in) != NGX_OK) {
-        return NGX_ERROR;
-    }
-
-    /* 1: keyframe (IDR)
-     * 2: inter frame
-     * 3: disposable inter frame */
-    ftype = (fmt & 0xf0) >> 4;
-
-    if (ftype != 1) {
-        return NGX_ERROR;
-    }
-
-    /* H265 HDR/PICT */
-    if (ngx_rtmp_hls_copy(s, &htype, &p, 1, &in) != NGX_OK) {
-        return NGX_ERROR;
-    }
-
-    /* proceed only with PICT */
-    if (htype != 1) {
-        return NGX_OK;
-    }
-
-    b = out;
-
-    *b->last++ = 0x1c;
-    *b->last++ = 0x00;
-
-    /* 3 bytes: decoder delay */
-    if (ngx_rtmp_hls_copy(s, NULL, &p, 3, &in) != NGX_OK) {
-        return NGX_ERROR;
-    }
-
-    /* 3 bytes: composition time */
-    *b->last++ = 0x00;
-    *b->last++ = 0x00;
-    *b->last++ = 0x00;
-
-    /* 1 byte: configuration version */
-    *b->last++ = 0x01;
-
-    /* 21 bits: profile, tie, level */
-    ngx_memcpy(b->last, ctx->avc_conf_record, 21);
-    b->last += 21;
-
-    /* numOfArrays */
-    *b->last++ = 0x03;
-
-    nal_bytes = ctx->avc_nal_bytes;
-    remained = NGX_RTMP_SPS_MAX_LENGTH;
-
-    while (in) {
-        if (ngx_rtmp_hls_copy(s, &rlen, &p, nal_bytes, &in) != NGX_OK) {
-            return NGX_OK;
-        }
-
-        len = 0;
-        ngx_rtmp_rmemcpy(&len, &rlen, nal_bytes);
-
-        if (len == 0) {
-            continue;
-        }
-
-        if (ngx_rtmp_hls_copy(s, &src_nal_type, &p, 1, &in) != NGX_OK) {
-            return NGX_OK;
-        }
-
-        /**
-          * +---------------+---------------+
-          * |0|1|2|3|4|5|6|7|0|1|2|3|4|5|6|7|
-          * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-          * |F|   Type    |  LayerId  | TID |
-          * +-------------+-----------------+
-          **/
-        nal_type = (src_nal_type & 0x7e) >> 1;
-
-        if (!(nal_type >= HEVC_NAL_VPS && nal_type <= HEVC_NAL_PPS)) {
-            if (ngx_rtmp_hls_copy(s, NULL, &p, len - 1, &in) != NGX_OK) {
-                return NGX_ERROR;
-            }
-            continue;
-        }
-
-        remained = NGX_RTMP_SPS_MAX_LENGTH - (b->last - b->pos);
-        
-        //hevc: nal type(1B) +  nal num(2B) + nal len（2B） + nal data (len)
-        if (len + 5 > remained) {
-            ngx_log_error(NGX_LOG_ERR, s->connection->log, 0,
-                          "codec: hevc too big sps or pps, nal_type:%uD, remained=%uD, len=%uD",
-                          nal_type, remained, len);
-            return NGX_ERROR;
-        }
-
-        /* nal type */
-        *b->last++ = (uint8_t) nal_type & 0x3f;
-
-        /* nalus num */
-        *b->last++ = 0x00;
-        *b->last++ = 0x01;
-
-        /* nal length */
-        *b->last++ = len >> 8;
-        *b->last++ = len & 0xff;
-        *b->last++ = src_nal_type;
-
-        if (ngx_rtmp_hls_copy(s, b->last, &p, len - 1, &in) != NGX_OK) {
-            return NGX_ERROR;
-        }
-
-        /* NALs MUST be VPS + SPS + PPS */
-        b->last += len - 1;
-        has_sps = 1;
-    }
-
-    return (has_sps == 1) ? NGX_OK : NGX_ERROR;
-}
-
-
-static ngx_int_t
-ngx_rtmp_codec_decode_profile_tier_level(ngx_rtmp_bit_reader_t *br)
-{
-    ngx_uint_t n;
-    /* profile_space */
-    ngx_rtmp_bit_read(br, 2);
-    /* tier_flag */
-    ngx_rtmp_bit_read(br, 1);
-    /* profile_idc */
-    ngx_rtmp_bit_read(br, 5);
-    /* profile_compatibility_flag */
-    for(n = 0; n < 32; n++) {
-        ngx_rtmp_bit_read(br, 1);
-    }
-    /* source_flag */
-    ngx_rtmp_bit_read(br, 4);
-    /* reserved 44bit*/
-    ngx_rtmp_bit_read(br, 44);
-
-    return NGX_OK;
-}
 
 static ngx_int_t
 ngx_rtmp_codec_parse_ptl(ngx_rtmp_bit_reader_t *br,ngx_uint_t max_sub_layers)
