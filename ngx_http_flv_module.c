@@ -55,7 +55,6 @@ extern ngx_uint_t ngx_rtmp_playing;
 ngx_uint_t ngx_http_flv_naccepted;
 
 typedef struct {
-    ngx_flag_t                          http_flv;
 } ngx_http_flv_httploc_conf_t;
 
 
@@ -164,13 +163,6 @@ ngx_rtmp_send_handler_t ngx_http_flv_send_handler = {
 
 
 static ngx_command_t ngx_http_flv_httpcommands[] = {
-
-    { ngx_string("http_flv"),
-      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
-      ngx_conf_set_flag_slot,
-      NGX_HTTP_LOC_CONF_OFFSET,
-      offsetof(ngx_http_flv_httploc_conf_t, http_flv),
-      NULL },
 
       ngx_null_command
 };
@@ -452,7 +444,7 @@ ngx_http_flv_http_handler(ngx_http_request_t *r)
     size_t                               i;
 
     hlcf = ngx_http_get_module_loc_conf(r, ngx_http_flv_httpmodule);
-    if (hlcf == NULL || !hlcf->http_flv) {
+    if (hlcf == NULL) {
     	return NGX_DECLINED;
     }
 
@@ -592,8 +584,6 @@ ngx_http_flv_http_create_conf(ngx_conf_t *cf)
         return NULL;
     }
 
-    hlcf->http_flv = NGX_CONF_UNSET;
-
     return hlcf;
 }
 
@@ -603,8 +593,6 @@ ngx_http_flv_http_merge_conf(ngx_conf_t *cf, void *parent, void *child)
 {
     ngx_http_flv_httploc_conf_t *prev = parent;
     ngx_http_flv_httploc_conf_t *conf = child;
-
-    ngx_conf_merge_value(conf->http_flv, prev->http_flv, 0);
 
     return NGX_CONF_OK;
 }
