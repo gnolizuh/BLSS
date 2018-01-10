@@ -591,9 +591,6 @@ ngx_http_flv_http_create_conf(ngx_conf_t *cf)
 static char *
 ngx_http_flv_http_merge_conf(ngx_conf_t *cf, void *parent, void *child)
 {
-    ngx_http_flv_httploc_conf_t *prev = parent;
-    ngx_http_flv_httploc_conf_t *conf = child;
-
     return NGX_CONF_OK;
 }
 
