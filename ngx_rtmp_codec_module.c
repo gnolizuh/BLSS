@@ -268,9 +268,9 @@ ngx_rtmp_codec_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     } else {
         header = &ctx->video_header;
         if (ctx->video_codec_id == NGX_RTMP_VIDEO_H264) {
-            ngx_rtmp_codec_parse_avc_header(s, &in);
+            ngx_rtmp_codec_parse_avc_header(s, in);
         } else if (ctx->video_codec_id == NGX_RTMP_VIDEO_H265){
-            ngx_rtmp_codec_parse_hevc_header(s, &in);
+            ngx_rtmp_codec_parse_hevc_header(s, in);
         }
     }
 
@@ -676,7 +676,7 @@ ngx_rtmp_codec_parse_hevc_header(ngx_rtmp_session_t *s, ngx_chain_t *in)
     }
 
     /* nalUnitLength */
-    if (!((ngx_uint_t) ngx_rtmp_bit_read(&br, 16) > 0) {
+    if (!((ngx_uint_t) ngx_rtmp_bit_read(&br, 16) > 0)) {
         return;
     }
 
