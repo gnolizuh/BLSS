@@ -120,12 +120,11 @@ typedef struct {
     ngx_uint_t                  aac_chan_conf;
     ngx_uint_t                  aac_sbr;
     ngx_uint_t                  aac_ps;
-    ngx_uint_t                  avc_profile;
-    ngx_uint_t                  avc_compat;
-    ngx_uint_t                  avc_level;
-    u_char                      avc_conf_record[21]; /* TODO */
-    ngx_uint_t                  avc_nal_bytes;
-    ngx_uint_t                  avc_ref_frames;
+    ngx_uint_t                  vc_profile;
+    ngx_uint_t                  vc_compat;
+    ngx_uint_t                  vc_level;
+    ngx_uint_t                  vc_nal_bytes;
+    ngx_uint_t                  vc_ref_frames;
     ngx_uint_t                  sample_rate;    /* 5512, 11025, 22050, 44100 */
     ngx_uint_t                  sample_size;    /* 1=8bit, 2=16bit */
     ngx_uint_t                  audio_channels; /* 1, 2 */

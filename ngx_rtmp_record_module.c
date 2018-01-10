@@ -1127,7 +1127,7 @@ ngx_rtmp_record_node_av(ngx_rtmp_session_t *s, ngx_rtmp_record_rec_ctx_t *rctx,
         }
 
         /* AVC header */
-        if (!rctx->avc_header_sent && codec_ctx->video_header &&
+        if (!rctx->video_header_sent && codec_ctx->video_header &&
            (rracf->flags & (NGX_RTMP_RECORD_VIDEO|
                             NGX_RTMP_RECORD_KEYFRAMES)))
         {
@@ -1144,14 +1144,14 @@ ngx_rtmp_record_node_av(ngx_rtmp_session_t *s, ngx_rtmp_record_rec_ctx_t *rctx,
                 return NGX_OK;
             }
 
-            rctx->avc_header_sent = 1;
+            rctx->video_header_sent = 1;
         }
     }
 
     if (h->type == NGX_RTMP_MSG_VIDEO) {
         if (codec_ctx && (codec_ctx->video_codec_id == NGX_RTMP_VIDEO_H264 || 
              codec_ctx->video_codec_id == NGX_RTMP_VIDEO_H265) &&
-            !rctx->avc_header_sent)
+            !rctx->video_header_sent)
         {
             ngx_log_debug1(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
                            "record: %V skipping until H264 header", &rracf->id);

@@ -1908,7 +1908,7 @@ ngx_rtmp_hls_video(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     out.pos = out.start;
     out.last = out.pos;
 
-    nal_bytes = codec_ctx->avc_nal_bytes;
+    nal_bytes = codec_ctx->vc_nal_bytes;
     aud_sent = 0;
     sps_pps_sent = 0;
 
