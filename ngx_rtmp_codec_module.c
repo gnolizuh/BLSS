@@ -254,7 +254,7 @@ ngx_rtmp_codec_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     /* no conf */
     if (!ngx_rtmp_is_codec_header(in)) {
         return NGX_OK;
-    }}
+    }
 
     cscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_core_module);
     header = NULL;
