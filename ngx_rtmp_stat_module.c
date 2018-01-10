@@ -522,22 +522,22 @@ ngx_rtmp_stat_live(ngx_http_request_t *r, ngx_chain_t ***lll,
                     NGX_RTMP_STAT_ECS(cname);
                     NGX_RTMP_STAT_L("</codec>");
                 }
-                if (codec->avc_profile) {
+                if (codec->vc_profile) {
                     NGX_RTMP_STAT_L("<profile>");
                     NGX_RTMP_STAT_CS(
-                            ngx_rtmp_stat_get_avc_profile(codec->avc_profile));
+                            ngx_rtmp_stat_get_avc_profile(codec->vc_profile));
                     NGX_RTMP_STAT_L("</profile>");
                 }
-                if (codec->avc_level) {
+                if (codec->vc_level) {
                     NGX_RTMP_STAT_L("<compat>");
                     NGX_RTMP_STAT(buf, ngx_snprintf(buf, sizeof(buf),
-                                  "%ui", codec->avc_compat) - buf);
+                                  "%ui", codec->vc_compat) - buf);
                     NGX_RTMP_STAT_L("</compat>");
                 }
-                if (codec->avc_level) {
+                if (codec->vc_level) {
                     NGX_RTMP_STAT_L("<level>");
                     NGX_RTMP_STAT(buf, ngx_snprintf(buf, sizeof(buf),
-                                  "%.1f", codec->avc_level / 10.) - buf);
+                                  "%.1f", codec->vc_level / 10.) - buf);
                     NGX_RTMP_STAT_L("</level>");
                 }
                 NGX_RTMP_STAT_L("</video>");

@@ -18,7 +18,6 @@
 #define NGX_RTMP_CODEC_META_COPY    2
 
 
-#define MAX_SUB_LAYERS 7
 #define MAX_SPS_COUNT 32
 
 static void * ngx_rtmp_codec_create_app_conf(ngx_conf_t *cf);
@@ -35,14 +34,15 @@ static void ngx_rtmp_codec_parse_aac_header(ngx_rtmp_session_t *s,
        ngx_chain_t *in);
 static void ngx_rtmp_codec_parse_avc_header(ngx_rtmp_session_t *s,
        ngx_chain_t *in);
+static void ngx_rtmp_codec_parse_hevc_header(ngx_rtmp_session_t*s,
+       ngx_chain_t *in);
+static void ngx_rtmp_codec_parse_hevc_profile_tier_level(ngx_rtmp_bit_reader_t *br,
+       ngx_uint_t max_sub_layers);
 #if (NGX_DEBUG)
 static void ngx_rtmp_codec_dump_header(ngx_rtmp_session_t *s, const char *type,
        ngx_chain_t *in);
 #endif
-static void ngx_rtmp_codec_parse_hevc_header(ngx_rtmp_session_t*s,
-       ngx_chain_t *in);
-static ngx_int_t ngx_rtmp_codec_parse_ptl(ngx_rtmp_bit_reader_t *br,
-       ngx_uint_t max_sub_layers);
+
 
 typedef struct {
     ngx_uint_t                      meta;
@@ -212,9 +212,9 @@ ngx_rtmp_codec_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     ngx_rtmp_core_srv_conf_t            *cscf;
     ngx_rtmp_codec_ctx_t                *ctx;
     ngx_chain_t                        **header;
-    uint8_t                             fmt;
-    static ngx_uint_t                   sample_rates[] =
-                                        { 5512, 11025, 22050, 44100 };
+    uint8_t                              fmt;
+    static ngx_uint_t                    sample_rates[] =
+                                         { 5512, 11025, 22050, 44100 };
 
     if (h->type != NGX_RTMP_MSG_AUDIO && h->type != NGX_RTMP_MSG_VIDEO) {
         return NGX_OK;
@@ -378,7 +378,7 @@ static void
 ngx_rtmp_codec_parse_avc_header(ngx_rtmp_session_t *s, ngx_chain_t *in)
 {
     ngx_uint_t              profile_idc, width, height, crop_left, crop_right,
-                            crop_top, crop_bottom, frame_mbs_only, n, cf_idc,
+                            crop_top, crop_bottom, frame_mbs_only, n, chroma_format_idc,
                             num_ref_frames;
     ngx_rtmp_codec_ctx_t   *ctx;
     ngx_rtmp_bit_reader_t   br;
@@ -393,12 +393,12 @@ ngx_rtmp_codec_parse_avc_header(ngx_rtmp_session_t *s, ngx_chain_t *in)
 
     ngx_rtmp_bit_read(&br, 48);
 
-    ctx->avc_profile = (ngx_uint_t) ngx_rtmp_bit_read_8(&br);
-    ctx->avc_compat = (ngx_uint_t) ngx_rtmp_bit_read_8(&br);
-    ctx->avc_level = (ngx_uint_t) ngx_rtmp_bit_read_8(&br);
+    ctx->vc_profile = (ngx_uint_t) ngx_rtmp_bit_read_8(&br);
+    ctx->vc_compat = (ngx_uint_t) ngx_rtmp_bit_read_8(&br);
+    ctx->vc_level = (ngx_uint_t) ngx_rtmp_bit_read_8(&br);
 
     /* nal bytes */
-    ctx->avc_nal_bytes = (ngx_uint_t) ((ngx_rtmp_bit_read_8(&br) & 0x03) + 1);
+    ctx->vc_nal_bytes = (ngx_uint_t) ((ngx_rtmp_bit_read_8(&br) & 0x03) + 1);
 
     /* nnals */
     if ((ngx_rtmp_bit_read_8(&br) & 0x1f) == 0) {
@@ -432,9 +432,9 @@ ngx_rtmp_codec_parse_avc_header(ngx_rtmp_session_t *s, ngx_chain_t *in)
         profile_idc == 83 || profile_idc == 86 || profile_idc == 118)
     {
         /* chroma format idc */
-        cf_idc = (ngx_uint_t) ngx_rtmp_bit_read_golomb(&br);
+        chroma_format_idc = (ngx_uint_t) ngx_rtmp_bit_read_golomb(&br);
         
-        if (cf_idc == 3) {
+        if (chroma_format_idc == 3) {
 
             /* separate color plane */
             ngx_rtmp_bit_read(&br, 1);
@@ -452,7 +452,7 @@ ngx_rtmp_codec_parse_avc_header(ngx_rtmp_session_t *s, ngx_chain_t *in)
         /* seq scaling matrix present */
         if (ngx_rtmp_bit_read(&br, 1)) {
 
-            for (n = 0; n < (cf_idc != 3 ? 8u : 12u); n++) {
+            for (n = 0; n < (chroma_format_idc != 3 ? 8u : 12u); n++) {
 
                 /* seq scaling list present */
                 if (ngx_rtmp_bit_read(&br, 1)) {
@@ -500,7 +500,7 @@ ngx_rtmp_codec_parse_avc_header(ngx_rtmp_session_t *s, ngx_chain_t *in)
     }
 
     /* num ref frames */
-    ctx->avc_ref_frames = (ngx_uint_t) ngx_rtmp_bit_read_golomb(&br);
+    ctx->vc_ref_frames = (ngx_uint_t) ngx_rtmp_bit_read_golomb(&br);
 
     /* gaps in frame num allowed */
     ngx_rtmp_bit_read(&br, 1);
@@ -547,8 +547,8 @@ ngx_rtmp_codec_parse_avc_header(ngx_rtmp_session_t *s, ngx_chain_t *in)
                    "codec: avc header "
                    "profile=%ui, compat=%ui, level=%ui, "
                    "nal_bytes=%ui, ref_frames=%ui, width=%ui, height=%ui",
-                   ctx->avc_profile, ctx->avc_compat, ctx->avc_level,
-                   ctx->avc_nal_bytes, ctx->avc_ref_frames,
+                   ctx->vc_profile, ctx->vc_compat, ctx->vc_level,
+                   ctx->vc_nal_bytes, ctx->vc_ref_frames,
                    ctx->width, ctx->height);
 }
 
@@ -574,19 +574,55 @@ ngx_rtmp_codec_process_startcode(ngx_buf_t* in, ngx_buf_t* out)
 }
 
 
+/***
+ *   aligned(8) class HEVCDecoderConfigurationRecord
+ *   {
+ *       unsigned int(8) configurationVersion = 1;
+ *       unsigned int(2) general_profile_space;
+ *       unsigned int(1) general_tier_flag;
+ *       unsigned int(5) general_profile_idc;
+ *       unsigned int(32) general_profile_compatibility_flags;
+ *       unsigned int(48) general_constraint_indicator_flags;
+ *       unsigned int(8) general_level_idc;
+ *       bit(4) reserved = ‘1111’b;
+ *       unsigned int(12) min_spatial_segmentation_idc;
+ *       bit(6) reserved = ‘111111’b;
+ *       unsigned int(2) parallelismType;
+ *       bit(6) reserved = ‘111111’b;
+ *       unsigned int(2) chroma_format_idc;
+ *       bit(5) reserved = ‘11111’b;
+ *       unsigned int(3) bit_depth_luma_minus8;
+ *       bit(5) reserved = ‘11111’b;
+ *       unsigned int(3) bit_depth_chroma_minus8;
+ *       bit(16) avgFrameRate;
+ *       bit(2) constantFrameRate;
+ *       bit(3) numTemporalLayers;
+ *       bit(1) temporalIdNested;
+ *       unsigned int(2) lengthSizeMinusOne;
+ *       unsigned int(8) numOfArrays;
+ *       for (j=0; j < numOfArrays; j++)
+ *       {
+ *           bit(1) array_completeness;
+ *           unsigned int(1) reserved = 0;
+ *           unsigned int(6) NAL_unit_type;
+ *           unsigned int(16) numNalus;
+ *           for (i=0; i< numNalus; i++)
+ *           {
+ *               unsigned int(16) nalUnitLength;
+ *               bit(8*nalUnitLength) nalUnit;
+ *           }
+ *       }
+ *   }
+ ***/
 static void
 ngx_rtmp_codec_parse_hevc_header(ngx_rtmp_session_t *s, ngx_chain_t *in)
 {
-    ngx_uint_t              num_of_arrays, nal_type , nal_num, nal_len, vps_id,
-                            max_sub_layers, cf_idc, sps_id,
+    ngx_uint_t              num_of_arrays, nal_type, nal_num, nal_len,
+                            max_sub_layers, chroma_format_idc, separate_colour_plane_flag,
                             width, height, crop_left, crop_right,
-                            crop_top, crop_bottom, n,m;
-    ngx_rtmp_codec_ctx_t    *ctx;
+                            crop_top, crop_bottom, sub_width_c, sub_height_c, n, m;
+    ngx_rtmp_codec_ctx_t   *ctx;
     ngx_rtmp_bit_reader_t   br;
-    u_char                  sps_out_buf[NGX_RTMP_SPS_MAX_LENGTH] = { 0 };
-    ngx_buf_t               sps_out;
-    u_char                  sps_in_buf[NGX_RTMP_SPS_MAX_LENGTH] = { 0 };
-    ngx_buf_t               sps_in;
 
 #if (NGX_DEBUG)
     ngx_rtmp_codec_dump_header(s, "hevc", in);
@@ -594,31 +630,21 @@ ngx_rtmp_codec_parse_hevc_header(ngx_rtmp_session_t *s, ngx_chain_t *in)
 
     ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_codec_module);
 
-    sps_out.start = sps_out_buf;
-    sps_out.end = sps_out_buf + sizeof(sps_out_buf);
-    sps_out.pos = sps_out.start;
-    sps_out.last = sps_out.pos;
-
-    sps_in.start = sps_in_buf;
-    sps_in.end = sps_in_buf + sizeof(sps_in_buf);
-    sps_in.pos = sps_in.start;
-    sps_in.last = sps_in.pos;
-
     ngx_rtmp_bit_init_reader(&br, in->buf->pos, in->buf->last);
 
     ngx_rtmp_bit_read(&br, 48 + 3 /* skip profile_space & tier_flag */);
 
-    ctx->avc_profile = (ngx_uint_t) ngx_rtmp_bit_read(&br, 5);
-    ctx->avc_compat = (ngx_uint_t) ngx_rtmp_bit_read_32(&br);
+    ctx->vc_profile = (ngx_uint_t) ngx_rtmp_bit_read(&br, 5);
+    ctx->vc_compat = (ngx_uint_t) ngx_rtmp_bit_read_32(&br);
 
     ngx_rtmp_bit_read(&br, 48);
 
-    ctx->avc_level = (ngx_uint_t) ngx_rtmp_bit_read_8(&br);
+    ctx->vc_level = (ngx_uint_t) ngx_rtmp_bit_read_8(&br);
 
     ngx_rtmp_bit_read(&br, 64);
 
     /* nal bytes */
-    ctx->avc_nal_bytes = (ngx_uint_t) ((ngx_rtmp_bit_read_8(&br) & 0x03) + 1);
+    ctx->vc_nal_bytes = (ngx_uint_t) ((ngx_rtmp_bit_read_8(&br) & 0x03) + 1);
 
     /* numOfArrays */
     num_of_arrays = (ngx_uint_t) ngx_rtmp_bit_read_8(&br);
@@ -634,9 +660,7 @@ ngx_rtmp_codec_parse_hevc_header(ngx_rtmp_session_t *s, ngx_chain_t *in)
             break;
         }
 
-        nal_num = (ngx_uint_t) ngx_rtmp_bit_read(&br, 16);
-
-        for (m = 0 ; m < nal_num ; m++) {
+        for (m = 0; m < nal_num; m++) {
             nal_len = (ngx_uint_t) ngx_rtmp_bit_read(&br, 16);
 
             if (br.pos + nal_len >= br.last) {
@@ -651,11 +675,12 @@ ngx_rtmp_codec_parse_hevc_header(ngx_rtmp_session_t *s, ngx_chain_t *in)
         return;
     }
 
+    /* nalUnitLength */
     if (!((ngx_uint_t) ngx_rtmp_bit_read(&br, 16) > 0) {
         return;
     }
 
-    /* SPS */
+    /* SPS NAL unit header */
 
     /* forbidden zero bit */
     ngx_rtmp_bit_read(&br, 1);
@@ -668,13 +693,13 @@ ngx_rtmp_codec_parse_hevc_header(ngx_rtmp_session_t *s, ngx_chain_t *in)
     /* nuh layer id */
     ngx_rtmp_bit_read(&br, 6);
 
-    /* nuh temporal id + 1 */
+    /* nuh temporal id plus1 */
     ngx_rtmp_bit_read(&br, 3);
+
+    /* SPS */
 
     /* vps id */
     ngx_rtmp_bit_read(&br, 4);
-
-    ngx_rtmp_bit_read_8(&br);
 
     /* sps_max_sub_layers_minus1 */
     max_sub_layers = (ngx_uint_t) ngx_rtmp_bit_read(&br, 3);
@@ -682,98 +707,103 @@ ngx_rtmp_codec_parse_hevc_header(ngx_rtmp_session_t *s, ngx_chain_t *in)
     /* sps_temporal_id_nesting_flag */
     ngx_rtmp_bit_read(&br, 1);
 
-    ngx_rtmp_bit_read(&br, 16);
-
-    if (ngx_rtmp_codec_parse_ptl(&br, max_sub_layers) != NGX_OK) {
-        return;
-    }
+    ngx_rtmp_codec_parse_hevc_profile_tier_level(&br, max_sub_layers);
 
     /* sps_seq_parameter_set_id */
-    sps_id = (ngx_uint_t)ngx_rtmp_bit_read_golomb(&br);
-    if (sps_id >= MAX_SPS_COUNT) {
-        return;
-    }
+    ngx_rtmp_bit_read_golomb(&br);
+
+    separate_colour_plane_flag = 0;
 
     /* chroma_format_idc */
-    cf_idc = (ngx_uint_t) ngx_rtmp_bit_read_golomb(&br);
-    if (!(cf_idc == 1 || cf_idc == 2 || cf_idc == 3)) {
-        return;
+    chroma_format_idc = (ngx_uint_t) ngx_rtmp_bit_read_golomb(&br);
+    if (chroma_format_idc == 3) {
+        separate_colour_plane_flag = (ngx_uint_t) ngx_rtmp_bit_read(&br, 1);
     }
 
-    if (cf_idc == 3) {
-        ngx_rtmp_bit_read(&br, 1);
-    }
+    sub_width_c = (chroma_format_idc == 1 || chroma_format_idc == 2) && separate_colour_plane_flag == 0 ? 2 : 1;
+    sub_height_c = chroma_format_idc == 1 && separate_colour_plane_flag == 0 ? 2 : 1;
 
-    /* pic_width_in_luma_samples and pic_height_in_luma_samples */
+    /* pic width in luma samples */
     width = (ngx_uint_t) ngx_rtmp_bit_read_golomb(&br);
+
+    /* pic height in luma samples */
     height = (ngx_uint_t) ngx_rtmp_bit_read_golomb(&br);
 
+    /* conformance window flag */
     if (ngx_rtmp_bit_read(&br, 1)) {
+
         crop_left = (ngx_uint_t) ngx_rtmp_bit_read_golomb(&br) * 2;
         crop_right = (ngx_uint_t) ngx_rtmp_bit_read_golomb(&br) * 2;
         crop_top = (ngx_uint_t) ngx_rtmp_bit_read_golomb(&br) * 2;
         crop_bottom = (ngx_uint_t) ngx_rtmp_bit_read_golomb(&br) * 2;
     } else {
+
         crop_left = 0;
         crop_right = 0;
         crop_top = 0;
         crop_bottom = 0;
     }
 
-    ctx->width = width - (crop_left + crop_right);
-    ctx->height = height - (crop_top + crop_bottom);
+    ctx->width = width - (sub_width_c * crop_left + sub_width_c * crop_right);
+    ctx->height = height - (sub_height_c * crop_top + sub_height_c * crop_bottom);
 
-#if (NGX_DEBUG)
     ngx_log_debug7(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
-                  "codec: hevc header "
-                  "profile=%ui, compat=%ui, level=%ui, "
-                  "nal_bytes=%ui, ref_frames=%ui, width=%ui, height=%ui",
-                  ctx->avc_profile, ctx->avc_compat, ctx->avc_level,
-                  ctx->avc_nal_bytes, ctx->avc_ref_frames,
-                  ctx->width, ctx->height);
-#endif
+                   "codec: hevc header "
+                   "profile=%ui, compat=%ui, level=%ui, "
+                   "nal_bytes=%ui, ref_frames=%ui, width=%ui, height=%ui",
+                   ctx->vc_profile, ctx->vc_compat, ctx->vc_level,
+                   ctx->vc_nal_bytes, ctx->vc_ref_frames,
+                   ctx->width, ctx->height);
 }
 
 
-static ngx_int_t
-ngx_rtmp_codec_parse_ptl(ngx_rtmp_bit_reader_t *br,ngx_uint_t max_sub_layers)
+#define MAX_SUB_LAYERS 7
+
+static void
+ngx_rtmp_codec_parse_hevc_profile_tier_level(ngx_rtmp_bit_reader_t *br, ngx_uint_t max_sub_layers_minus1)
 {
-    ngx_uint_t n;
-    ngx_uint_t profile_present_flag [MAX_SUB_LAYERS] = { 0 };
-    ngx_uint_t level_present_flag[MAX_SUB_LAYERS] = { 0 };
+    ngx_uint_t i;
+    ngx_uint_t sub_layer_profile_present_flag[MAX_SUB_LAYERS];
+    ngx_uint_t sub_layer_level_present_flag[MAX_SUB_LAYERS];
 
-    if(ngx_rtmp_codec_decode_profile_tier_level(br) != NGX_OK) {
-        return NGX_ERROR;
+    ngx_rtmp_bit_read(br, 96);
+
+    for (i = 0; i < max_sub_layers_minus1; i++) {
+        sub_layer_profile_present_flag[i] = (ngx_uint_t) ngx_rtmp_bit_read(br, 1);
+        sub_layer_level_present_flag[i]   = (ngx_uint_t) ngx_rtmp_bit_read(br, 1);
     }
 
-    /* level_idc */
-    ngx_rtmp_bit_read(br, 8);
-    /* profile_present_flag*/
-    for(n = 0; n < max_sub_layers; n++) {
-        profile_present_flag[n] = (ngx_uint_t) ngx_rtmp_bit_read(br, 1);
-        level_present_flag[n] = (ngx_uint_t) ngx_rtmp_bit_read(br, 1);
-    }
-
-    if(max_sub_layers > 0) {
-        for (n = max_sub_layers; n < 8; n++) {
-            ngx_rtmp_bit_read(br, 2);
+    if (max_sub_layers_minus1 > 0) {
+        for (i = max_sub_layers_minus1; i < 8; i++) {
+            ngx_rtmp_bit_read(br, 2); // reserved_zero_2bits[i]
         }
     }
 
-    for (n = 0; n < max_sub_layers; n++) {
-        if(profile_present_flag[n]) {
-            if(ngx_rtmp_codec_decode_profile_tier_level(br) != NGX_OK) {
-                return NGX_ERROR;
-            }
+    for (i = 0; i < max_sub_layers_minus1; i++) {
+        if (sub_layer_profile_present_flag[i]) {
+            /*
+             * sub_layer_profile_space[i]                     u(2)
+             * sub_layer_tier_flag[i]                         u(1)
+             * sub_layer_profile_idc[i]                       u(5)
+             * sub_layer_profile_compatibility_flag[i][0..31] u(32)
+             * sub_layer_progressive_source_flag[i]           u(1)
+             * sub_layer_interlaced_source_flag[i]            u(1)
+             * sub_layer_non_packed_constraint_flag[i]        u(1)
+             * sub_layer_frame_only_constraint_flag[i]        u(1)
+             * sub_layer_reserved_zero_44bits[i]              u(44)
+             */
+            ngx_rtmp_bit_read_32(br);
+            ngx_rtmp_bit_read_32(br);
+            ngx_rtmp_bit_read(br, 24);
         }
 
-        if(level_present_flag[n]) {
-            ngx_rtmp_bit_read(br, 8);
-        }
+        if (sub_layer_level_present_flag[i])
+            ngx_rtmp_bit_read_8(br);
     }
-
-    return NGX_OK;
 }
+
+#undef MAX_SUB_LAYERS
+
 
 #if (NGX_DEBUG)
 static void
