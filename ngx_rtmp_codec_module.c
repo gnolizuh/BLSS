@@ -792,13 +792,13 @@ ngx_rtmp_codec_parse_hevc_profile_tier_level(ngx_rtmp_bit_reader_t *br, ngx_uint
              * sub_layer_frame_only_constraint_flag[i]        u(1)
              * sub_layer_reserved_zero_44bits[i]              u(44)
              */
-            ngx_rtmp_bit_read_32(br);
-            ngx_rtmp_bit_read_32(br);
+            ngx_rtmp_bit_read(br, 32);
+            ngx_rtmp_bit_read(br, 32);
             ngx_rtmp_bit_read(br, 24);
         }
 
         if (sub_layer_level_present_flag[i])
-            ngx_rtmp_bit_read_8(br);
+            ngx_rtmp_bit_read(br, 8);
     }
 }
 
