@@ -552,28 +552,6 @@ ngx_rtmp_codec_parse_avc_header(ngx_rtmp_session_t *s, ngx_chain_t *in)
                    ctx->width, ctx->height);
 }
 
-static void
-ngx_rtmp_codec_process_startcode(ngx_buf_t* in, ngx_buf_t* out)
-{
-    u_char *p;
-    ngx_buf_t *pp = out;
-    for (p = in->pos; p < in->last;) {
-        if(*p) {
-            *pp->last++ = *p++;
-            continue;
-        }
-
-        if (p + 2 < in->last && *(p+1) == 0 && *(p+2) == 3) {
-            *pp->last++ = *p++;
-            *pp->last++ = *p++;
-            p++;
-        } else {
-            *pp->last++ = *p++;
-        }
-    }
-}
-
-
 /***
  *   aligned(8) class HEVCDecoderConfigurationRecord
  *   {
@@ -614,6 +592,7 @@ ngx_rtmp_codec_process_startcode(ngx_buf_t* in, ngx_buf_t* out)
  *       }
  *   }
  ***/
+
 static void
 ngx_rtmp_codec_parse_hevc_header(ngx_rtmp_session_t *s, ngx_chain_t *in)
 {
