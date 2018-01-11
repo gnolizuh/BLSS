@@ -11,136 +11,82 @@ BLSS: Bravo Live Streaming Service
 [5]: https://img.shields.io/github/downloads/atom/atom/total.svg
 [6]: https://github.com/gnolizuh/BLSS/releases
 
-[README in english](https://github.com/gnolizuh/BLSS/blob/master/README.md) 
+Media streaming server based on [nginx-rtmp-module](https://github.com/arut/nginx-rtmp-module).
 
-# 简介
+# 特性
 
-BLSS是一个NGINX第三方模块，它基于开源项目[nginx-rtmp-module](https://github.com/arut/nginx-rtmp-module)二次开发实现，保留了原有特性的基础上提供一些关键功能，
-如**HTTP-FLV协议的分发、GOP缓存、正则匹配推拉流域名、vhost**等。
+* 继承 [nginx-rtmp-module](https://github.com/arut/nginx-rtmp-module) 所有功能.
 
-# 安装方法
+* 支持基于HTTP协议的FLV播放.
 
-下载[nginx](https://nginx.org/)：
+* 支持动态调整GOP缓存个数.
 
-    wget https://nginx.org/download/nginx-$VERSION.tar.gz
-    tar zxvf nginx-$VERSION.tar.gz
+* 支持Socket sharding特性，使 [nginx-rtmp-module](https://github.com/arut/nginx-rtmp-module) 在多进程下有更均衡的负载 (必须在 linux kernel 2.6 or later 下运行).
 
-下载[BLSS](https://github.com/gnolizuh/BLSS/releases)：
+* 提供在 application 更高一层的用户隔离能力 (rtmp service{} block).
 
-    wget https://github.com/gnolizuh/BLSS/archive/v1.1.4.tar.gz
-    tar zxvf v1.1.4.tar.gz
+* 支持正则匹配 virtual hosts.
 
-编译安装：
+* 提供 bkdr hash 进程间哈希级联，减少进程间级联的消耗 (relay_stream hash option).
 
-    cd NGINX-SRC-DIR
-    ./configure --add-module=/path/to/BLSS
-    make
-    make install
+# 系统支持
 
-编译DEBUG模式(输出DEBUG日志)：
+* Linux (kernel 2.6 or later are recommended)/FreeBSD/MacOS/Windows (limited).
 
-    ./configure --add-module=/path/to/BLSS --with-debug
+# 依赖
 
-# 配置步骤
+* GCC for compiling on Unix-like systems.
 
-修改配置文件如下：
+* MSVC for compiling on Windows (see how to build nginx on win32).
 
-    worker_processes 8;   # 开启多进程模式
-    relay_stream hash;    # 选择多进程级联工作模式
+* PCRE, zlib and OpenSSL libraries sources if needed.
 
-    # rtmp 相关配置
-    rtmp {
-        server {
-            listen 1935 reuseport;
+# 安装
 
-            service cctv {
-                hostname pub rtmp *.pub.rtmp.cctv;         # 正则匹配RTMP推流域名
-                hostname sub rtmp *.sub.rtmp.cctv;         # 正则匹配RTMP拉流域名
-                hostname sub http_flv *.sub.httpflv.cctv;  # 正则匹配HTTP-FLV拉流域名
+* 进入 NGINX 源码目录 & 运行以下命令
 
-                application news {
-                    live on;
-                    gop_cache on;
-                    gop_cache_count 5;  # cache 5 GOPs
+        ./configure --add-module=/path/to/BLSS
+        make
+        make install
 
-                    hls on;
-                    hls_fragment 10s;
-                    hls_playlist_length 30s;
-                }
+# 开始使用
 
-                application sports {
-                    hls on;
-                    hls_fragment 1m;
-                    hls_playlist_length 3m;
+* 编译 BLSS 模块.
+
+* 更新 nginx.conf 文件并启动 nginx.
+
+* 推流.
+
+        ffmpeg -re -i live.flv -c copy -f flv rtmp://publish.com[:port]/appname/streamname
+
+* 播放.
+
+        ffplay rtmp://rtmpplay.com[:port]/appname/streamname # RTMP
+        ffplay http://flvplay.com[:port]/appname/streamname  # HTTP based FLV
+        
+# 示例
+
+        worker_processes 8;   # multi-worker process mode
+        relay_stream hash;    # stream relay mode
+
+        rtmp {
+            server {
+                listen 1935 reuseport;
+
+                service cctv {
+                    hostname pub rtmp publish.com;      # match rtmp push domain
+                    hostname sub rtmp rtmpplay.com;     # match rtmp pull domain
+                    hostname sub http_flv flvplay.com;  # match http-flv pull domain
+
+                    application live {
+                        live on;
+                        gop_cache on;
+                        gop_cache_count 5;  # cache 5 GOPs
+
+                        hls on;
+                        hls_fragment 10s;
+                        hls_playlist_length 30s;
+                    }
                 }
             }
         }
-    }
-    
-    http {
-        include      mime.types;
-        default_type application/octet-stream;
-
-        log_format   main  '$remote_addr - $remote_user [$time_local] "$request" '
-                            '$status $body_bytes_sent "$http_referer" '
-                            '"$http_user_agent" "$http_x_forwarded_for"';
-
-        access_log   logs/http_sla.log main;
-
-        keepalive_timeout 60;
-
-        server {
-            listen 80 reuseport;
-
-            location / {
-
-                add_header 'Content-Type' 'video/x-flv';      # content type header
-                add_header 'Access-Control-Allow-Origin' '*'; # cross-domain header
-            }
-        }
-    }
-
-启动nginx
-
-    ./obj/nginx -p /path/to/nginx
-
-# 测试
-
-## 测试工具
-
-- [OBS](https://obsproject.com/) [**推流**]
-- [FFMPEG](https://ffmpeg.org/) [**推流/播放**]
-- [VLC](http://www.videolan.org/vlc/) [**播放**]
-
-## 测试方法
-
-### 推流
-
-客户端需要绑定HOST：
-
-    192.168.1.100 test.pub.rtmp.cctv     # RTMP推流地址
-
-下面以FFMPEG进行RTMP推流：
-
-    ffmpeg -re -i movie.flv -vcodec copy -acodec copy -f flv rtmp://test.pub.rtmp.cctv/news/test
-
-以IP形式进行推流：
-
-    ffmpeg -re -i movie.flv -vcodec copy -acodec copy -f flv rtmp://192.168.1.100/test.pub.rtmp.cctv/news/test
-
-### 播放
-
-客户端需要绑定HOST：
-
-    192.168.1.100 test.sub.rtmp.cctv     # RTMP播放地址
-    192.168.1.100 test.sub.httpflv.cctv  # HTTP-FLV播放地址
-
-使用播放器进行RTMP/HTTP-FLV播放：
-
-    rtmp://test.sub.rtmp.cctv/news/test
-    http://test.sub.httpflv.cctv/news/test.flv
-
-以IP形式进行播放
-
-    rtmp://192.168.1.100/test.sub.rtmp.cctv/news/test
-    http://192.168.1.100/test.sub.httpflv.cctv/news/test.flv
