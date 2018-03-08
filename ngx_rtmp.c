@@ -598,6 +598,10 @@ ngx_rtmp_add_addresses(ngx_conf_t *cf, ngx_rtmp_core_srv_conf_t *cscf,
 
         proxy_protocol = lsopt->proxy_protocol || addr[i].opt.proxy_protocol;
 
+#if (NGX_HTTP_SSL)
+        ssl = lsopt->ssl || addr[i].opt.ssl;
+#endif
+
         if (lsopt->set) {
 
             if (addr[i].opt.set) {
