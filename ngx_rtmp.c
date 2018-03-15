@@ -601,6 +601,9 @@ ngx_rtmp_add_addresses(ngx_conf_t *cf, ngx_rtmp_core_srv_conf_t *cscf,
 #if (NGX_HTTP_SSL)
         ssl = lsopt->ssl || addr[i].opt.ssl;
 #endif
+#if (NGX_HTTP_V2)
+        http2 = lsopt->http2 || addr[i].opt.http2;
+#endif
 
         if (lsopt->set) {
 
