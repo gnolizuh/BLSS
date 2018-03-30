@@ -93,4 +93,4 @@ Media streaming server based on [nginx-rtmp-module](https://github.com/arut/ngin
 
 # 技术交流群
 
-<img src="groups.png" width = "260" height = "258"/>
+![Alt text](groups.png "微信二维码")
