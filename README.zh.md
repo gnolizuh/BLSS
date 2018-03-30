@@ -90,3 +90,7 @@ Media streaming server based on [nginx-rtmp-module](https://github.com/arut/ngin
                 }
             }
         }
+
+# 技术交流群
+
+<img src="groups.png" width = "260" height = "258"/>

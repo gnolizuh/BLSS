@@ -90,3 +90,7 @@ cd to NGINX source directory & run this:
             }
         }
     }
+
+# Groups
+
+<img src="groups.png" width = "260" height = "258"/>
