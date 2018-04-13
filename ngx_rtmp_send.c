@@ -151,6 +151,62 @@ ngx_rtmp_send_ack(ngx_rtmp_session_t *s, uint32_t seq)
 }
 
 
+ngx_int_t
+ngx_rtmp_send_on_fcpublish(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h)
+{
+    static double               trans = 0;
+    size_t                      nelts;
+
+    static ngx_rtmp_amf_elt_t elts[] = {
+
+        { NGX_RTMP_AMF_STRING,
+          ngx_null_string,
+          "onFCPublish", 0 },
+
+        { NGX_RTMP_AMF_NUMBER,
+          ngx_null_string,
+          &trans, 0 },
+
+        { NGX_RTMP_AMF_NULL,
+          ngx_null_string,
+          NULL, 0 },
+    };
+
+    nelts = sizeof(elts) / sizeof(elts[0]);
+
+    return ngx_rtmp_send_shared_packet(s,
+           ngx_rtmp_create_amf(s, h, elts, nelts));
+}
+
+
+ngx_int_t
+ngx_rtmp_send_on_bw_done(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h)
+{
+    static double               bw = 0;
+    size_t                      nelts;
+
+    static ngx_rtmp_amf_elt_t elts[] = {
+
+        { NGX_RTMP_AMF_STRING,
+          ngx_null_string,
+          "onBWDone", 0 },
+
+        { NGX_RTMP_AMF_NUMBER,
+          ngx_null_string,
+          &bw, 0 },
+
+        { NGX_RTMP_AMF_NULL,
+          ngx_null_string,
+          NULL, 0 },
+    };
+
+    nelts = sizeof(elts) / sizeof(elts[0]);
+
+    return ngx_rtmp_send_shared_packet(s,
+           ngx_rtmp_create_amf(s, h, elts, nelts));
+}
+
+
 ngx_chain_t *
 ngx_rtmp_create_ack_size(ngx_rtmp_session_t *s, uint32_t ack_size)
 {
