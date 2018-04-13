@@ -39,6 +39,12 @@ typedef struct {
 
 typedef struct {
     double                          trans;
+    u_char                          name[NGX_RTMP_MAX_NAME];
+} ngx_rtmp_release_stream_t;
+
+
+typedef struct {
+    double                          trans;
     double                          stream;
 } ngx_rtmp_create_stream_t;
 
@@ -51,6 +57,12 @@ typedef struct {
 typedef struct {
     double                          stream;
 } ngx_rtmp_close_stream_t;
+
+
+typedef struct {
+    double                          trans;
+    u_char                          name[NGX_RTMP_MAX_NAME];
+} ngx_rtmp_fcpublish_t;
 
 
 typedef struct {
@@ -112,12 +124,16 @@ ngx_rtmp_cmd_get_core_srv_conf(ngx_rtmp_session_t *s, ngx_int_t type, ngx_str_t 
 typedef ngx_int_t (*ngx_rtmp_connect_pt)(ngx_rtmp_session_t *s,
         ngx_rtmp_connect_t *v);
 typedef ngx_int_t (*ngx_rtmp_disconnect_pt)(ngx_rtmp_session_t *s);
+typedef ngx_int_t (*ngx_rtmp_release_stream_pt)(ngx_rtmp_session_t *s,
+        ngx_rtmp_release_stream_t *v);
 typedef ngx_int_t (*ngx_rtmp_create_stream_pt)(ngx_rtmp_session_t *s,
         ngx_rtmp_create_stream_t *v);
 typedef ngx_int_t (*ngx_rtmp_close_stream_pt)(ngx_rtmp_session_t *s,
         ngx_rtmp_close_stream_t *v);
 typedef ngx_int_t (*ngx_rtmp_delete_stream_pt)(ngx_rtmp_session_t *s,
         ngx_rtmp_delete_stream_t *v);
+typedef ngx_int_t (*ngx_rtmp_fcpublish_pt)(ngx_rtmp_session_t *s,
+        ngx_rtmp_fcpublish_t *v);
 typedef ngx_int_t (*ngx_rtmp_publish_pt)(ngx_rtmp_session_t *s,
         ngx_rtmp_publish_t *v);
 typedef ngx_int_t (*ngx_rtmp_play_pt)(ngx_rtmp_session_t *s,
@@ -141,9 +157,11 @@ typedef ngx_int_t (*ngx_rtmp_set_buflen_pt)(ngx_rtmp_session_t *s,
 
 extern ngx_rtmp_connect_pt          ngx_rtmp_connect;
 extern ngx_rtmp_disconnect_pt       ngx_rtmp_disconnect;
+extern ngx_rtmp_release_stream_pt   ngx_rtmp_release_stream;
 extern ngx_rtmp_create_stream_pt    ngx_rtmp_create_stream;
 extern ngx_rtmp_close_stream_pt     ngx_rtmp_close_stream;
 extern ngx_rtmp_delete_stream_pt    ngx_rtmp_delete_stream;
+extern ngx_rtmp_fcpublish_pt        ngx_rtmp_fcpublish;
 extern ngx_rtmp_publish_pt          ngx_rtmp_publish;
 extern ngx_rtmp_play_pt             ngx_rtmp_play;
 extern ngx_rtmp_seek_pt             ngx_rtmp_seek;
