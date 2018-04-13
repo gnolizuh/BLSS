@@ -654,6 +654,10 @@ ngx_int_t ngx_rtmp_send_abort(ngx_rtmp_session_t *s,
         uint32_t csid);
 ngx_int_t ngx_rtmp_send_ack(ngx_rtmp_session_t *s,
         uint32_t seq);
+ngx_int_t ngx_rtmp_send_on_fcpublish(ngx_rtmp_session_t *s,
+        ngx_rtmp_header_t *h);
+ngx_int_t ngx_rtmp_send_on_bw_done(ngx_rtmp_session_t *s,
+        ngx_rtmp_header_t *h);
 ngx_int_t ngx_rtmp_send_ack_size(ngx_rtmp_session_t *s,
         uint32_t ack_size);
 ngx_int_t ngx_rtmp_send_bandwidth(ngx_rtmp_session_t *s,
