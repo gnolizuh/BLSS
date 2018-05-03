@@ -128,6 +128,11 @@ ngx_rtmp_cmd_get_conf(ngx_rtmp_session_t *s, const char *func)
     ngx_uint_t                  n;
 
     hash = &s->addr_conf->virtual_hosts->names;
+    if (hash == NULL) {
+        ngx_log_error(NGX_LOG_EMERG, s->connection->log, 0,
+                      "fetch virtual host failed, pls check your config file.");
+        return NGX_ERROR;
+    }
 
     /* match host to find out service conf */
     hn = ngx_hash_find_combined(hash, ngx_hash_key(s->host.data, s->host.len),
