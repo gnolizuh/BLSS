@@ -92,4 +92,4 @@ cd to NGINX source directory & run this:
     }
 
 # wechat QR code
-![Alt text](groups.png =150x150)
+![Alt text](groups.png "wechat QR code")
