@@ -90,7 +90,7 @@ ngx_http_flv_init_connection(ngx_http_request_t *r)
 #endif
 
         case AF_UNIX:
-            unix_socket = 1;
+            unix_socket = 1; // fallthrough
 
         default: /* AF_INET */
             sin = (struct sockaddr_in *) sa;
@@ -121,7 +121,7 @@ ngx_http_flv_init_connection(ngx_http_request_t *r)
 #endif
 
         case AF_UNIX:
-            unix_socket = 1;
+            unix_socket = 1; // fallthrough
 
         default: /* AF_INET */
             addr = port->addrs;
@@ -305,7 +305,7 @@ ngx_rtmp_init_connection(ngx_connection_t *c)
 #endif
 
         case AF_UNIX:
-            unix_socket = 1;
+            unix_socket = 1; // fallthrough
 
         default: /* AF_INET */
             sin = (struct sockaddr_in *) sa;
@@ -336,7 +336,7 @@ ngx_rtmp_init_connection(ngx_connection_t *c)
 #endif
 
         case AF_UNIX:
-            unix_socket = 1;
+            unix_socket = 1; // fallthrough
 
         default: /* AF_INET */
             addr = port->addrs;
