@@ -287,7 +287,8 @@ ngx_http_flv_send_message(ngx_rtmp_session_t *s, ngx_chain_t *out,
 {
     ngx_uint_t                      nmsg;
 
-    nmsg = (s->out_last - s->out_pos) % s->out_queue + 1;
+    // modulo negative number may cause action undefined. 
+    nmsg = (s->out_last - s->out_pos + s->out_queue) % s->out_queue + 1;
 
     if (priority > 3) {
         priority = 3;
