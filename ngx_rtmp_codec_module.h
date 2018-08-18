@@ -134,7 +134,6 @@ typedef struct {
     ngx_chain_t                *video_header;
     ngx_chain_t                *aac_header;
 
-    ngx_rtmp_header_t           meta_header;
     ngx_rtmp_header_t           msgh;
 
     ngx_chain_t                *meta;

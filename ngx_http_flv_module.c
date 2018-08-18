@@ -647,7 +647,7 @@ ngx_http_flv_append_shared_bufs(ngx_rtmp_core_srv_conf_t *cscf, ngx_rtmp_header_
     taghead = ngx_rtmp_append_shared_bufs(cscf, NULL, head);
 
     tail->next = NULL;
-    presize -= NGX_RTMP_MAX_FLV_TAG_HEADER;
+    presize -= NGX_RTMP_MAX_FLV_TAG_HEADER
 
     /* tag header */
     taghead->buf->pos -= NGX_RTMP_MAX_FLV_TAG_HEADER;

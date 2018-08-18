@@ -809,6 +809,12 @@ ngx_rtmp_codec_dump_header(ngx_rtmp_session_t *s, const char *type,
 
 
 static ngx_int_t
+ngx_rtmp_codec_construct_meta(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h)
+{
+}
+
+
+static ngx_int_t
 ngx_rtmp_codec_reconstruct_meta(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h)
 {
     ngx_rtmp_codec_ctx_t           *ctx;
@@ -993,8 +999,6 @@ ngx_rtmp_codec_prepare_meta(ngx_rtmp_session_t *s, uint32_t timestamp)
     h.timestamp = timestamp;
     ngx_rtmp_prepare_message(s, &h, NULL, ctx->meta);
 
-    ngx_memzero(&ctx->meta_header, sizeof(ctx->meta_header));
-    ctx->meta_header = h;
     ctx->meta_version = ngx_rtmp_codec_get_next_version();
 
     return NGX_OK;
