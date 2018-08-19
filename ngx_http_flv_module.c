@@ -155,6 +155,7 @@ static ngx_str_t ngx_http_status_lines[] = {
 
 
 ngx_rtmp_send_handler_t ngx_http_flv_send_handler = {
+    NULL,
     ngx_http_flv_http_send_header,
     ngx_http_flv_http_send_message,
     ngx_http_flv_http_append_shared_bufs,
@@ -653,6 +654,7 @@ ngx_http_flv_append_shared_bufs(ngx_rtmp_core_srv_conf_t *cscf, ngx_rtmp_header_
     taghead->buf->pos -= NGX_RTMP_MAX_FLV_TAG_HEADER;
     ph = taghead->buf->pos;
 
+    /* | tag type | data size | timestamp | stream id | tag data .... | previous tag size | */
     *ph++ = (u_char)h->type;
 
     p = (u_char*)&presize;

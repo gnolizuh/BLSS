@@ -24,8 +24,8 @@ extern ngx_uint_t ngx_rtmp_playing;
 
 
 static ngx_int_t ngx_rtmp_live_postconfiguration(ngx_conf_t *cf);
-static void * ngx_rtmp_live_create_app_conf(ngx_conf_t *cf);
-static char * ngx_rtmp_live_merge_app_conf(ngx_conf_t *cf,
+static void *ngx_rtmp_live_create_app_conf(ngx_conf_t *cf);
+static char *ngx_rtmp_live_merge_app_conf(ngx_conf_t *cf,
        void *parent, void *child);
 static char *ngx_rtmp_live_set_msec_slot(ngx_conf_t *cf, ngx_command_t *cmd,
        void *conf);
@@ -33,11 +33,12 @@ static void ngx_rtmp_live_start(ngx_rtmp_session_t *s);
 static void ngx_rtmp_live_stop(ngx_rtmp_session_t *s);
 static void ngx_rtmp_live_send_header(ngx_rtmp_session_t *s, ngx_rtmp_session_t *ps);
 static ngx_int_t ngx_rtmp_live_send_message(ngx_rtmp_session_t *s, ngx_chain_t *in, ngx_uint_t priority);
-static ngx_chain_t * ngx_rtmp_live_append_shared_bufs(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_rtmp_header_t *lh, ngx_chain_t *in);
+static ngx_chain_t *ngx_rtmp_live_append_shared_bufs(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_rtmp_header_t *lh, ngx_chain_t *in);
 static void ngx_rtmp_live_free_shared_chain(ngx_rtmp_session_t *s, ngx_chain_t *in);
 
 
 ngx_rtmp_send_handler_t ngx_rtmp_live_send_handler = {
+    NULL,
     ngx_rtmp_live_send_header,
     ngx_rtmp_live_send_message,
     ngx_rtmp_live_append_shared_bufs,
@@ -910,10 +911,8 @@ ngx_rtmp_live_broadcast(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
         rpkt = handler->append_shared_bufs(s, &ch, &lh, in);
 
-        meta = NULL;
-        if (codec_ctx) {
-            meta = (n == 0 ? codec_ctx->meta : codec_ctx->meta_flv);
-        }
+        // TODO:
+        meta = codec_ctx->meta;
 
         for (pctx = ctx->stream->ctx[n]; pctx; pctx = pctx->next) {
             if (pctx == ctx || pctx->paused) {
