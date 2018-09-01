@@ -791,7 +791,7 @@ ngx_rtmp_gop_cache_close_stream(ngx_rtmp_session_t *s, ngx_rtmp_close_stream_t *
     ngx_rtmp_gop_cache_app_conf_t  *gacf;
 
     ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_live_module);
-    if (ctx == NULL || ctx->stream == NULL) {
+    if (ctx == NULL) {
         goto next;
     }
 
