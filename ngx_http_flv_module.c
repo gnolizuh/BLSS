@@ -544,6 +544,10 @@ ngx_http_flv_http_handler(ngx_http_request_t *r)
         return NGX_DECLINED;
     }
 
+    r->main->count++;
+    r->allow_ranges = 0;
+    r->read_event_handler = ngx_http_test_reading;
+
     cln = ngx_http_cleanup_add(r, 0);
     if (cln == NULL) {
         return NGX_DECLINED;
