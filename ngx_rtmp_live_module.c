@@ -697,11 +697,10 @@ ngx_rtmp_live_close_stream(ngx_rtmp_session_t *s, ngx_rtmp_close_stream_t *v)
     }
 
     if (ctx->stream->ctx[NGX_RTMP_LIVE_TYPE_RTMP] ||
-        ctx->stream->ctx[NGX_RTMP_LIVE_TYPE_HTTP_FLV]) {
-        if (ctx->stream->pctx) {
-            ctx->stream = NULL;
-            goto next;
-        }
+        ctx->stream->ctx[NGX_RTMP_LIVE_TYPE_HTTP_FLV] ||
+        ctx->stream->pctx) {
+        ctx->stream = NULL;
+        goto next;
     } else {
         if (ctx->stream->pctx != NULL &&
             ctx->stream->pctx->session != NULL &&
