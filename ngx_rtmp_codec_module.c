@@ -838,7 +838,7 @@ ngx_rtmp_codec_construct_meta(ngx_rtmp_session_t *s)
 
 
 static ngx_int_t
-ngx_rtmp_codec_reconstruct_meta(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h)
+ngx_rtmp_codec_reconstruct_meta(ngx_rtmp_session_t *s)
 {
     ngx_rtmp_codec_ctx_t           *ctx;
     ngx_rtmp_core_srv_conf_t       *cscf;
