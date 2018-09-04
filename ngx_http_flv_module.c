@@ -721,7 +721,6 @@ ngx_http_flv_http_append_meta(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_c
 }
 
 
-
 static void
 ngx_http_flv_http_send_header(ngx_rtmp_session_t *s, ngx_rtmp_session_t *ps)
 {
