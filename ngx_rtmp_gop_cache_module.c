@@ -294,11 +294,13 @@ ngx_rtmp_gop_alloc_cache(ngx_rtmp_session_t *s)
     }
 
     // save metadata.
-    if (codec_ctx->meta != NULL && codec_ctx->meta_flv != NULL) {
+    if (codec_ctx->meta != NULL) {
         cache->meta_header  = codec_ctx->meta_header;
         cache->meta_version = codec_ctx->meta_version;
-        cache->meta_data = ngx_rtmp_append_shared_bufs(cscf, NULL, codec_ctx->meta);
-        cache->meta_data_flv = ngx_rtmp_append_shared_bufs(cscf, NULL, codec_ctx->meta_flv);
+        cache->meta = ngx_rtmp_append_shared_bufs(cscf, NULL, codec_ctx->meta);
+        ngx_rtmp_prepare_message(s, &codec_ctx->meta_header, NULL, cache->meta);
+        cache->meta_flv = ngx_http_flv_append_shared_bufs(cscf, NULL, codec_ctx->meta);
+        ngx_http_flv_prepare_message(s, &codec_ctx->meta_header, NULL, cache->meta_flv);
     }
 
     if (ctx->head == NULL) {
@@ -345,14 +347,14 @@ ngx_rtmp_gop_free_cache(ngx_rtmp_session_t *s, ngx_rtmp_gop_cache_t *cache)
         cache->audio_seq_header_data = NULL;
     }
 
-    if (cache->meta_data) {
-        ngx_rtmp_free_shared_chain(cscf, cache->meta_data);
-        cache->meta_data = NULL;
+    if (cache->meta) {
+        ngx_rtmp_free_shared_chain(cscf, cache->meta);
+        cache->meta = NULL;
     }
 
-    if (cache->meta_data_flv) {
-        ngx_rtmp_free_shared_chain(cscf, cache->meta_data_flv);
-        cache->meta_data_flv = NULL;
+    if (cache->meta_flv) {
+        ngx_rtmp_free_shared_chain(cscf, cache->meta_flv);
+        cache->meta_flv = NULL;
     }
 
     for (frame = cache->head; frame; frame = frame->next) {
@@ -594,7 +596,7 @@ ngx_rtmp_gop_cache_send(ngx_rtmp_session_t *ss)
 
     for (cache = gctx->head; cache; cache = cache->next) {
 
-        meta = (ss->proto == NGX_PROTO_TYPE_HTTP_FLV_PULL ? cache->meta_data_flv : cache->meta_data);
+        meta = (ss->proto == NGX_PROTO_TYPE_HTTP_FLV_PULL ? cache->meta_flv : cache->meta);
         if (meta) {
             meta_version = cache->meta_version;
         }
