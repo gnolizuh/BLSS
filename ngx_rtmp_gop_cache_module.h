@@ -40,8 +40,8 @@ struct ngx_rtmp_gop_cache_s {
     ngx_rtmp_gop_cache_t               *next;
     ngx_chain_t                        *video_seq_header_data;
     ngx_chain_t                        *audio_seq_header_data;
-    ngx_chain_t                        *meta_data;
-    ngx_chain_t                        *meta_data_flv;
+    ngx_chain_t                        *meta;
+    ngx_chain_t                        *meta_flv;
     ngx_uint_t                          meta_version;
     ngx_rtmp_header_t                   meta_header;
     ngx_int_t                           video_frame_cnt;
