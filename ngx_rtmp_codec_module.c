@@ -24,8 +24,8 @@ static void * ngx_rtmp_codec_create_app_conf(ngx_conf_t *cf);
 static char * ngx_rtmp_codec_merge_app_conf(ngx_conf_t *cf,
        void *parent, void *child);
 static ngx_int_t ngx_rtmp_codec_postconfiguration(ngx_conf_t *cf);
-static ngx_int_t ngx_rtmp_codec_reconstruct_meta(ngx_rtmp_session_t *s,
-       ngx_rtmp_header_t *h);
+static ngx_int_t ngx_rtmp_codec_construct_meta(ngx_rtmp_session_t *s);
+static ngx_int_t ngx_rtmp_codec_reconstruct_meta(ngx_rtmp_session_t *s);
 static ngx_int_t ngx_rtmp_codec_copy_meta(ngx_rtmp_session_t *s,
        ngx_rtmp_header_t *h, ngx_chain_t *in);
 static ngx_int_t ngx_rtmp_codec_prepare_meta(ngx_rtmp_session_t *s,
@@ -196,11 +196,6 @@ ngx_rtmp_codec_disconnect(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
         ctx->meta = NULL;
     }
 
-    if (ctx->meta_flv) {
-        ngx_rtmp_free_shared_chain(cscf, ctx->meta_flv);
-        ctx->meta_flv = NULL;
-    }
-
     return NGX_OK;
 }
 
@@ -276,6 +271,9 @@ ngx_rtmp_codec_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
     if (header == NULL) {
         return NGX_OK;
+    } else {
+        // when we got sequence header, try construct new meta if meta was not arrived.
+        ngx_rtmp_codec_construct_meta(s);
     }
 
     if (*header) {
@@ -809,6 +807,37 @@ ngx_rtmp_codec_dump_header(ngx_rtmp_session_t *s, const char *type,
 
 
 static ngx_int_t
+ngx_rtmp_codec_construct_meta(ngx_rtmp_session_t *s)
+{
+    ngx_rtmp_codec_ctx_t           *ctx;
+    ngx_rtmp_core_srv_conf_t       *cscf;
+
+    ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_codec_module);
+    if (ctx == NULL) {
+        return NGX_OK;
+    }
+
+    // meta was arrived, we do not construct it.
+    if (ctx->meta_came) {
+        return NGX_OK;
+    }
+
+    ngx_log_debug0(NGX_LOG_DEBUG_RTMP, s->connection->log, 0,
+                  "construct meta");
+
+    cscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_core_module);
+
+    if (ctx->meta) {
+        ngx_rtmp_free_shared_chain(cscf, ctx->meta);
+        ctx->meta = NULL;
+    }
+
+    // meta was not arrived, we construct depend on what we have.
+    return ngx_rtmp_codec_reconstruct_meta(s);
+}
+
+
+static ngx_int_t
 ngx_rtmp_codec_reconstruct_meta(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h)
 {
     ngx_rtmp_codec_ctx_t           *ctx;
@@ -910,11 +939,6 @@ ngx_rtmp_codec_reconstruct_meta(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h)
         ctx->meta = NULL;
     }
 
-    if (ctx->meta_flv) {
-        ngx_rtmp_free_shared_chain(cscf, ctx->meta_flv);
-        ctx->meta_flv = NULL;
-    }
-
     v.width = ctx->width;
     v.height = ctx->height;
     v.duration = ctx->duration;
@@ -929,13 +953,6 @@ ngx_rtmp_codec_reconstruct_meta(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h)
     rc = ngx_rtmp_append_amf(s, &ctx->meta, NULL, out_elts,
                              sizeof(out_elts) / sizeof(out_elts[0]));
     if (rc != NGX_OK || ctx->meta == NULL) {
-        return NGX_ERROR;
-    }
-
-    ctx->meta_flv = ngx_http_flv_append_shared_bufs(cscf, h, ctx->meta);
-    if (ctx->meta_flv == NULL) {
-        ngx_rtmp_free_shared_chain(cscf, ctx->meta);
-        ctx->meta = NULL;
         return NGX_ERROR;
     }
 
@@ -963,17 +980,6 @@ ngx_rtmp_codec_copy_meta(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
         return NGX_ERROR;
     }
 
-    if (ctx->meta_flv) {
-        ngx_rtmp_free_shared_chain(cscf, ctx->meta_flv);
-    }
-
-    ctx->meta_flv = ngx_http_flv_append_shared_bufs(cscf, h, in);
-    if (ctx->meta_flv == NULL) {
-        ngx_rtmp_free_shared_chain(cscf, ctx->meta);
-        ctx->meta = NULL;
-        return NGX_ERROR;
-    }
-
     return ngx_rtmp_codec_prepare_meta(s, h->timestamp);
 }
 
@@ -991,11 +997,11 @@ ngx_rtmp_codec_prepare_meta(ngx_rtmp_session_t *s, uint32_t timestamp)
     h.msid = NGX_RTMP_MSID;
     h.type = NGX_RTMP_MSG_AMF_META;
     h.timestamp = timestamp;
-    ngx_rtmp_prepare_message(s, &h, NULL, ctx->meta);
 
     ngx_memzero(&ctx->meta_header, sizeof(ctx->meta_header));
     ctx->meta_header = h;
     ctx->meta_version = ngx_rtmp_codec_get_next_version();
+    if (!ctx->meta_came) ctx->meta_came = 1;
 
     return NGX_OK;
 }
@@ -1154,7 +1160,7 @@ ngx_rtmp_codec_meta_data(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
     switch (cacf->meta) {
         case NGX_RTMP_CODEC_META_ON:
-            return ngx_rtmp_codec_reconstruct_meta(s, h);
+            return ngx_rtmp_codec_reconstruct_meta(s);
         case NGX_RTMP_CODEC_META_COPY:
             return ngx_rtmp_codec_copy_meta(s, h, in);
     }
