@@ -26,7 +26,9 @@ typedef struct {
 extern ngx_module_t  ngx_http_flv_rtmpmodule;
 
 ngx_chain_t *
-ngx_http_flv_append_shared_bufs(ngx_rtmp_core_srv_conf_t *cscf, ngx_rtmp_header_t *h, ngx_chain_t *in);
+ngx_http_flv_append_shared_bufs(ngx_rtmp_core_srv_conf_t *cscf, ngx_chain_t *hd, ngx_chain_t *in);
+void
+ngx_http_flv_prepare_message(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_rtmp_header_t *lh, ngx_chain_t *out);
 
 
 #endif /* _NGX_RTMP_HTTP_FLV_H_INCLUDED_ */

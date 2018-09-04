@@ -18,6 +18,7 @@ typedef struct ngx_rtmp_gop_cache_s ngx_rtmp_gop_cache_t;
 
 
 typedef struct {
+    ngx_chain_t                        *(*append_meta)(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_chain_t *in);
     void                                (*send_header)(ngx_rtmp_session_t *s, ngx_rtmp_session_t *ps);
     ngx_int_t                           (*send_message)(ngx_rtmp_session_t *s, ngx_chain_t *in, ngx_uint_t priority);
     ngx_chain_t                        *(*append_shared_bufs)(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_rtmp_header_t *lh, ngx_chain_t *in);
@@ -39,8 +40,8 @@ struct ngx_rtmp_gop_cache_s {
     ngx_rtmp_gop_cache_t               *next;
     ngx_chain_t                        *video_seq_header_data;
     ngx_chain_t                        *audio_seq_header_data;
-    ngx_chain_t                        *meta_data;
-    ngx_chain_t                        *meta_data_flv;
+    ngx_chain_t                        *meta;
+    ngx_chain_t                        *meta_flv;
     ngx_uint_t                          meta_version;
     ngx_rtmp_header_t                   meta_header;
     ngx_int_t                           video_frame_cnt;

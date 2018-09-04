@@ -68,6 +68,7 @@ static ngx_int_t ngx_http_flv_rtmp_init(ngx_conf_t *cf);
 
 static ngx_int_t ngx_http_flv_send_message(ngx_rtmp_session_t *s, ngx_chain_t *out, ngx_uint_t priority);
 static ngx_int_t ngx_http_flv_connect_local(ngx_rtmp_session_t *s);
+static ngx_chain_t * ngx_http_flv_http_append_meta(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_chain_t *meta);
 static void ngx_http_flv_http_send_header(ngx_rtmp_session_t *s, ngx_rtmp_session_t *ps);
 static ngx_int_t ngx_http_flv_http_send_message(ngx_rtmp_session_t *s, ngx_chain_t *in, ngx_uint_t priority);
 static ngx_chain_t * ngx_http_flv_http_append_shared_bufs(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_rtmp_header_t *lh, ngx_chain_t *in);
@@ -155,6 +156,7 @@ static ngx_str_t ngx_http_status_lines[] = {
 
 
 ngx_rtmp_send_handler_t ngx_http_flv_send_handler = {
+    ngx_http_flv_http_append_meta,
     ngx_http_flv_http_send_header,
     ngx_http_flv_http_send_message,
     ngx_http_flv_http_append_shared_bufs,
@@ -613,53 +615,76 @@ ngx_http_flv_connect_end(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
 
 
 ngx_chain_t *
-ngx_http_flv_append_shared_bufs(ngx_rtmp_core_srv_conf_t *cscf, ngx_rtmp_header_t *h, ngx_chain_t *in)
+ngx_http_flv_append_shared_bufs(ngx_rtmp_core_srv_conf_t *cscf, ngx_chain_t *hd, ngx_chain_t *in)
 {
-    ngx_chain_t                    *tail, *head, *taghead, prepkt;
-    ngx_chain_t                    *tag = in;
+    ngx_chain_t                    *tail, *head, *ptag, prepkt;
     ngx_buf_t                       prebuf;
-    uint32_t                        presize, presizebuf;
+    uint32_t                        psize, psizebuf;
     u_char                         *p, *ph;
 
-    ngx_memzero(&prebuf, sizeof(prebuf));
-    prebuf.start = prebuf.pos = (u_char*)&presizebuf;
-    prebuf.end   = prebuf.last = (u_char*)(((u_char*)&presizebuf) + sizeof(presizebuf));
-    prepkt.buf   = &prebuf;
-    prepkt.next  = NULL;
+    head = ptag = in;
 
-    head = tag;
-    tail = tag;
-    taghead = NULL;
-
-    for (presize = 0, tail = tag; tag; tail = tag, tag = tag->next) {
-        presize += (tag->buf->last - tag->buf->pos);
+    for (psize = 0, tail = ptag; ptag; tail = ptag, ptag = ptag->next) {
+        psize += (ptag->buf->last - ptag->buf->pos);
     }
 
-    presize += NGX_RTMP_MAX_FLV_TAG_HEADER;
+    psize += NGX_RTMP_MAX_FLV_TAG_HEADER;
 
-    ph = (u_char*)&presizebuf;
-    p  = (u_char*)&presize;
+    // set PreviousTagSize
+    ph = (u_char*)&psizebuf;
+    p  = (u_char*)&psize;
 
     *ph++ = p[3];
     *ph++ = p[2];
     *ph++ = p[1];
     *ph++ = p[0];
 
-    /* Link chain of PreviousTagSize after the last packet. */
+    ngx_memzero(&prebuf, sizeof(prebuf));
+    prebuf.start = prebuf.pos = (u_char*)&psizebuf;
+    prebuf.end = prebuf.last = (u_char*)(((u_char*)&psizebuf) + sizeof(psizebuf));
+    prepkt.buf = &prebuf;
+    prepkt.next = NULL;
+
+    // link chain of PreviousTagSize after the last packet
     tail->next = &prepkt;
 
-    taghead = ngx_rtmp_append_shared_bufs(cscf, NULL, head);
+    // alloc a new tag
+    ptag = ngx_rtmp_append_shared_bufs(cscf, hd, head);
 
+    // rebase pointer
     tail->next = NULL;
-    presize -= NGX_RTMP_MAX_FLV_TAG_HEADER;
+
+    if (!ptag) {
+        return NULL;
+    }
+
+    return ptag;
+}
+
+
+void
+ngx_http_flv_prepare_message(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
+        ngx_rtmp_header_t *lh, ngx_chain_t *out)
+{
+    ngx_chain_t                    *head, *ptag;
+    uint32_t                        psize;
+    u_char                         *p, *ph;
+
+    head = ptag = out;
+
+    for (psize = 0; ptag; ptag = ptag->next) {
+        psize += (ptag->buf->last - ptag->buf->pos);
+    }
+
+    psize -= 4;
 
     /* tag header */
-    taghead->buf->pos -= NGX_RTMP_MAX_FLV_TAG_HEADER;
-    ph = taghead->buf->pos;
+    head->buf->pos -= NGX_RTMP_MAX_FLV_TAG_HEADER;
+    ph = head->buf->pos;
 
     *ph++ = (u_char)h->type;
 
-    p = (u_char*)&presize;
+    p = (u_char*)&psize;
     *ph++ = p[2];
     *ph++ = p[1];
     *ph++ = p[0];
@@ -673,8 +698,26 @@ ngx_http_flv_append_shared_bufs(ngx_rtmp_core_srv_conf_t *cscf, ngx_rtmp_header_
     *ph++ = 0;
     *ph++ = 0;
     *ph++ = 0;
+}
 
-    return taghead;
+
+static ngx_chain_t *
+ngx_http_flv_http_append_meta(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_chain_t *in)
+{
+    ngx_rtmp_core_srv_conf_t       *cscf;
+    ngx_chain_t                    *meta;
+
+    cscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_core_module);
+    if (cscf == NULL) {
+        return NULL;
+    }
+
+    meta = ngx_http_flv_append_shared_bufs(cscf, NULL, in);
+    if (meta != NULL) {
+        ngx_http_flv_prepare_message(s, h, NULL, meta);
+    }
+
+    return meta;
 }
 
 
@@ -1200,13 +1243,19 @@ static ngx_chain_t *
 ngx_http_flv_http_append_shared_bufs(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_rtmp_header_t *lh, ngx_chain_t *in)
 {
     ngx_rtmp_core_srv_conf_t       *cscf;
+    ngx_chain_t                    *out;
 
     cscf = ngx_rtmp_get_module_srv_conf(s, ngx_rtmp_core_module);
     if (cscf == NULL) {
         return NULL;
     }
 
-    return ngx_http_flv_append_shared_bufs(cscf, h, in);
+    out = ngx_http_flv_append_shared_bufs(cscf, NULL, in);
+    if (out != NULL) {
+        ngx_http_flv_prepare_message(s, h, NULL, out);
+    }
+
+    return out;
 }
 
 
