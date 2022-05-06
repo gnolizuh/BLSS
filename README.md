@@ -91,5 +91,3 @@ cd to NGINX source directory & run this:
         }
     }
 
-# wechat QR code
-![Alt text](groups.png "wechat QR code")
